@@ -11,11 +11,11 @@ import lombok.Setter;
 /**
  * Mojo to apply kustomize manifests.
  */
-@Mojo(name = "kustomize", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
-public class KustomizeMojo extends KubectlMojo {
+@Mojo(name = "apply", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
+public class ApplyMojo extends KubectlMojo {
 
-	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl kustomize | kubectl apply -f -")
+	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
 	@Getter
 	@Setter
-	private String command = "kubectl kustomize | kubectl apply -f -";
+	private String command = "kubectl apply -f .";
 }

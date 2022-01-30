@@ -5,8 +5,10 @@ import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.K3sMojo;
+import lombok.Setter;
 
 /**
  * Mojo to pull k3s image.
@@ -14,16 +16,21 @@ import io.kokuwa.maven.k3s.K3sMojo;
 @Mojo(name = "pull", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class PullMojo extends K3sMojo {
 
+	@Setter @Parameter(property = "k3s.pull.always", defaultValue = "false")
+	private boolean pullAlways = false;
+	@Setter @Parameter(property = "k3s.pull.skip", defaultValue = "false")
+	private boolean skipPull = false;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
-		if (isSkip()) {
+		if (isSkip(skipPull)) {
 			return;
 		}
 
 		// check if image is alreay present
 
-		if (!isPullAlways()) {
+		if (!pullAlways) {
 			var imagePresent = dockerClient().listImagesCmd()
 					.withImageNameFilter(dockerImage())
 					.exec().stream()

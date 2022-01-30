@@ -1,5 +1,6 @@
 package io.kokuwa.maven.k3s;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +18,6 @@ import io.kokuwa.maven.k3s.util.DockerUtil;
 import io.kokuwa.maven.k3s.util.Kubernetes;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -25,44 +25,45 @@ import lombok.Setter;
  */
 public abstract class K3sMojo extends AbstractMojo {
 
-	private static final String IMAGE_REPOSITORY = "rancher/k3s";
-	private static final String IMAGE_TAG = "latest";
-
-	@Getter
-	private final Path workdir = Path.of("target/k3s").toAbsolutePath();
-	@Getter
-	private final Path kubeconfig = workdir.resolve("kubeconfig.yaml");
-
-	// parameter
-
-	@Getter	@Setter	@Parameter(property = "k3s.image.registry")
+	@Setter @Parameter(property = "k3s.image.registry")
 	private String imageRegistry;
-	@Getter	@Setter	@Parameter(property = "k3s.image.repository", defaultValue = IMAGE_REPOSITORY)
-	private String imageRepository = IMAGE_REPOSITORY;
-	@Getter	@Setter	@Parameter(property = "k3s.image.tag", defaultValue = IMAGE_TAG)
-	private String imageTag = IMAGE_TAG;
-	@Getter	@Setter	@Parameter(property = "k3s.image.pullAlways", defaultValue = "false")
-	private boolean pullAlways = false;
-	@Getter	@Setter	@Parameter(property = "k3s.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.image.repository", defaultValue = "rancher/k3s")
+	private String imageRepository = "rancher/k3s";
+	@Setter @Parameter(property = "k3s.image.tag", defaultValue = "latest")
+	private String imageTag = "latest";
+	@Setter @Parameter(property = "k3s.workdir", defaultValue = "${project.outputDirectory}/k3s")
+	private File workingDir = new File("target/k3s");
+	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip = false;
+
+	protected Path getWorkingDir() {
+		return workingDir.toPath().toAbsolutePath();
+	}
+
+	protected Path getKubeConfig() {
+		return getWorkingDir().resolve("kubeconfig.yaml");
+	}
+
+	protected boolean isSkip(boolean skipMojo) {
+		return skip || skipMojo;
+	}
 
 	// docker
 
-	static DockerUtil dockerUtil;
-	static String dockerImage;
-	static DockerClient dockerClient;
+	private static String dockerImage;
+	private static DockerClient dockerClient;
 
-	public String dockerImage() {
+	protected String dockerImage() {
 		if (dockerImage == null) {
 			dockerImage = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
-			if ("latest".equals(getImageTag())) {
+			if ("latest".equals(imageTag)) {
 				getLog().warn("Using image tag 'latest' is unstable.");
 			}
 		}
 		return dockerImage;
 	}
 
-	public DockerClient dockerClient() throws MojoExecutionException {
+	protected DockerClient dockerClient() throws MojoExecutionException {
 		if (dockerClient == null) {
 
 			// create client
@@ -82,16 +83,17 @@ public abstract class K3sMojo extends AbstractMojo {
 		return dockerClient;
 	}
 
-	public DockerUtil dockerUtil() throws MojoExecutionException {
+	protected DockerUtil dockerUtil() throws MojoExecutionException {
 		return new DockerUtil(dockerClient());
 	}
 
 	// kubernetes
 
-	static Kubernetes kubernetes;
+	private static Kubernetes kubernetes;
 
-	public Kubernetes kubernetes() throws MojoExecutionException {
+	protected Kubernetes kubernetes() throws MojoExecutionException {
 		if (kubernetes == null) {
+			var kubeconfig = getKubeConfig();
 			if (!Files.exists(kubeconfig)) {
 				throw new MojoExecutionException("Kube config not found at " + kubeconfig);
 			}
@@ -104,7 +106,7 @@ public abstract class K3sMojo extends AbstractMojo {
 		return kubernetes;
 	}
 
-	public void reset() {
+	protected void reset() {
 		kubernetes = null;
 	}
 }

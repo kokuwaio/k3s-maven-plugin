@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import io.kokuwa.maven.k3s.mojo.KubectlMojo;
+import io.kokuwa.maven.k3s.mojo.ApplyMojo;
 import io.kokuwa.maven.k3s.mojo.KustomizeMojo;
 import io.kokuwa.maven.k3s.mojo.PullMojo;
 import io.kokuwa.maven.k3s.mojo.RemoveMojo;
@@ -32,15 +33,15 @@ public class LifecycleTest {
 	StartMojo start;
 	StopMojo stop;
 	RemoveMojo remove;
-	KubectlMojo kubectl;
+	ApplyMojo apply;
 	KustomizeMojo kustomize;
 
-	@DisplayName("pull/start/kubectl/rm")
+	@DisplayName("pull/start/apply/rm")
 	@Test
 	void kubectl() throws MojoExecutionException {
 		pull.execute();
 		start.setPortBindings(List.of("8080:8080")).execute();
-		kubectl.setKubectlCommand("kubectl apply -f pod.yaml").execute();
+		apply.setCommand("kubectl apply -f pod.yaml").execute();
 		assertPodRunning();
 		remove.execute();
 	}
@@ -55,12 +56,12 @@ public class LifecycleTest {
 		remove.execute();
 	}
 
-	@DisplayName("pull/start/kubectl/stop/stop/rm")
+	@DisplayName("pull/start/apply/stop/stop/rm")
 	@Test
 	void stopped() throws MojoExecutionException {
 		pull.execute();
 		start.setPortBindings(List.of("8080:8080")).execute();
-		kubectl.setKubectlManifests("src/test/k3s/pod.yaml").execute();
+		apply.setManifests(new File("src/test/k3s/pod.yaml")).execute();
 		assertPodRunning();
 		stop.execute();
 		stop.execute();
@@ -100,7 +101,7 @@ public class LifecycleTest {
 		start = mojo(new StartMojo());
 		stop = mojo(new StopMojo());
 		remove = mojo(new RemoveMojo());
-		kubectl = mojo(new KubectlMojo());
+		apply = mojo(new ApplyMojo());
 		kustomize = mojo(new KustomizeMojo());
 	}
 
