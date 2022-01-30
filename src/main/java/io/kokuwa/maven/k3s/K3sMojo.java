@@ -25,11 +25,11 @@ import lombok.Setter;
  */
 public abstract class K3sMojo extends AbstractMojo {
 
-	@Setter @Parameter(property = "k3s.image.registry")
+	@Setter @Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
-	@Setter @Parameter(property = "k3s.image.repository", defaultValue = "rancher/k3s")
+	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "rancher/k3s")
 	private String imageRepository = "rancher/k3s";
-	@Setter @Parameter(property = "k3s.image.tag", defaultValue = "latest")
+	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag = "latest";
 	@Setter @Parameter(property = "k3s.workdir", defaultValue = "${project.outputDirectory}/k3s")
 	private File workingDir = new File("target/k3s");

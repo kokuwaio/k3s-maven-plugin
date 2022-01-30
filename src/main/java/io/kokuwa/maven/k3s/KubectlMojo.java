@@ -18,8 +18,8 @@ import lombok.Setter;
  */
 public abstract class KubectlMojo extends K3sMojo {
 
-	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "true")
-	private boolean kubectlStreamLogs = true;
+	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
+	private boolean streamLogs = false;
 	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests = new File("src/test/k3s");
 	@Setter @Parameter(property = "k3s.kubectl.skip", defaultValue = "false")
@@ -64,7 +64,7 @@ public abstract class KubectlMojo extends K3sMojo {
 
 		// exec
 
-		getLog().info("[kubectl] " + getCommand());
+		getLog().info(getCommand());
 		var execId = dockerClient().execCreateCmd(containerId)
 				.withCmd("/bin/sh", "-c", getCommand())
 				.withWorkingDir("/k3s/manifests")
@@ -73,12 +73,13 @@ public abstract class KubectlMojo extends K3sMojo {
 				.withAttachStderr(true)
 				.exec().getId();
 
-		var callback = new DockerLogCallback(getLog(), kubectlStreamLogs);
+		var callback = new DockerLogCallback(getLog(), streamLogs, "[kubectl] ");
 		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(getCommand()).until(callback::isCompleted);
+		Await.await(getCommand()).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 
 		var response = dockerClient().inspectExecCmd(execId).exec();
 		if (response.getExitCodeLong() != 0) {
+			callback.replayOnWarn();
 			throw new MojoExecutionException("kubectl returned exit code " + response.getExitCodeLong());
 		}
 
