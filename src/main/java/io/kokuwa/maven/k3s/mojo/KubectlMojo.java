@@ -81,7 +81,7 @@ public class KubectlMojo extends K3sMojo {
 
 		var callback = new DockerLogCallback(getLog(), kubectlStreamLogs);
 		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(getLog(), kubectlCommand).until(callback::isCompleted);
+		Await.await(kubectlCommand).until(callback::isCompleted);
 
 		var response = dockerClient().inspectExecCmd(execId).exec();
 		if (response.getExitCodeLong() != 0) {
@@ -90,7 +90,7 @@ public class KubectlMojo extends K3sMojo {
 
 		// wait for pods to be ready
 
-		Await.await(getLog(), "k3s pods ready").until(kubernetes()::isPodsReady);
+		Await.await("k3s pods ready").until(kubernetes()::isPodsReady);
 		getLog().debug("k3s pods ready");
 	}
 }

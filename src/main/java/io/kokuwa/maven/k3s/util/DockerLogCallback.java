@@ -24,7 +24,7 @@ public class DockerLogCallback implements ResultCallback<Frame> {
 
 	@Override
 	public void onNext(Frame frame) {
-		var message = " > " + new String(frame.getPayload()).strip();
+		var message = new String(frame.getPayload()).strip();
 		if (streamLogs) {
 			log.info(message);
 		} else {

@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,10 +37,20 @@ public class LifecycleTest {
 
 	@DisplayName("pull/start/kubectl/rm")
 	@Test
-	void simple() throws MojoExecutionException {
+	void kubectl() throws MojoExecutionException {
 		pull.execute();
 		start.setPortBindings(List.of("8080:8080")).execute();
 		kubectl.setKubectlCommand("kubectl apply -f pod.yaml").execute();
+		assertPodRunning();
+		remove.execute();
+	}
+
+	@DisplayName("pull/start/kustomize/rm")
+	@Test
+	void kustomize() throws MojoExecutionException {
+		pull.execute();
+		start.setPortBindings(List.of("8080:8080")).execute();
+		kustomize.execute();
 		assertPodRunning();
 		remove.execute();
 	}
@@ -56,17 +67,13 @@ public class LifecycleTest {
 		remove.execute();
 	}
 
-	@DisplayName("pull/start/kustomize/stop/start/rm")
+	@DisplayName("pull/start/stop/start/rm")
 	@Test
 	void restart() throws MojoExecutionException {
 		pull.execute();
-		start.setPortBindings(List.of("8080:8080")).execute();
-		kustomize.execute();
-		assertPodRunning();
+		start.execute();
 		stop.execute();
 		start.execute();
-		kustomize.execute();
-		assertPodRunning();
 		remove.execute();
 	}
 
@@ -95,6 +102,12 @@ public class LifecycleTest {
 		remove = mojo(new RemoveMojo());
 		kubectl = mojo(new KubectlMojo());
 		kustomize = mojo(new KustomizeMojo());
+	}
+
+	@BeforeEach
+	@AfterEach
+	void reset() throws MojoExecutionException {
+		mojo(new RemoveMojo()).execute();
 	}
 
 	private <T extends K3sMojo> T mojo(T mojo) {
