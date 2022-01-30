@@ -34,13 +34,13 @@ import lombok.Setter;
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class StartMojo extends K3sMojo {
 
-	@Setter @Parameter(property = "k3s.start.streamLogs", defaultValue = "false")
-	private boolean startStreamLogs = false;
+	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
+	private boolean streamLogs = false;
 	@Setter @Parameter(property = "k3s.port.bindings")
 	private List<String> portBindings = new ArrayList<>();
 	@Setter @Parameter(property = "k3s.port.api", defaultValue = "6443")
 	private Integer portKubeApi = 6443;
-	@Setter @Parameter(property = "k3s.start.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
 	private boolean skipStart = false;
 
 	@Override
@@ -123,21 +123,22 @@ public class StartMojo extends K3sMojo {
 			// logs to console and wait for startup
 
 			var k3sStarted = new AtomicBoolean();
+			var callback = new DockerLogCallback(getLog(), streamLogs, "[k3s] ") {
+				@Override
+				public void onNext(Frame frame) {
+					super.onNext(frame);
+					if (new String(frame.getPayload()).contains("k3s is up and running")) {
+						k3sStarted.set(true);
+					}
+				}
+			};
 			dockerClient().logContainerCmd(containerId)
 					.withStdOut(true)
 					.withStdErr(true)
 					.withFollowStream(true)
 					.withSince((int) started.getEpochSecond())
-					.exec(new DockerLogCallback(getLog(), startStreamLogs) {
-						@Override
-						public void onNext(Frame frame) {
-							super.onNext(frame);
-							if (new String(frame.getPayload()).contains("k3s is up and running")) {
-								k3sStarted.set(true);
-							}
-						}
-					});
-			Await.await("k3s is up and running").until(k3sStarted::get);
+					.exec(callback);
+			Await.await("k3s is up and running").onTimeout(callback::replayOnWarn).until(k3sStarted::get);
 			getLog().info("k3s is up and running");
 		}
 

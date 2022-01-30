@@ -16,9 +16,9 @@ import lombok.Setter;
 @Mojo(name = "pull", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class PullMojo extends K3sMojo {
 
-	@Setter @Parameter(property = "k3s.pull.always", defaultValue = "false")
-	private boolean pullAlways = false;
-	@Setter @Parameter(property = "k3s.pull.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.imagePullAlways", defaultValue = "false")
+	private boolean imagePullAlways = false;
+	@Setter @Parameter(property = "k3s.skipPull", defaultValue = "false")
 	private boolean skipPull = false;
 
 	@Override
@@ -30,7 +30,7 @@ public class PullMojo extends K3sMojo {
 
 		// check if image is alreay present
 
-		if (!pullAlways) {
+		if (!imagePullAlways) {
 			var imagePresent = dockerClient().listImagesCmd()
 					.withImageNameFilter(dockerImage())
 					.exec().stream()

@@ -17,7 +17,7 @@ import lombok.Setter;
 @Mojo(name = "rm", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class RemoveMojo extends K3sMojo {
 
-	@Setter @Parameter(property = "k3s.rm.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.skipRm", defaultValue = "false")
 	private boolean skipRm = false;
 
 	@Override

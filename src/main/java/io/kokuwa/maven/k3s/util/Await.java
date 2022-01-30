@@ -25,11 +25,13 @@ public class Await {
 	private final String text;
 	private Duration timeout;
 	private Duration interval;
+	private Runnable onTimeout;
 
 	private Await(String text) {
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);
 		this.interval = Duration.ofMillis(500);
+		this.onTimeout = () -> {};
 	}
 
 	public Await interval(Duration newInterval) {
@@ -39,6 +41,11 @@ public class Await {
 
 	public Await timeout(Duration newTimeout) {
 		this.timeout = newTimeout;
+		return this;
+	}
+
+	public Await onTimeout(Runnable newOnTimeout) {
+		this.onTimeout = newOnTimeout;
 		return this;
 	}
 
@@ -59,6 +66,7 @@ public class Await {
 			} catch (Exception e) {}
 		}
 
+		onTimeout.run();
 		throw new MojoExecutionException(text + " did not complete in " + timeout.toSeconds() + " seconds");
 	}
 

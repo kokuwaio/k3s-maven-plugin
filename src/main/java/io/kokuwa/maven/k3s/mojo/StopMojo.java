@@ -14,7 +14,7 @@ import lombok.Setter;
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class StopMojo extends K3sMojo {
 
-	@Setter @Parameter(property = "k3s.stop.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.skipStop", defaultValue = "false")
 	private boolean skipStop = false;
 
 	@Override
