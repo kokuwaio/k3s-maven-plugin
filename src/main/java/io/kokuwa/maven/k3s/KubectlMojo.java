@@ -1,42 +1,36 @@
-package io.kokuwa.maven.k3s.mojo;
+package io.kokuwa.maven.k3s;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import io.kokuwa.maven.k3s.K3sMojo;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Mojo to apply manifests.
+ * Base for mojos to exec kubectl.
  */
-@Mojo(name = "kubectl", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
-public class KubectlMojo extends K3sMojo {
+public abstract class KubectlMojo extends K3sMojo {
 
-	private static final String COMMAND = "kubectl apply -f .";
-	private static final String MANIFESTS = "src/test/k3s";
-
-	@Getter	@Setter	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "true")
+	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "true")
 	private boolean kubectlStreamLogs = true;
-	@Getter	@Setter	@Parameter(property = "k3s.kubectl.manifests", defaultValue = MANIFESTS)
-	private String kubectlManifests = MANIFESTS;
-	@Getter	@Setter	@Parameter(property = "k3s.kubectl.command", defaultValue = COMMAND)
-	private String kubectlCommand = COMMAND;
+	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
+	private File manifests = new File("src/test/k3s");
+	@Setter @Parameter(property = "k3s.kubectl.skip", defaultValue = "false")
+	private boolean skipKubectl = false;
+
+	public abstract String getCommand();
 
 	@Override
 	public void execute() throws MojoExecutionException {
 
-		if (isSkip()) {
+		if (isSkip(skipKubectl)) {
 			return;
 		}
 
@@ -50,8 +44,8 @@ public class KubectlMojo extends K3sMojo {
 
 		// copy manifests to working directory
 
-		var source = Path.of(kubectlManifests).toAbsolutePath();
-		var destination = getWorkdir().resolve("manifests").toAbsolutePath();
+		var source = manifests.toPath().toAbsolutePath();
+		var destination = getWorkingDir().resolve("manifests").toAbsolutePath();
 		try {
 			if (Files.exists(source)) {
 				if (Files.exists(destination)) {
@@ -70,9 +64,9 @@ public class KubectlMojo extends K3sMojo {
 
 		// exec
 
-		getLog().info("[kubectl] " + kubectlCommand);
+		getLog().info("[kubectl] " + getCommand());
 		var execId = dockerClient().execCreateCmd(containerId)
-				.withCmd("/bin/sh", "-c", kubectlCommand)
+				.withCmd("/bin/sh", "-c", getCommand())
 				.withWorkingDir("/k3s/manifests")
 				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml"))
 				.withAttachStdout(true)
@@ -81,7 +75,7 @@ public class KubectlMojo extends K3sMojo {
 
 		var callback = new DockerLogCallback(getLog(), kubectlStreamLogs);
 		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(kubectlCommand).until(callback::isCompleted);
+		Await.await(getCommand()).until(callback::isCompleted);
 
 		var response = dockerClient().inspectExecCmd(execId).exec();
 		if (response.getExitCodeLong() != 0) {

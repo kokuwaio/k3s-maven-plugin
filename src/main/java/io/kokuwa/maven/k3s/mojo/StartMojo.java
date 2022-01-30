@@ -26,7 +26,6 @@ import io.kokuwa.maven.k3s.K3sMojo;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
 import io.kokuwa.maven.k3s.util.DockerUtil;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -35,17 +34,19 @@ import lombok.Setter;
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class StartMojo extends K3sMojo {
 
-	@Getter	@Setter	@Parameter(property = "k3s.streamLogs", defaultValue = "false")
-	private boolean streamLogs = false;
-	@Getter	@Setter	@Parameter(property = "k3s.port.bindings")
+	@Setter @Parameter(property = "k3s.start.streamLogs", defaultValue = "false")
+	private boolean startStreamLogs = false;
+	@Setter @Parameter(property = "k3s.port.bindings")
 	private List<String> portBindings = new ArrayList<>();
-	@Getter	@Setter	@Parameter(property = "k3s.port.api", defaultValue = "6443")
+	@Setter @Parameter(property = "k3s.port.api", defaultValue = "6443")
 	private Integer portKubeApi = 6443;
+	@Setter @Parameter(property = "k3s.start.skip", defaultValue = "false")
+	private boolean skipStart = false;
 
 	@Override
 	public void execute() throws MojoExecutionException {
 
-		if (isSkip()) {
+		if (isSkip(skipStart)) {
 			return;
 		}
 
@@ -64,9 +65,9 @@ public class StartMojo extends K3sMojo {
 		// check mount path for manifests and kubectl file
 
 		try {
-			Files.createDirectories(getWorkdir());
+			Files.createDirectories(getWorkingDir());
 		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to create workdir " + getWorkdir(), e);
+			throw new MojoExecutionException("Failed to create workdir " + getWorkingDir(), e);
 		}
 
 		// host config
@@ -76,7 +77,7 @@ public class StartMojo extends K3sMojo {
 		portBindings.stream().map(PortBinding::parse).forEach(ports::add);
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
-				.withBinds(new Bind(getWorkdir().toString(), new Volume("/k3s")))
+				.withBinds(new Bind(getWorkingDir().toString(), new Volume("/k3s")))
 				.withPortBindings(ports);
 
 		// container
@@ -127,7 +128,7 @@ public class StartMojo extends K3sMojo {
 					.withStdErr(true)
 					.withFollowStream(true)
 					.withSince((int) started.getEpochSecond())
-					.exec(new DockerLogCallback(getLog(), isStreamLogs()) {
+					.exec(new DockerLogCallback(getLog(), startStreamLogs) {
 						@Override
 						public void onNext(Frame frame) {
 							super.onNext(frame);
