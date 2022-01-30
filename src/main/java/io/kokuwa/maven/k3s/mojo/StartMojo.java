@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +115,7 @@ public class StartMojo extends K3sMojo {
 
 			// start
 
+			var started = Instant.now();
 			dockerClient().startContainerCmd(containerId).exec();
 			getLog().info("Container with id '" + containerId + "' started");
 
@@ -124,6 +126,7 @@ public class StartMojo extends K3sMojo {
 					.withStdOut(true)
 					.withStdErr(true)
 					.withFollowStream(true)
+					.withSince((int) started.getEpochSecond())
 					.exec(new DockerLogCallback(getLog(), isStreamLogs()) {
 						@Override
 						public void onNext(Frame frame) {
@@ -133,14 +136,14 @@ public class StartMojo extends K3sMojo {
 							}
 						}
 					});
-			Await.await(getLog(), "k3s is up and running").until(k3sStarted::get);
+			Await.await("k3s is up and running").until(k3sStarted::get);
 			getLog().info("k3s is up and running");
 		}
 
-		Await.await(getLog(), "k3s master node ready").until(kubernetes()::isNodeReady);
-		Await.await(getLog(), "k3s pods ready").until(kubernetes()::isPodsReady);
+		Await.await("k3s master node ready").until(kubernetes()::isNodeReady);
+		Await.await("k3s pods ready").until(kubernetes()::isPodsReady);
 		// sa can be missing, see https://github.com/kubernetes/kubernetes/issues/66689
-		Await.await(getLog(), "k3s service account ready").until(kubernetes()::isServiceAccountReady);
+		Await.await("k3s service account ready").until(kubernetes()::isServiceAccountReady);
 		getLog().info("k3s node ready");
 	}
 }

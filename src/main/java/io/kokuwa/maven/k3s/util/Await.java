@@ -6,7 +6,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 
 /**
  * Utility for waits.
@@ -19,31 +18,22 @@ import org.apache.maven.plugin.logging.Log;
  */
 public class Await {
 
-	public static Await await(Log log, String text) {
-		return new Await(log, text);
+	public static Await await(String text) {
+		return new Await(text);
 	}
 
-	private final Log log;
 	private final String text;
 	private Duration timeout;
-	private Duration pollDelay;
-	private Duration pollInterval;
+	private Duration interval;
 
-	private Await(Log log, String text) {
-		this.log = log;
+	private Await(String text) {
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);
-		this.pollDelay = Duration.ofSeconds(1);
-		this.pollInterval = Duration.ofSeconds(1);
+		this.interval = Duration.ofMillis(500);
 	}
 
-	public Await pollDelay(Duration newPollDelay) {
-		this.pollDelay = newPollDelay;
-		return this;
-	}
-
-	public Await pollInterval(Duration newPollInterval) {
-		this.pollInterval = newPollInterval;
+	public Await interval(Duration newInterval) {
+		this.interval = newInterval;
 		return this;
 	}
 
@@ -58,15 +48,12 @@ public class Await {
 
 	public <V> V until(Callable<V> supplier, Function<V, Boolean> check) throws MojoExecutionException {
 
-		wait(pollDelay);
-
 		var started = Instant.now().plus(timeout);
 		while (Instant.now().isBefore(started)) {
-			wait(pollInterval);
+			wait(interval);
 			try {
 				V value = supplier.call();
 				if (check.apply(value)) {
-					log.debug(text + " finished");
 					return value;
 				}
 			} catch (Exception e) {}
