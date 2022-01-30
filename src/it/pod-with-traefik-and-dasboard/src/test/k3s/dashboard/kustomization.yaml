@@ -1,0 +1,18 @@
+namespace: default
+
+commonLabels:
+  app.kubernetes.io/name: kubernetes-dashboard
+
+resources:
+  - rbac.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: kubernetes-dashboard-certs
+  - name: kubernetes-dashboard-csrf
+  - name: kubernetes-dashboard-key-holder
