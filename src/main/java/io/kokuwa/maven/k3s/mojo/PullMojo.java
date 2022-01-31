@@ -16,8 +16,11 @@ import lombok.Setter;
 @Mojo(name = "pull", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class PullMojo extends K3sMojo {
 
+	/** Always pull k3s image. */
 	@Setter @Parameter(property = "k3s.imagePullAlways", defaultValue = "false")
 	private boolean imagePullAlways = false;
+
+	/** Skip pull of k3s image. */
 	@Setter @Parameter(property = "k3s.skipPull", defaultValue = "false")
 	private boolean skipPull = false;
 

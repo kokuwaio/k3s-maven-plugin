@@ -34,12 +34,19 @@ import lombok.Setter;
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class StartMojo extends K3sMojo {
 
+	/** Stream logs of `k3s` to maven logger. */
 	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
 	private boolean streamLogs = false;
-	@Setter @Parameter(property = "k3s.port.bindings")
+
+	/** Additional port bindings e.g. `8080:8080`. */
+	@Setter @Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
-	@Setter @Parameter(property = "k3s.port.api", defaultValue = "6443")
+
+	/** KubeApi port. */
+	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private Integer portKubeApi = 6443;
+
+	/** Skip starting of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
 	private boolean skipStart = false;
 

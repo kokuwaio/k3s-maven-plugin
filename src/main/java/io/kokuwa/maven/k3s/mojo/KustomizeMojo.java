@@ -14,8 +14,7 @@ import lombok.Setter;
 @Mojo(name = "kustomize", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class KustomizeMojo extends KubectlMojo {
 
-	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl kustomize | kubectl apply -f -")
-	@Getter
-	@Setter
-	private String command = "kubectl kustomize | kubectl apply -f -";
+	/** Command to use for applying manifest files. */
+	@Getter @Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -k .")
+	private String command = "kubectl apply -k .";
 }
