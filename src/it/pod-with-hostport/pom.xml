@@ -8,7 +8,7 @@
 		<version>LOCAL-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>@project.artifactId@-it-pod-with-nodeport</artifactId>
+	<artifactId>@project.artifactId@-it-pod-with-hostport</artifactId>
 
 	<build>
 		<plugins>
