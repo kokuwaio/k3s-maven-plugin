@@ -18,10 +18,15 @@ import lombok.Setter;
  */
 public abstract class KubectlMojo extends K3sMojo {
 
+	/** Stream logs of `kubectl` to maven logger. */
 	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
 	private boolean streamLogs = false;
+
+	/** Path where to find manifest files. */
 	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests = new File("src/test/k3s");
+
+	/** Skip applying kubectl manifests. */
 	@Setter @Parameter(property = "k3s.kubectl.skip", defaultValue = "false")
 	private boolean skipKubectl = false;
 

@@ -25,14 +25,23 @@ import lombok.Setter;
  */
 public abstract class K3sMojo extends AbstractMojo {
 
+	/** k3s image registr. */
 	@Setter @Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
+
+	/** k3s image repository. */
 	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "rancher/k3s")
 	private String imageRepository = "rancher/k3s";
+
+	/** k3s image tag. */
 	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag = "latest";
-	@Setter @Parameter(property = "k3s.workdir", defaultValue = "${project.outputDirectory}/k3s")
+
+	/** k3s working directory. This directory is mounted into docker container. */
+	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
 	private File workingDir = new File("target/k3s");
+
+	/** k3s working directory. This directory is mounted into docker container. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip = false;
 
