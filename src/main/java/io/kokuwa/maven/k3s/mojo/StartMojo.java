@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,14 @@ public class StartMojo extends K3sMojo {
 	/** KubeApi port. */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private Integer portKubeApi = 6443;
+
+	/** Timeout in seconds to wait for pods getting ready. */
+	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
+	private int podTimeout = 300;
+
+	/** Timeout in seconds to wait for nodes getting ready. */
+	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "60")
+	private int nodeTimeout = 300;
 
 	/** Skip starting of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
@@ -145,12 +154,15 @@ public class StartMojo extends K3sMojo {
 					.withFollowStream(true)
 					.withSince((int) started.getEpochSecond())
 					.exec(callback);
-			Await.await("k3s is up and running").onTimeout(callback::replayOnWarn).until(k3sStarted::get);
+			Await.await("k3s is up and running")
+					.timeout(Duration.ofSeconds(nodeTimeout))
+					.onTimeout(callback::replayOnWarn)
+					.until(k3sStarted::get);
 			getLog().info("k3s is up and running");
 		}
 
 		Await.await("k3s master node ready").until(kubernetes()::isNodeReady);
-		Await.await("k3s pods ready").until(kubernetes()::isPodsReady);
+		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
 		// sa can be missing, see https://github.com/kubernetes/kubernetes/issues/66689
 		Await.await("k3s service account ready").until(kubernetes()::isServiceAccountReady);
 		getLog().info("k3s node ready");

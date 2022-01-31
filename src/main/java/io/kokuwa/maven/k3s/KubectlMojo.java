@@ -3,6 +3,7 @@ package io.kokuwa.maven.k3s;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -25,6 +26,10 @@ public abstract class KubectlMojo extends K3sMojo {
 	/** Path where to find manifest files. */
 	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests = new File("src/test/k3s");
+
+	/** Timeout in seconds to wait for pods getting ready. */
+	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
+	private int podTimeout = 300;
 
 	/** Skip applying kubectl manifests. */
 	@Setter @Parameter(property = "k3s.kubectl.skip", defaultValue = "false")
@@ -90,7 +95,7 @@ public abstract class KubectlMojo extends K3sMojo {
 
 		// wait for pods to be ready
 
-		Await.await("k3s pods ready").until(kubernetes()::isPodsReady);
+		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
 		getLog().debug("k3s pods ready");
 	}
 }
