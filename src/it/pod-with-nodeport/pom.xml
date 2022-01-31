@@ -20,7 +20,7 @@
 						<goals>
 							<goal>pull</goal>
 							<goal>start</goal>
-							<goal>kustomize</goal>
+							<goal>apply</goal>
 							<goal>rm</goal>
 						</goals>
 					</execution>
