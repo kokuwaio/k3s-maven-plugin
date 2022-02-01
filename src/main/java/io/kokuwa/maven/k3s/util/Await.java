@@ -30,7 +30,7 @@ public class Await {
 	private Await(String text) {
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);
-		this.interval = Duration.ofMillis(500);
+		this.interval = Duration.ofMillis(250);
 		this.onTimeout = () -> {};
 	}
 
@@ -57,13 +57,13 @@ public class Await {
 
 		var started = Instant.now().plus(timeout);
 		while (Instant.now().isBefore(started)) {
-			wait(interval);
 			try {
 				V value = supplier.call();
 				if (check.apply(value)) {
 					return value;
 				}
 			} catch (Exception e) {}
+			wait(interval);
 		}
 
 		onTimeout.run();
