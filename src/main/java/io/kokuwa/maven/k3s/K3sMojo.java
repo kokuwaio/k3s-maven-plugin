@@ -25,7 +25,7 @@ import lombok.Setter;
  */
 public abstract class K3sMojo extends AbstractMojo {
 
-	/** k3s image registr. */
+	/** k3s image registry. */
 	@Setter @Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
 
@@ -41,7 +41,7 @@ public abstract class K3sMojo extends AbstractMojo {
 	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
 	private File workingDir = new File("target/k3s");
 
-	/** k3s working directory. This directory is mounted into docker container. */
+	/** Skip plugin. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip = false;
 

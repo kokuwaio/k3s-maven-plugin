@@ -43,17 +43,17 @@ public class StartMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
 
-	/** KubeApi port. */
+	/** KubeApi port to expose to host. */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private Integer portKubeApi = 6443;
+
+	/** Timeout in seconds to wait for nodes getting ready. */
+	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "60")
+	private int nodeTimeout = 60;
 
 	/** Timeout in seconds to wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
 	private int podTimeout = 300;
-
-	/** Timeout in seconds to wait for nodes getting ready. */
-	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "60")
-	private int nodeTimeout = 300;
 
 	/** Skip starting of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
