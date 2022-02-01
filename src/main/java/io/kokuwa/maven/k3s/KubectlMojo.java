@@ -28,11 +28,11 @@ public abstract class KubectlMojo extends K3sMojo {
 	private File manifests = new File("src/test/k3s");
 
 	/** Timeout in seconds to wait for pods getting ready. */
-	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
+	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "300")
 	private int podTimeout = 300;
 
 	/** Skip applying kubectl manifests. */
-	@Setter @Parameter(property = "k3s.kubectl.skip", defaultValue = "false")
+	@Setter @Parameter(property = "k3s.skipKubectl", defaultValue = "false")
 	private boolean skipKubectl = false;
 
 	public abstract String getCommand();
