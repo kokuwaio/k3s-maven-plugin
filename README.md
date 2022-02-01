@@ -28,14 +28,14 @@ If you don't like to use this plugin you can:
 
 ## Goals
 
-| Goal              | Description                      | Default Lifecycle Phase |
-| ----------------- | -------------------------------- | ----------------------- |
-| `k3s:pull`       | Pull k3s image                   | pre-integration-test    |
-| `k3s:start`      | Create and start k3s container   | pre-integration-test    |
-| `k3s:apply`      | Apply plain manifest files       | pre-integration-test    |
-| `k3s:kustomize` | Apply kustomize manifest files   | pre-integration-test    |
-| `k3s:stop`       | Stop k3s container               |                         |
-| `k3s:rm`         | Stop and destroy k3s containers  | post-integration-test   |
+| Goal                                       | Description                      | Default Lifecycle Phase |
+| ------------------------------------------ | -------------------------------- | ----------------------- |
+| [`k3s:pull`](docs/goal/pull.md)            | Pull k3s image                   | pre-integration-test    |
+| [`k3s:start`](docs/goal/start.md)          | Create and start k3s container   | pre-integration-test    |
+| [`k3s:apply`](docs/goal/apply.md)          | Apply plain manifest files       | pre-integration-test    |
+| [`k3s:kustomize`](docs/goal/kustomize.md)  | Apply kustomize manifest files   | pre-integration-test    |
+| [`k3s:stop`](docs/goal/stop.md)            | Stop k3s container               |                         |
+| [`k3s:rm`](docs/goal/rm.md)                | Stop and destroy k3s containers  | post-integration-test   |
 
 ## Examples
 
