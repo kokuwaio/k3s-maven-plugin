@@ -29,7 +29,7 @@ public class StopMojo extends K3sMojo {
 
 		var optionalContainerId = dockerUtil().getContainerId();
 		if (optionalContainerId.isEmpty()) {
-			getLog().info("[k3s] Container not found, skip stop");
+			getLog().info("Container not found, skip stop");
 			return;
 		}
 		var containerId = optionalContainerId.get();
@@ -38,7 +38,7 @@ public class StopMojo extends K3sMojo {
 
 		if (dockerUtil().isRunning(containerId)) {
 			dockerClient().stopContainerCmd(containerId).exec();
-			getLog().info("[k3s] Container with id '" + containerId + "' stopped");
+			getLog().info("Container with id '" + containerId + "' stopped");
 		}
 	}
 }
