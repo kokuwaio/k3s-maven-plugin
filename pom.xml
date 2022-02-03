@@ -8,7 +8,7 @@
 	<packaging>maven-plugin</packaging>
 
 	<name>k3s Maven Plugin</name>
-	<description>TODO</description>
+	<description>Maven Plugin to start k3s for test purposes</description>
 	<url>https://github.com/kokuwaio/k3s-maven-plugin</url>
 	<inceptionYear>2022</inceptionYear>
 	<organization>
