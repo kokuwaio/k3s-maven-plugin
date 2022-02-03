@@ -115,7 +115,7 @@ public abstract class K3sMojo extends AbstractMojo {
 		return kubernetes;
 	}
 
-	protected void reset() {
+	protected void resetKubernetes() {
 		kubernetes = null;
 	}
 }

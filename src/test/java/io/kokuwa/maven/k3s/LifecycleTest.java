@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.github.dockerjava.api.command.InspectVolumeResponse;
+
 import io.kokuwa.maven.k3s.mojo.ApplyMojo;
 import io.kokuwa.maven.k3s.mojo.KustomizeMojo;
 import io.kokuwa.maven.k3s.mojo.PullMojo;
@@ -32,6 +34,7 @@ import io.kokuwa.maven.k3s.mojo.StopMojo;
 @DisplayName("lifecycle")
 public class LifecycleTest {
 
+	List<InspectVolumeResponse> volumesBefore;
 	PullMojo pull;
 	StartMojo start;
 	StopMojo stop;
@@ -109,18 +112,23 @@ public class LifecycleTest {
 	// internal
 
 	@BeforeEach
-	void setUp() {
+	void setUp() throws MojoExecutionException {
 		pull = mojo(new PullMojo());
 		start = mojo(new StartMojo());
 		stop = mojo(new StopMojo());
 		remove = mojo(new RemoveMojo());
 		apply = mojo(new ApplyMojo());
 		kustomize = mojo(new KustomizeMojo());
+		volumesBefore = pull.dockerClient().listVolumesCmd().exec().getVolumes();
 	}
 
-	@BeforeEach
 	@AfterEach
-	void reset() throws MojoExecutionException {
+	void tearDown() throws MojoExecutionException {
+
+		var volumesAfter = pull.dockerClient().listVolumesCmd().exec().getVolumes();
+		volumesAfter.removeIf(after -> volumesBefore.stream().anyMatch(v -> v.getName().equals(after.getName())));
+		assertTrue(volumesAfter.isEmpty(), "test leaked volume");
+
 		mojo(new RemoveMojo()).execute();
 	}
 
