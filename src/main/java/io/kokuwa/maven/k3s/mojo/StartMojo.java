@@ -66,25 +66,31 @@ public class StartMojo extends K3sMojo {
 			return;
 		}
 
-		startContainer(createContainer());
+		var containerId = dockerUtil().getContainerId().orElse(null);
+		var running = containerId != null && dockerUtil().isRunning(containerId);
+		if (containerId != null) {
+			if (!Files.exists(getKubeConfig()) && running) {
+				running = false;
+				dockerClient().stopContainerCmd(containerId).exec();
+				getLog().info("Container with id '" + containerId + "' stopped, mount was deleted");
+			} else if (running) {
+				getLog().debug("Container with id '" + containerId + "' found running");
+			} else {
+				getLog().debug("Container with id '" + containerId + "' found stopped");
+			}
+		} else {
+			containerId = createContainer();
+		}
+
+		if (!running) {
+			startContainer(containerId);
+		}
+
+		copyKubeConfigToMountedWorkingDirectory(containerId);
+		awaitK3sNodesAndPodsReady();
 	}
 
 	private String createContainer() throws MojoExecutionException {
-
-		var optionalContainerId = dockerUtil().getContainerId();
-		if (optionalContainerId.isPresent()) {
-			getLog().debug("Container with id '" + optionalContainerId.get() + "' found");
-			return optionalContainerId.get();
-		}
-		getLog().debug("Container not found");
-
-		// check mount path for manifests and kubectl file
-
-		try {
-			Files.createDirectories(getWorkingDir());
-		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to create workdir " + getWorkingDir(), e);
-		}
 
 		// host config
 
@@ -99,8 +105,6 @@ public class StartMojo extends K3sMojo {
 		// container
 
 		var command = List.of("server",
-				"--write-kubeconfig-mode=666",
-				"--write-kubeconfig=/k3s/kubeconfig.yaml",
 				"--disable-cloud-controller",
 				"--disable-network-policy",
 				"--disable-helm-controller",
@@ -126,45 +130,75 @@ public class StartMojo extends K3sMojo {
 
 	private void startContainer(String containerId) throws MojoExecutionException {
 
-		if (dockerUtil().isRunning(dockerClient().inspectContainerCmd(containerId).exec())) {
-			getLog().debug("Container with id '" + containerId + "' running, skip start");
-		} else {
+		// check mount path for manifests and kubectl file
 
-			// start
-
-			var started = Instant.now();
-			dockerClient().startContainerCmd(containerId).exec();
-			getLog().info("Container with id '" + containerId + "' started");
-
-			// logs to console and wait for startup
-
-			var k3sStarted = new AtomicBoolean();
-			var callback = new DockerLogCallback(getLog(), streamLogs, "[k3s] ") {
-				@Override
-				public void onNext(Frame frame) {
-					super.onNext(frame);
-					if (new String(frame.getPayload()).contains("k3s is up and running")) {
-						k3sStarted.set(true);
-					}
-				}
-			};
-			dockerClient().logContainerCmd(containerId)
-					.withStdOut(true)
-					.withStdErr(true)
-					.withFollowStream(true)
-					.withSince((int) started.getEpochSecond())
-					.exec(callback);
-			Await.await("k3s is up and running")
-					.timeout(Duration.ofSeconds(nodeTimeout))
-					.onTimeout(callback::replayOnWarn)
-					.until(k3sStarted::get);
-			getLog().info("k3s is up and running");
+		try {
+			Files.createDirectories(getWorkingDir());
+		} catch (IOException e) {
+			throw new MojoExecutionException("Failed to create workdir " + getWorkingDir(), e);
 		}
+
+		// start k3s
+		var started = Instant.now();
+		dockerClient().startContainerCmd(containerId).exec();
+		getLog().info("Container with id '" + containerId + "' starting");
+
+		// logs to console and wait for startup
+
+		var k3sStarted = new AtomicBoolean();
+		var callback = new DockerLogCallback(getLog(), streamLogs, "[k3s] ") {
+			@Override
+			public void onNext(Frame frame) {
+				super.onNext(frame);
+				if (new String(frame.getPayload()).contains("k3s is up and running")) {
+					k3sStarted.set(true);
+				}
+			}
+		};
+		dockerClient().logContainerCmd(containerId)
+				.withStdOut(true)
+				.withStdErr(true)
+				.withFollowStream(true)
+				.withSince((int) started.getEpochSecond())
+				.exec(callback);
+		Await.await("k3s is up and running")
+				.timeout(Duration.ofSeconds(nodeTimeout))
+				.onTimeout(callback::replayOnWarn)
+				.until(k3sStarted::get);
+		getLog().info("k3s is up and running");
+	}
+
+	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
+
+		// wait for nodes and pods to get ready
 
 		Await.await("k3s master node ready").until(kubernetes()::isNodeReady);
 		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
-		// sa can be missing, see https://github.com/kubernetes/kubernetes/issues/66689
+
+		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
+
 		Await.await("k3s service account ready").until(kubernetes()::isServiceAccountReady);
+
 		getLog().info("k3s node ready");
+	}
+
+	private void copyKubeConfigToMountedWorkingDirectory(String containerId) throws MojoExecutionException {
+
+		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
+		var execId = dockerClient().execCreateCmd(containerId)
+				.withCmd("/bin/sh", "-c", command)
+				.withAttachStdout(true)
+				.withAttachStderr(true)
+				.exec().getId();
+
+		var callback = new DockerLogCallback(getLog(), true, "[install] ");
+		dockerClient().execStartCmd(execId).exec(callback);
+		Await.await(command).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
+
+		var response = dockerClient().inspectExecCmd(execId).exec();
+		if (response.getExitCodeLong() != 0) {
+			callback.replayOnWarn();
+			throw new MojoExecutionException("install returned exit code " + response.getExitCodeLong());
+		}
 	}
 }

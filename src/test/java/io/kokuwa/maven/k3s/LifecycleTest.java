@@ -5,13 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.junit.jupiter.api.AfterEach;
@@ -68,13 +71,23 @@ public class LifecycleTest {
 		remove.execute();
 	}
 
-	@DisplayName("pull/start/stop/start/rm")
+	@DisplayName("pull/start/start/stop/start/start/rm")
 	@Test
-	void restart() throws MojoExecutionException {
+	void restart() throws MojoExecutionException, IOException {
 		pull.execute();
 		start.execute();
+
+		// restart again
+		start.execute();
+
+		// restart again with missing kubeconfig
+		FileUtils.forceDelete(Path.of("target/k3s/kubeconfig.yaml").toFile());
+		start.execute();
+
+		// restart stopped
 		stop.execute();
 		start.execute();
+
 		remove.execute();
 	}
 
