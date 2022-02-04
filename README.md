@@ -1,8 +1,8 @@
 # k3s Maven Plugin
 
-[![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/kokuwaio/micronaut-logging.svg?label=License)](http://www.apache.org/licenses/)
-[![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kokuwa.micronaut%22%20AND%20a:%22micronaut-logging%22)
-[![CI](https://img.shields.io/github/workflow/status/kokuwaio/micronaut-logging/Snapshot)](https://github.com/kokuwaio/micronaut-logging/actions/workflows/snapshot.yaml)
+[![License](https://img.shields.io/github/license/kokuwaio/k3s-maven-plugin.svg?label=License)](https://github.com/kokuwaio/k3s-maven-plugin/blob/main/LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kokuwa.maven%22%20AND%20a:%22k3s-maven-plugin%22)
+[![Build](https://img.shields.io/github/workflow/status/kokuwaio/k3s-maven-plugin/Snapshot?label=Build)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/snapshot.yaml?label=Build)
 
 This is a plugin to manage k3s for integration tests.
 
@@ -70,14 +70,23 @@ Add to your `settings.xml` (or prefix goals with groupId):
 Start k3s with deployments for manual testing:
 
 ```sh
-mvn k3s:pull k3s:start k3s:kustomize -Dkubectl.manifest=src/it/pod-with-traefik-and-dasboard/src/test/k3s
+mvn k3s:pull k3s:start k3s:kustomize \
+  -Dk3s.portBindings=8080:8080 \
+  -Dk3s.kubectl.manifests=src/it/pod-with-traefik-and-dasboard/src/test/k3s \
+  -Dk3s.streamLogs
 ```
 
 Now you can access this urls:
 
 * Traefik Admin: [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
-* Kubernetes Dashboard: [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io)
+* Kubernetes Dashboard: [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
 * Echo: [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
+
+Use external `kubectl`:
+
+```sh
+export KUBECONFIG=target/k3s/kubeconfig.yaml && kubectl get all --all-namespaces
+```
 
 Stop k3s after manual testing:
 

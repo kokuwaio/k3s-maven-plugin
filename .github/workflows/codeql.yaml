@@ -4,12 +4,10 @@ name: CodeQL
   workflow_dispatch: {}
   push:
     branches: [main]
-    paths: [src/main/java/*.java]
   pull_request:
     branches: [main]
-    paths: [src/main/java/*.java]
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * *'
 
 jobs:
   codeql:

@@ -35,7 +35,7 @@ jobs:
           server-id: sonatype-nexus
           server-username: SERVER_USERNAME
           server-password: SERVER_PASSWORD
-      - run: mvn -B dependency:go-offline -q
+      - run: mvn -B dependency:go-offline
       - run: mvn -B verify
         if: github.ref != 'refs/heads/main'
       - run: mvn -B deploy
