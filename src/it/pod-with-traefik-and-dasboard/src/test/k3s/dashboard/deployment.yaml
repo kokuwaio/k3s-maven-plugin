@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: docker.io/kubernetesui/dashboard:v2.4.0
+          image: kubernetesui/dashboard:v2.4.0
           imagePullPolicy: IfNotPresent
           args:
             - --namespace=default

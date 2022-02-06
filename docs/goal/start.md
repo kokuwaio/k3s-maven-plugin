@@ -11,6 +11,9 @@ Create and start k3s container.
 | `streamLogs` | `k3s.streamLogs` | Stream logs of `k3s` to maven logger. | false |
 | `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
+| `disableHelmController` | `k3s.disable.helmController` | Disable helm controller. | true |
+| `disableLocalStorage` | `k3s.disable.localStorage` | Disable local storage. | true |
+| `disableTraefik` | `k3s.disable.traefik` | Disable traefik. | true |
 | `nodeTimeout` | `k3s.nodeTimeout` | Timeout in seconds to wait for nodes getting ready. | 60 |
 | `podTimeout` | `k3s.podTimeout` | Timeout in seconds to wait for pods getting ready. | 300 |
 | `skipStart` | `k3s.skipStart` | Skip starting k3s container. | false |

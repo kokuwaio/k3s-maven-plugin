@@ -8,7 +8,7 @@ This is a plugin to manage k3s for integration tests.
 
 ## Why `k3s-maven-plugin`?
 
-For unit testing [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Testcontainers](https://www.testcontainers.org/) (e.g. for Postgres) can be used. This is not sufficient for complex setups or running systems for ui development outside of junit context. `docker-compose` was a common technology to describe this setups.
+For unit testing [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Testcontainers](https://www.testcontainers.org/) (e.g. for PostgreSQL) can be used. This is not sufficient for complex setups or running systems for ui development outside of Junit context. `docker-compose` was a common technology to describe this setups.
 
 If your production system is Kubernetes it would be better to use some kind of Kubernetes for integration tests:
 
@@ -16,7 +16,7 @@ If your production system is Kubernetes it would be better to use some kind of K
 * [`kind`](https://kind.sigs.k8s.io/)
 * [`minikube`](https://minikube.sigs.k8s.io/docs/)
 
-Becaues `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`.
+Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`.
 
 If you don't like to use this plugin you can:
 
@@ -41,13 +41,13 @@ If you don't like to use this plugin you can:
 
 To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as examples.
 
-### [IntegrationTest with Pod using HostPort](/src/it/pod-with-hostport)
+### [Pod using HostPort](/src/it/pod-with-hostport)
 
 * manifest are applied with `k3s:apply`
 * Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
 * [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
-  
-### [IntegrationTest with Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
+
+### [Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
 
 * manifest are applied with `k3s:kustomize`
 * Traefik for subdomains of `127.0.0.1.nip.io` with [hostport](/src/it/pod-with-traefik-and-dasboard/src/test/k3s/traefik/deployment.yaml#L35) 8080

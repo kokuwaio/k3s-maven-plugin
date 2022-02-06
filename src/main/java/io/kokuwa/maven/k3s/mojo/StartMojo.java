@@ -39,6 +39,18 @@ public class StartMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
 	private boolean streamLogs = false;
 
+	/** Disable helm controller. */
+	@Setter @Parameter(property = "k3s.disable.helmController")
+	private boolean disableHelmController = true;
+
+	/** Disable local storage. */
+	@Setter @Parameter(property = "k3s.disable.localStorage")
+	private boolean disableLocalStorage = true;
+
+	/** Disable traefik. */
+	@Setter @Parameter(property = "k3s.disable.traefik")
+	private boolean disableTraefik = true;
+
 	/** Additional port bindings e.g. `8080:8080`. */
 	@Setter @Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
@@ -104,15 +116,21 @@ public class StartMojo extends K3sMojo {
 
 		// container
 
-		var command = List.of("server",
+		var command = new ArrayList<>(List.of("server",
 				"--disable-cloud-controller",
 				"--disable-network-policy",
-				"--disable-helm-controller",
 				"--disable=metrics-server",
-				"--disable=local-storage",
 				"--disable=servicelb",
-				"--disable=traefik",
-				"--https-listen-port=" + portKubeApi);
+				"--https-listen-port=" + portKubeApi));
+		if (disableHelmController) {
+			command.add("--disable-helm-controller");
+		}
+		if (disableLocalStorage) {
+			command.add("--disable=local-storage");
+		}
+		if (disableTraefik) {
+			command.add("--disable=traefik");
+		}
 
 		var containerId = dockerClient()
 				.createContainerCmd(dockerImage())
