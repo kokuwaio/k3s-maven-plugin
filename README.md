@@ -62,6 +62,13 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 * PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
 * [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
 
+### [Kafka/Kafka Web UI with HostPort](src/it/kafka-with-hostport)
+
+* manifest are applied with `k3s:apply`
+* Kafka is running with [hostport](/src/it/kafka-with-hostport/src/test/k3s/kafka.yaml#L29) 9091
+* [Kafka Web UI](https://github.com/obsidiandynamics/kafdrop) available at [http://kafdrop.127.0.0.1.nip.io:9000](http://kafdrop.127.0.0.1.nip.io:9000)
+* [test](/src/it/kafka-with-hostport/src/test/java/io/kokuwa/maven/k3s/KafkaIT.java#L30) uses `http://kafka.127.0.0.1.nip.io:9091` as endpoint
+
 ### Usage out of Build
 
 Add to your `settings.xml` (or prefix goals with groupId):
