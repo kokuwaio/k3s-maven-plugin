@@ -38,8 +38,7 @@ public abstract class K3sMojo extends AbstractMojo {
 	private String imageTag = "latest";
 
 	/** k3s working directory. This directory is mounted into docker container. */
-	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
-	private File workingDir = new File("target/k3s");
+	private final File workingDir = new File(System.getProperty("java.io.tmpdir") + "/k3s");
 
 	/** Skip plugin. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
