@@ -56,6 +56,12 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 * Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
 * [test](/src/it/pod-with-traefik-and-dasboard/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
 
+### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
+
+* manifest are applied with `k3s:kustomize`
+* PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
+* [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
+
 ### Usage out of Build
 
 Add to your `settings.xml` (or prefix goals with groupId):
