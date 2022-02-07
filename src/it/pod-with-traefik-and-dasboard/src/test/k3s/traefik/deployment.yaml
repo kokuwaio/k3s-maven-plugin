@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: traefik
-          image: docker.io/traefik:v2.6.0
+          image: traefik:v2.6.0
           args:
             - --providers.kubernetesingress=true
             - --entrypoints.traefik.address=:8090
