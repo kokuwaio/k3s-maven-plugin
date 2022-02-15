@@ -115,7 +115,7 @@
 		<version.org.projectlombok>1.18.22</version.org.projectlombok>
 		<version.org.slf4j>1.7.36</version.org.slf4j>
 		<version.io.kubernetes.client>14.0.0</version.io.kubernetes.client>
-		<version.com.github.docker.java>3.2.12</version.com.github.docker.java>
+		<version.com.github.docker.java>3.2.13</version.com.github.docker.java>
 
 	</properties>
 
