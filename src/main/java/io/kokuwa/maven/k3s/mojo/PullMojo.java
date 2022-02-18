@@ -1,5 +1,6 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,7 +38,7 @@ public class PullMojo extends K3sMojo {
 			var imagePresent = dockerClient().listImagesCmd()
 					.withImageNameFilter(dockerImage())
 					.exec().stream()
-					.flatMap(i -> Stream.of(i.getRepoTags()))
+					.flatMap(i -> Optional.ofNullable(i.getRepoTags()).map(Stream::of).orElseGet(Stream::empty))
 					.anyMatch(dockerImage()::equals);
 			if (imagePresent) {
 				getLog().debug("Image '" + dockerImage() + "' found, skip pull");
