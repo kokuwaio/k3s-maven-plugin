@@ -34,8 +34,8 @@ public abstract class K3sMojo extends AbstractMojo {
 	private String imageRepository = "rancher/k3s";
 
 	/** k3s image tag. */
-	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
-	private String imageTag = "latest";
+	@Setter @Parameter(property = "k3s.imageTag")
+	private String imageTag;
 
 	/** k3s working directory. This directory is mounted into docker container. */
 	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
@@ -64,10 +64,14 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	protected String dockerImage() {
 		if (dockerImage == null) {
-			dockerImage = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
-			if ("latest".equals(imageTag)) {
+			if (imageTag == null) {
+				imageTag = "v1.23.4-k3s1";
+				getLog().warn("No image tag provided, '" + imageTag
+						+ "' will be used. This will change in newer plugin versions.");
+			} else if (imageTag.equals("latest")) {
 				getLog().warn("Using image tag 'latest' is unstable.");
 			}
+			dockerImage = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 		}
 		return dockerImage;
 	}
