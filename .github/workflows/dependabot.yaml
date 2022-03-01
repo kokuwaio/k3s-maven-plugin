@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - uses: dependabot/fetch-metadata@v1.1.1
+      - uses: dependabot/fetch-metadata@v1.2.1
         id: metadata
         with:
           github-token: "${{ secrets.GIT_ACTION_TOKEN }}"
