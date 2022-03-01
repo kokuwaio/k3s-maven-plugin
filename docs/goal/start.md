@@ -7,7 +7,7 @@ Create and start k3s container.
 | `workdir` | `k3s.workdir` | k3s working directory. This directory is mounted into docker container. | target/k3s |
 | `imageRegistry` | `k3s.imageRegistry` | k3s image registry | |
 | `imageRepository` | `k3s.imageRepository` | k3s image repository | rancher/k3s |
-| `imageTag` | `k3s.imageTag` | k3s image tag | latest |
+| `imageTag` | `k3s.imageTag` | k3s image tag | v1.23.4-k3s1 |
 | `streamLogs` | `k3s.streamLogs` | Stream logs of `k3s` to maven logger. | false |
 | `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
