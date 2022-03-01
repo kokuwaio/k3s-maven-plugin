@@ -1,12 +1,9 @@
-name: Snapshot
+name: PullRequest
 
-"on":
-  workflow_dispatch: {}
-  push:
-    branches: [main]
-    paths-ignore: ['**.md']
+"on": pull_request
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -16,19 +13,13 @@ jobs:
           distribution: temurin
           java-version: 11
           cache: maven
-          server-id: sonatype-nexus
-          server-username: SERVER_USERNAME
-          server-password: SERVER_PASSWORD
       - run: mvn -B dependency:go-offline
-      - run: mvn -B deploy
-        env:
-          SERVER_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
-          SERVER_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+      - run: mvn -B verify
       - uses: dorny/test-reporter@v1.5.0
         if: failure()
         with:
           name: surefire
-          path: '**/target/surefire-reports/*.xml'
+          path: '**/target/surefire-reports/*.xml,**/target/invoker-reports/*.xml'
           reporter: java-junit
           list-suites: failed
           list-tests: failed

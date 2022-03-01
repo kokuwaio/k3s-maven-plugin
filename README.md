@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/github/license/kokuwaio/k3s-maven-plugin.svg?label=License)](https://github.com/kokuwaio/k3s-maven-plugin/blob/main/LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kokuwa.maven%22%20AND%20a:%22k3s-maven-plugin%22)
 [![Build](https://img.shields.io/github/workflow/status/kokuwaio/k3s-maven-plugin/Snapshot?label=Build)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/snapshot.yaml?label=Build)
+[![Lint](https://img.shields.io/github/workflow/status/kokuwaio/k3s-maven-plugin/Lint?label=Lint)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/lint.yaml?label=Lint)
 
 This is a plugin to manage k3s for integration tests.
 
