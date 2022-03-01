@@ -60,12 +60,16 @@ public class StartMojo extends K3sMojo {
 	private Integer portKubeApi = 6443;
 
 	/** Timeout in seconds to wait for nodes getting ready. */
-	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "60")
-	private int nodeTimeout = 60;
+	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "120")
+	private int nodeTimeout = 120;
 
 	/** Timeout in seconds to wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
 	private int podTimeout = 300;
+
+	/** Wait for pods getting ready. */
+	@Setter @Parameter(property = "k3s.podWait", defaultValue = "false")
+	private boolean podWait = false;
 
 	/** Skip starting of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
@@ -188,10 +192,15 @@ public class StartMojo extends K3sMojo {
 
 	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
 
-		// wait for nodes and pods to get ready
+		// wait for nodes get ready
 
 		Await.await("k3s master node ready").until(kubernetes()::isNodeReady);
-		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
+
+		// wait for pods get ready
+
+		if (podWait) {
+			Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
+		}
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
