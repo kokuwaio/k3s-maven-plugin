@@ -19,7 +19,7 @@ public class RemoveMojo extends K3sMojo {
 
 	/** Skip remove of k3s container. */
 	@Setter @Parameter(property = "k3s.skipRm", defaultValue = "false")
-	private boolean skipRm = false;
+	private boolean skipRm;
 
 	@Override
 	public void execute() throws MojoExecutionException {

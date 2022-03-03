@@ -19,11 +19,11 @@ public class PullMojo extends K3sMojo {
 
 	/** Always pull k3s image. */
 	@Setter @Parameter(property = "k3s.imagePullAlways", defaultValue = "false")
-	private boolean imagePullAlways = false;
+	private boolean imagePullAlways;
 
 	/** Skip pull of k3s image. */
 	@Setter @Parameter(property = "k3s.skipPull", defaultValue = "false")
-	private boolean skipPull = false;
+	private boolean skipPull;
 
 	@Override
 	public void execute() throws MojoExecutionException {

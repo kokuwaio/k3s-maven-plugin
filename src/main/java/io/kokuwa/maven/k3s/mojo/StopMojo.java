@@ -16,7 +16,7 @@ public class StopMojo extends K3sMojo {
 
 	/** Skip stoppping of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStop", defaultValue = "false")
-	private boolean skipStop = false;
+	private boolean skipStop;
 
 	@Override
 	public void execute() throws MojoExecutionException {

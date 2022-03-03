@@ -22,19 +22,19 @@ public abstract class KubectlMojo extends K3sMojo {
 
 	/** Stream logs of `kubectl` to maven logger. */
 	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
-	private boolean streamLogs = false;
+	private boolean streamLogs;
 
 	/** Path where to find manifest files. */
 	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
-	private File manifests = new File("src/test/k3s");
+	private File manifests;
 
 	/** Timeout in seconds to wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "300")
-	private int podTimeout = 300;
+	private int podTimeout;
 
 	/** Skip applying kubectl manifests. */
 	@Setter @Parameter(property = "k3s.skipKubectl", defaultValue = "false")
-	private boolean skipKubectl = false;
+	private boolean skipKubectl;
 
 	public abstract String getCommand();
 
