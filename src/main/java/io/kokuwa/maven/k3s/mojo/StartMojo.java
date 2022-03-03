@@ -14,6 +14,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -88,11 +89,11 @@ public class StartMojo extends K3sMojo {
 			if (!Files.exists(getKubeConfig()) && running) {
 				running = false;
 				dockerClient().stopContainerCmd(containerId).exec();
-				getLog().info("Container with id '" + containerId + "' stopped, mount was deleted");
+				log.info("Container with id '{}' stopped, mount was deleted", containerId);
 			} else if (running) {
-				getLog().debug("Container with id '" + containerId + "' found running");
+				log.debug("Container with id '{}' found running", containerId);
 			} else {
-				getLog().debug("Container with id '" + containerId + "' found stopped");
+				log.debug("Container with id '{}' found stopped", containerId);
 			}
 		} else {
 			containerId = createContainer();
@@ -144,8 +145,8 @@ public class StartMojo extends K3sMojo {
 				.withLabels(Map.of(DockerUtil.CONTAINER_LABEL, Boolean.TRUE.toString()))
 				.withHostConfig(hostConfig)
 				.exec().getId();
-		getLog().info("Container  with id '" + containerId + "' created, image: " + dockerImage());
-		getLog().info("k3s " + command.stream().collect(Collectors.joining(" ")));
+		log.info("Container  with id '{}' created, image: ", containerId, dockerImage());
+		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
 
 		return containerId;
 	}
@@ -163,12 +164,12 @@ public class StartMojo extends K3sMojo {
 		// start k3s
 		var started = Instant.now();
 		dockerClient().startContainerCmd(containerId).exec();
-		getLog().info("Container with id '" + containerId + "' starting");
+		log.info("Container with id '{}' starting", containerId);
 
 		// logs to console and wait for startup
 
 		var k3sStarted = new AtomicBoolean();
-		var callback = new DockerLogCallback(getLog(), streamLogs, "[k3s] ") {
+		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.k3s"), streamLogs) {
 			@Override
 			public void onNext(Frame frame) {
 				super.onNext(frame);
@@ -187,7 +188,7 @@ public class StartMojo extends K3sMojo {
 				.timeout(Duration.ofSeconds(nodeTimeout))
 				.onTimeout(callback::replayOnWarn)
 				.until(k3sStarted::get);
-		getLog().info("k3s is up and running");
+		log.info("k3s is up and running");
 	}
 
 	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
@@ -206,7 +207,7 @@ public class StartMojo extends K3sMojo {
 
 		Await.await("k3s service account ready").until(kubernetes()::isServiceAccountReady);
 
-		getLog().info("k3s node ready");
+		log.info("k3s node ready");
 	}
 
 	private void copyKubeConfigToMountedWorkingDirectory(String containerId) throws MojoExecutionException {
@@ -218,7 +219,7 @@ public class StartMojo extends K3sMojo {
 				.withAttachStderr(true)
 				.exec().getId();
 
-		var callback = new DockerLogCallback(getLog(), true, "[install] ");
+		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.Install"), true);
 		dockerClient().execStartCmd(execId).exec(callback);
 		Await.await(command).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 

@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.maven.plugin.logging.Log;
+import org.slf4j.Logger;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.Frame;
@@ -15,15 +15,13 @@ public class DockerLogCallback implements ResultCallback<Frame> {
 
 	@Getter
 	private final List<String> messages = new ArrayList<>();
-	private final Log log;
+	private final Logger log;
 	private final boolean streamLogs;
-	private final String prefix;
 	private boolean completed;
 
-	public DockerLogCallback(Log log, boolean streamLogs, String prefix) {
+	public DockerLogCallback(Logger log, boolean streamLogs) {
 		this.log = log;
 		this.streamLogs = streamLogs;
-		this.prefix = prefix;
 	}
 
 	public boolean isCompleted() {
@@ -39,9 +37,9 @@ public class DockerLogCallback implements ResultCallback<Frame> {
 		var message = new String(frame.getPayload()).strip();
 		messages.add(message);
 		if (streamLogs) {
-			log.info(prefix + message);
+			log.info(message);
 		} else {
-			log.debug(prefix + message);
+			log.debug(message);
 		}
 	}
 
