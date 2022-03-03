@@ -32,7 +32,7 @@ public class RemoveMojo extends K3sMojo {
 
 		var optionalContainerId = dockerUtil().getContainerId();
 		if (optionalContainerId.isEmpty()) {
-			getLog().debug("Container not found, skip remove");
+			log.debug("Container not found, skip remove");
 			return;
 		}
 		var containerId = optionalContainerId.get();
@@ -40,7 +40,7 @@ public class RemoveMojo extends K3sMojo {
 		// remove container with volumes
 
 		dockerClient().removeContainerCmd(containerId).withRemoveVolumes(true).withForce(true).exec();
-		getLog().info("Container with id '" + containerId + "' removed");
+		log.info("Container with id '{}' removed", containerId);
 
 		// remove obsolete config
 

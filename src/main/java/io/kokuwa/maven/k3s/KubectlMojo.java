@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
@@ -74,7 +75,7 @@ public abstract class KubectlMojo extends K3sMojo {
 
 		// exec
 
-		getLog().info(getCommand());
+		log.info(getCommand());
 		var execId = dockerClient().execCreateCmd(containerId)
 				.withCmd("/bin/sh", "-c", getCommand())
 				.withWorkingDir("/k3s/manifests")
@@ -83,7 +84,7 @@ public abstract class KubectlMojo extends K3sMojo {
 				.withAttachStderr(true)
 				.exec().getId();
 
-		var callback = new DockerLogCallback(getLog(), streamLogs, "[kubectl] ");
+		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl"), streamLogs);
 		dockerClient().execStartCmd(execId).exec(callback);
 		Await.await(getCommand()).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 
@@ -96,6 +97,6 @@ public abstract class KubectlMojo extends K3sMojo {
 		// wait for pods to be ready
 
 		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
-		getLog().debug("k3s pods ready");
+		log.debug("k3s pods ready");
 	}
 }

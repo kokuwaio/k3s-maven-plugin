@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -24,6 +26,8 @@ import lombok.Setter;
  * Base class for all mojos of this plugin.
  */
 public abstract class K3sMojo extends AbstractMojo {
+
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/** k3s image registry. */
 	@Setter @Parameter(property = "k3s.imageRegistry")
@@ -66,10 +70,10 @@ public abstract class K3sMojo extends AbstractMojo {
 		if (dockerImage == null) {
 			if (imageTag == null) {
 				imageTag = "v1.23.4-k3s1";
-				getLog().warn("No image tag provided, '" + imageTag
-						+ "' will be used. This will change in newer plugin versions.");
+				log.warn("No image tag provided, '{}' will be used. This will change in newer plugin versions.",
+						imageTag);
 			} else if (imageTag.equals("latest")) {
-				getLog().warn("Using image tag 'latest' is unstable.");
+				log.warn("Using image tag 'latest' is unstable.");
 			}
 			dockerImage = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 		}

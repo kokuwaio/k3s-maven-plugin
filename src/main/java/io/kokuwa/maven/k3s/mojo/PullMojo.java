@@ -34,14 +34,15 @@ public class PullMojo extends K3sMojo {
 
 		// check if image is alreay present
 
+		var dockerImage = dockerImage();
 		if (!imagePullAlways) {
 			var imagePresent = dockerClient().listImagesCmd()
-					.withImageNameFilter(dockerImage())
+					.withImageNameFilter(dockerImage)
 					.exec().stream()
 					.flatMap(i -> Optional.ofNullable(i.getRepoTags()).map(Stream::of).orElseGet(Stream::empty))
-					.anyMatch(dockerImage()::equals);
+					.anyMatch(dockerImage::equals);
 			if (imagePresent) {
-				getLog().debug("Image '" + dockerImage() + "' found, skip pull");
+				log.debug("Image '{}' found, skip pull", dockerImage);
 				return;
 			}
 		}
@@ -49,11 +50,11 @@ public class PullMojo extends K3sMojo {
 		// pull image
 
 		try {
-			getLog().info("Image '" + dockerImage() + "' not found, start pulling image ...");
-			dockerClient().pullImageCmd(dockerImage()).start().awaitCompletion();
-			getLog().info("Image '" + dockerImage() + "' pulled");
+			log.info("Image '{}' not found, start pulling image ...", dockerImage);
+			dockerClient().pullImageCmd(dockerImage).start().awaitCompletion();
+			log.info("Image '{}' pulled", dockerImage);
 		} catch (InterruptedException e) {
-			throw new MojoExecutionException("Failed to pull image " + dockerImage(), e);
+			throw new MojoExecutionException("Failed to pull image " + dockerImage, e);
 		}
 	}
 }
