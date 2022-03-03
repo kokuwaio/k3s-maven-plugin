@@ -16,12 +16,15 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.LoggerFactory;
 
+import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports.Binding;
+import com.github.dockerjava.api.model.PropagationMode;
+import com.github.dockerjava.api.model.SELContext;
 import com.github.dockerjava.api.model.Volume;
 
 import io.kokuwa.maven.k3s.K3sMojo;
@@ -109,15 +112,24 @@ public class StartMojo extends K3sMojo {
 
 	private String createContainer() throws MojoExecutionException {
 
-		// host config
+		// host config (see https://github.com/rancher/k3d/issues/113)
 
 		var ports = new ArrayList<PortBinding>();
 		ports.add(new PortBinding(Binding.bindPort(portKubeApi), ExposedPort.tcp(portKubeApi)));
 		portBindings.stream().map(PortBinding::parse).forEach(ports::add);
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
-				.withBinds(new Bind(getWorkingDir().toString(), new Volume("/k3s")))
-				.withPortBindings(ports);
+				.withPidMode("host")
+				.withBinds(
+						new Bind(getWorkingDir().toString(), new Volume("/k3s")),
+						new Bind("/var/lib/docker", new Volume("/var/lib/docker"), AccessMode.DEFAULT,
+								SELContext.DEFAULT, null, PropagationMode.RSHARED),
+						new Bind("/var/lib/kubelet", new Volume("/var/lib/kubelet"), AccessMode.DEFAULT,
+								SELContext.DEFAULT, null, PropagationMode.RSHARED),
+						new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock")))
+				.withPortBindings(ports)
+				.withPrivileged(true)
+				.withNetworkMode("host");
 
 		// container
 
@@ -126,6 +138,7 @@ public class StartMojo extends K3sMojo {
 				"--disable-network-policy",
 				"--disable=metrics-server",
 				"--disable=servicelb",
+				"--docker",
 				"--https-listen-port=" + portKubeApi));
 		if (disableHelmController) {
 			command.add("--disable-helm-controller");

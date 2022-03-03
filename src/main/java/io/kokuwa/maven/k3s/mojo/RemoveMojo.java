@@ -42,6 +42,23 @@ public class RemoveMojo extends K3sMojo {
 		dockerClient().removeContainerCmd(containerId).withRemoveVolumes(true).withForce(true).exec();
 		log.info("Container with id '{}' removed", containerId);
 
+		// remove spawned container
+
+		dockerClient().listContainersCmd().exec()
+				.stream()
+				.filter(c -> c.getLabels().containsKey("io.kubernetes.pod.uid"))
+				.forEach(c -> {
+					try {
+						dockerClient().removeContainerCmd(c.getId())
+								.withRemoveVolumes(true)
+								.withForce(true)
+								.exec();
+					} catch (MojoExecutionException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				});
+
 		// remove obsolete config
 
 		try {
