@@ -33,8 +33,7 @@ If you don't like to use this plugin you can:
 | ------------------------------------------ | -------------------------------- | ----------------------- |
 | [`k3s:pull`](docs/goal/pull.md)            | Pull k3s image                   | pre-integration-test    |
 | [`k3s:start`](docs/goal/start.md)          | Create and start k3s container   | pre-integration-test    |
-| [`k3s:apply`](docs/goal/apply.md)          | Apply plain manifest files       | pre-integration-test    |
-| [`k3s:kustomize`](docs/goal/kustomize.md)  | Apply kustomize manifest files   | pre-integration-test    |
+| [`k3s:kubectl`](docs/goal/kubectl.md)      | Run kubectl                      | pre-integration-test    |
 | [`k3s:stop`](docs/goal/stop.md)            | Stop k3s container               |                         |
 | [`k3s:rm`](docs/goal/rm.md)                | Stop and destroy k3s containers  | post-integration-test   |
 
@@ -44,13 +43,13 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 
 ### [Pod using HostPort](/src/it/pod-with-hostport)
 
-* manifest are applied with `k3s:apply`
+* manifest are applied with `k3s:kubectl`
 * Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
 * [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
 
 ### [Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
 
-* manifest are applied with `k3s:kustomize`
+* manifest are applied with `k3s:kubectl` using custom command with kustomize
 * Traefik for subdomains of `127.0.0.1.nip.io` with [hostport](/src/it/pod-with-traefik-and-dasboard/src/test/k3s/traefik/deployment.yaml#L35) 8080
 * Traefik Admin available at [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
 * Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io)
@@ -59,13 +58,13 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 
 ### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
 
-* manifest are applied with `k3s:kustomize`
+* manifest are applied with `k3s:kubectl` using custom command with kustomize
 * PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
 * [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
 
 ### [Kafka/Kafka Web UI with HostPort](src/it/kafka-with-hostport)
 
-* manifest are applied with `k3s:apply`
+* manifest are applied with `k3s:kubectl`
 * Kafka is running with [hostport](/src/it/kafka-with-hostport/src/test/k3s/kafka.yaml#L29) 9091
 * [Kafka Web UI](https://github.com/obsidiandynamics/kafdrop) available at [http://kafdrop.127.0.0.1.nip.io:9000](http://kafdrop.127.0.0.1.nip.io:9000)
 * [test](/src/it/kafka-with-hostport/src/test/java/io/kokuwa/maven/k3s/KafkaIT.java#L30) uses `http://kafka.127.0.0.1.nip.io:9091` as endpoint
@@ -84,10 +83,11 @@ Add to your `settings.xml` (or prefix goals with groupId):
 Start k3s with deployments for manual testing:
 
 ```sh
-mvn k3s:pull k3s:start k3s:kustomize \
+mvn k3s:pull k3s:start k3s:kubectl \
   -Dk3s.portBindings=8080:8080 \
   -Dk3s.kubectl.manifests=src/it/pod-with-traefik-and-dasboard/src/test/k3s \
   -Dk3s.streamLogs
+  -Dk3s.command='kubectl apply -k .'
 ```
 
 Now you can access this urls:

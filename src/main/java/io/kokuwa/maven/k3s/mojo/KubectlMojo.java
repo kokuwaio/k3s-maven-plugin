@@ -1,4 +1,4 @@
-package io.kokuwa.maven.k3s;
+package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,17 +8,21 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.LoggerFactory;
 
+import io.kokuwa.maven.k3s.K3sMojo;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
 import lombok.Setter;
 
 /**
- * Base for mojos to exec kubectl.
+ * Mojo for kubectl.
  */
-public abstract class KubectlMojo extends K3sMojo {
+@Mojo(name = "kubectl", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
+public class KubectlMojo extends K3sMojo {
 
 	/** Stream logs of `kubectl` to maven logger. */
 	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
@@ -32,11 +36,13 @@ public abstract class KubectlMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "300")
 	private int podTimeout;
 
+	/** Command to use for applying kustomize files. */
+	@Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
+	private String command;
+
 	/** Skip applying kubectl manifests. */
 	@Setter @Parameter(property = "k3s.skipKubectl", defaultValue = "false")
 	private boolean skipKubectl;
-
-	public abstract String getCommand();
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -75,9 +81,9 @@ public abstract class KubectlMojo extends K3sMojo {
 
 		// exec
 
-		log.info(getCommand());
+		log.info(command);
 		var execId = dockerClient().execCreateCmd(containerId)
-				.withCmd("/bin/sh", "-c", getCommand())
+				.withCmd("/bin/sh", "-c", command)
 				.withWorkingDir("/k3s/manifests")
 				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml"))
 				.withAttachStdout(true)
@@ -86,7 +92,7 @@ public abstract class KubectlMojo extends K3sMojo {
 
 		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl"), streamLogs);
 		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(getCommand()).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
+		Await.await(command).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 
 		var response = dockerClient().inspectExecCmd(execId).exec();
 		if (response.getExitCodeLong() != 0) {
