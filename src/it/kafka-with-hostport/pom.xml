@@ -29,7 +29,7 @@
 						<goals>
 							<goal>pull</goal>
 							<goal>start</goal>
-							<goal>apply</goal>
+							<goal>kubectl</goal>
 							<goal>rm</goal>
 						</goals>
 					</execution>
