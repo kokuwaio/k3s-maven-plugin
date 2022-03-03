@@ -38,19 +38,19 @@ public class StartMojo extends K3sMojo {
 
 	/** Stream logs of `k3s` to maven logger. */
 	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
-	private boolean streamLogs = false;
+	private boolean streamLogs;
 
 	/** Disable helm controller. */
-	@Setter @Parameter(property = "k3s.disable.helmController")
-	private boolean disableHelmController = true;
+	@Setter @Parameter(property = "k3s.disable.helmController", defaultValue = "true")
+	private boolean disableHelmController;
 
 	/** Disable local storage. */
-	@Setter @Parameter(property = "k3s.disable.localStorage")
-	private boolean disableLocalStorage = true;
+	@Setter @Parameter(property = "k3s.disable.localStorage", defaultValue = "true")
+	private boolean disableLocalStorage;
 
 	/** Disable traefik. */
-	@Setter @Parameter(property = "k3s.disable.traefik")
-	private boolean disableTraefik = true;
+	@Setter @Parameter(property = "k3s.disable.traefik", defaultValue = "true")
+	private boolean disableTraefik;
 
 	/** Additional port bindings e.g. `8080:8080`. */
 	@Setter @Parameter(property = "k3s.portBindings")
@@ -58,23 +58,23 @@ public class StartMojo extends K3sMojo {
 
 	/** KubeApi port to expose to host. */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
-	private Integer portKubeApi = 6443;
+	private int portKubeApi;
 
 	/** Timeout in seconds to wait for nodes getting ready. */
 	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "120")
-	private int nodeTimeout = 120;
+	private int nodeTimeout;
 
 	/** Timeout in seconds to wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
-	private int podTimeout = 300;
+	private int podTimeout;
 
 	/** Wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.podWait", defaultValue = "false")
-	private boolean podWait = false;
+	private boolean podWait;
 
 	/** Skip starting of k3s container. */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
-	private boolean skipStart = false;
+	private boolean skipStart;
 
 	@Override
 	public void execute() throws MojoExecutionException {

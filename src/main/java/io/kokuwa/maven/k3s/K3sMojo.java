@@ -43,7 +43,7 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	/** k3s working directory. This directory is mounted into docker container. */
 	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
-	private File workingDir = new File("target/k3s");
+	private File workingDir;
 
 	/** Skip plugin. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")

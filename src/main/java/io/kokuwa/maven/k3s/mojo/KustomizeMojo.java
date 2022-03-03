@@ -16,5 +16,5 @@ public class KustomizeMojo extends KubectlMojo {
 
 	/** Command to use for applying manifest files. */
 	@Getter @Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -k .")
-	private String command = "kubectl apply -k .";
+	private String command;
 }

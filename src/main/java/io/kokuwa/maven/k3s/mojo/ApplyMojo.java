@@ -16,5 +16,5 @@ public class ApplyMojo extends KubectlMojo {
 
 	/** Command to use for applying kustomize files. */
 	@Getter @Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
-	private String command = "kubectl apply -f .";
+	private String command;
 }
