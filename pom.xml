@@ -344,7 +344,9 @@
 							<streamLogsOnFailures>true</streamLogsOnFailures>
 							<writeJunitReport>true</writeJunitReport>
 							<goals>
+								<goal>clean</goal>
 								<goal>verify</goal>
+								<goal>clean</goal>
 							</goals>
 						</configuration>
 					</execution>
