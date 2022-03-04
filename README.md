@@ -9,7 +9,7 @@ This is a plugin to manage k3s for integration tests.
 
 ## Why `k3s-maven-plugin`?
 
-For unit testing [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Testcontainers](https://www.testcontainers.org/) (e.g. for PostgreSQL) can be used. This is not sufficient for complex setups or running systems for ui development outside of Junit context. `docker-compose` was a common technology to describe this setups.
+For unit testing [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Testcontainers](https://www.testcontainers.org/) (e.g. for PostgreSQL) can be used. This is not sufficient for complex setups or running systems for ui development outside of JUnit context. `docker-compose` is a common technology to describe this setups.
 
 If your production system is Kubernetes it would be better to use some kind of Kubernetes for integration tests:
 
@@ -17,12 +17,15 @@ If your production system is Kubernetes it would be better to use some kind of K
 * [`kind`](https://kind.sigs.k8s.io/)
 * [`minikube`](https://minikube.sigs.k8s.io/docs/)
 
-Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`.
+Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`. This plugin runs `k3s` as docker container (like `k3d`) and is configured to use hosts docker daemon for its containers (not containerd). With this setup it is possible to use image caching between runs and reusing docker config for remote repositories.
+
+As alternative it was considered to use `k3s` without docker and in rootless mode. This assumes packages like `newguimap` which are not installed everywhere. Feel free to create a PR for adding a non-docker mode of this plugin.
 
 If you don't like to use this plugin you can:
 
 * use `docker-compose` with testcontainers [Docker Compose Module](https://www.testcontainers.org/modules/docker_compose/)
 * use `docker-compose` with [docker-compose-maven-plugin](https://github.com/syncdk/docker-compose-maven-plugin)
+* use `k3d` as wrapper for `k3s` in docker with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
 * start `k3s` direct with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
 * start `k3s` in docker with [docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin)
 * handle lifecycle out of maven
