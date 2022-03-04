@@ -47,6 +47,13 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 * Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
 * [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
 
+### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image)
+
+* manifest are applied with `k3s:kubectl`
+* image is [Never](/src/it/pod-with-local-image/src/test/k3s/pod.yaml#L9) pull from registries
+* Pod is running with [hostport](/src/it/pod-with-local-image/src/test/k3s/pod.yaml#L13) 8080
+* [test](/src/it/pod-with-local-image/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
+
 ### [Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
 
 * manifest are applied with `k3s:kubectl` using custom command with kustomize

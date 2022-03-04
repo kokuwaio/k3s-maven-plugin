@@ -18,6 +18,7 @@
 
 		<maven.compiler.source>@maven.compiler.source@</maven.compiler.source>
 		<maven.compiler.target>@maven.compiler.target@</maven.compiler.target>
+		<maven.compiler.parameters>true</maven.compiler.parameters>
 
 		<!-- ===================================================================== -->
 		<!-- ============================= Libaries ============================== -->
@@ -44,9 +45,11 @@
 
 			<!-- test -->
 			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter-api</artifactId>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
 				<version>${version.org.junit.jupiter}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 
 		</dependencies>
@@ -115,7 +118,6 @@
 				<artifactId>tidy-maven-plugin</artifactId>
 				<executions>
 					<execution>
-						<phase>test</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
