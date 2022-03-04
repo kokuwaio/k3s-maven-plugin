@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -40,7 +39,7 @@ public class KafkaIT {
 	}
 
 	@Test
-	void test() throws InterruptedException, ExecutionException {
+	void test() throws Exception {
 
 		var topic = "test";
 		var key = UUID.randomUUID().toString();
@@ -55,6 +54,5 @@ public class KafkaIT {
 		var consumerRecord = consumerRecords.iterator().next();
 		assertEquals(key, consumerRecord.key(), "key");
 		assertEquals(value, consumerRecord.value(), "value");
-
 	}
 }

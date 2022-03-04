@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: micronaut
+spec:
+  containers:
+    - name: micronaut
+      image: k3s-maven-plugin-it-pod-with-local-image
+      imagePullPolicy: Never
+      ports:
+        - name: http
+          containerPort: 8080
+          hostPort: 8080
+      startupProbe:
+        httpGet:
+          path: /health
+          port: http
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        readOnlyRootFilesystem: true
+  automountServiceAccountToken: false
+  terminationGracePeriodSeconds: 0

@@ -156,9 +156,11 @@
 
 			<!-- test -->
 			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter-api</artifactId>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
 				<version>${version.org.junit.jupiter}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -340,7 +342,7 @@
 						</goals>
 						<configuration>
 							<cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-							<streamLogs>true</streamLogs>
+							<streamLogs>false</streamLogs>
 							<streamLogsOnFailures>true</streamLogsOnFailures>
 							<writeJunitReport>true</writeJunitReport>
 							<goals>
