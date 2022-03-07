@@ -27,9 +27,6 @@
 				</executions>
 				<configuration>
 					<command>kubectl apply -k .</command>
-					<portBindings>
-						<portBinding>8080:8080</portBinding>
-					</portBindings>
 				</configuration>
 			</plugin>
 		</plugins>

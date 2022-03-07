@@ -9,7 +9,6 @@ Create and start k3s container.
 | `imageRepository` | `k3s.imageRepository` | k3s image repository | rancher/k3s |
 | `imageTag` | `k3s.imageTag` | k3s image tag | v1.23.4-k3s1 |
 | `streamLogs` | `k3s.streamLogs` | Stream logs of `k3s` to maven logger. | false |
-| `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
 | `disableHelmController` | `k3s.disable.helmController` | Disable helm controller. | true |
 | `disableLocalStorage` | `k3s.disable.localStorage` | Disable local storage. | true |
