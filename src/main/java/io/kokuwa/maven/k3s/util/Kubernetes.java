@@ -1,5 +1,8 @@
 package io.kokuwa.maven.k3s.util;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,16 @@ public class Kubernetes {
 					}
 					return ready;
 				});
+	}
+
+	public Set<Integer> getHostPorts() throws ApiException {
+		return api
+				.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null).getItems().stream()
+				.flatMap(pod -> pod.getSpec().getContainers().stream())
+				.flatMap(container -> container.getPorts().stream())
+				.filter(port -> port.getHostPort() != null)
+				.map(port -> port.getHostPort())
+				.collect(Collectors.toSet());
 	}
 
 	public boolean isServiceAccountReady() throws ApiException {
