@@ -1,7 +1,6 @@
 package io.kokuwa.maven.k3s;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ public class LifecycleTest extends AbstractTest {
 	@MojoParameter(name = "command", value = "kubectl apply -f pod.yaml")
 	void kubectl(PullMojo pull, StartMojo start, KubectlMojo kubectl, RemoveMojo remove) throws Exception {
 		pull.execute();
-		start.setPortBindings(List.of("8080:8080")).execute();
+		start.execute();
 		kubectl.execute();
 		assertPodRunning();
 		remove.execute();

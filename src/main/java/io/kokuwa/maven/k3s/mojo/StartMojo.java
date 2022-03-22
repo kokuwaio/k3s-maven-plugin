@@ -18,11 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports.Binding;
 import com.github.dockerjava.api.model.PropagationMode;
 import com.github.dockerjava.api.model.SELContext;
 import com.github.dockerjava.api.model.Volume;
@@ -54,10 +51,6 @@ public class StartMojo extends K3sMojo {
 	/** Disable traefik. */
 	@Setter @Parameter(property = "k3s.disable.traefik", defaultValue = "true")
 	private boolean disableTraefik;
-
-	/** Additional port bindings e.g. `8080:8080`. */
-	@Setter @Parameter(property = "k3s.portBindings")
-	private List<String> portBindings = new ArrayList<>();
 
 	/** KubeApi port to expose to host. */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
@@ -114,9 +107,6 @@ public class StartMojo extends K3sMojo {
 
 		// host config (see https://github.com/rancher/k3d/issues/113)
 
-		var ports = new ArrayList<PortBinding>();
-		ports.add(new PortBinding(Binding.bindPort(portKubeApi), ExposedPort.tcp(portKubeApi)));
-		portBindings.stream().map(PortBinding::parse).forEach(ports::add);
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
 				.withPidMode("host")
@@ -127,7 +117,6 @@ public class StartMojo extends K3sMojo {
 						new Bind("/var/lib/kubelet", new Volume("/var/lib/kubelet"), AccessMode.DEFAULT,
 								SELContext.DEFAULT, null, PropagationMode.RSHARED),
 						new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock")))
-				.withPortBindings(ports)
 				.withPrivileged(true)
 				.withNetworkMode("host");
 
@@ -154,7 +143,6 @@ public class StartMojo extends K3sMojo {
 				.createContainerCmd(dockerImage())
 				.withName(DockerUtil.CONTAINER_NAME)
 				.withCmd(command)
-				.withExposedPorts(ports.stream().map(PortBinding::getExposedPort).collect(Collectors.toList()))
 				.withLabels(Map.of(DockerUtil.CONTAINER_LABEL, Boolean.TRUE.toString()))
 				.withHostConfig(hostConfig)
 				.exec().getId();

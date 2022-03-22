@@ -35,9 +35,6 @@
 				</executions>
 				<configuration>
 					<command>kubectl apply -k .</command>
-					<portBindings>
-						<portBinding>5432:5432</portBinding>
-					</portBindings>
 				</configuration>
 			</plugin>
 		</plugins>

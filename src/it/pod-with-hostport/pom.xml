@@ -25,11 +25,6 @@
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<portBindings>
-						<portBinding>8080:8080</portBinding>
-					</portBindings>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

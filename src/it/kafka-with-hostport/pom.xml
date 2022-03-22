@@ -34,12 +34,6 @@
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<portBindings>
-						<portBinding>9000:9000</portBinding>
-						<portBinding>9091:9091</portBinding>
-					</portBindings>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
