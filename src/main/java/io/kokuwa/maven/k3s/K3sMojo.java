@@ -11,12 +11,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-
-import io.kokuwa.maven.k3s.util.DockerUtil;
+import io.kokuwa.maven.k3s.util.Docker;
 import io.kokuwa.maven.k3s.util.Kubernetes;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
@@ -28,6 +23,7 @@ import lombok.Setter;
 public abstract class K3sMojo extends AbstractMojo {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+	protected final Docker docker = new Docker();
 
 	/** k3s image registry. */
 	@Setter @Parameter(property = "k3s.imageRegistry")
@@ -43,87 +39,43 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	/** k3s working directory. This directory is mounted into docker container. */
 	@Setter @Parameter(property = "k3s.workdir", defaultValue = "target/k3s")
-	private File workingDir;
+	private File workDir;
 
 	/** Skip plugin. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip = false;
 
-	protected Path getWorkingDir() {
-		return workingDir.toPath().toAbsolutePath();
+	protected Path getWorkDir() {
+		return workDir.toPath().toAbsolutePath();
 	}
 
 	protected Path getKubeConfig() {
-		return getWorkingDir().resolve("kubeconfig.yaml");
+		return getWorkDir().resolve("kubeconfig.yaml");
 	}
 
 	protected boolean isSkip(boolean skipMojo) {
 		return skip || skipMojo;
 	}
 
-	// docker
-
-	private static String dockerImage;
-	private static DockerClient dockerClient;
-
-	protected String dockerImage() {
-		if (dockerImage == null) {
-			if (imageTag == null) {
-				imageTag = "v1.23.4-k3s1";
-				log.warn("No image tag provided, '{}' will be used. This will change in newer plugin versions.",
-						imageTag);
-			} else if (imageTag.equals("latest")) {
-				log.warn("Using image tag 'latest' is unstable.");
-			}
-			dockerImage = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
+	protected String getDockerImage() {
+		if (imageTag == null) {
+			imageTag = "v1.23.4-k3s1";
+			log.warn("No image tag provided, '{}' will be used. This will change in newer versions.", imageTag);
+		} else if (imageTag.equals("latest")) {
+			log.warn("Using image tag 'latest' is unstable.");
 		}
-		return dockerImage;
+		return (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 	}
 
-	protected DockerClient dockerClient() throws MojoExecutionException {
-		if (dockerClient == null) {
-
-			// create client
-
-			var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-			var httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
-			dockerClient = DockerClientImpl.getInstance(config, httpClient);
-
-			// check if docker is available
-
-			try {
-				dockerClient.pingCmd().exec();
-			} catch (RuntimeException e) {
-				throw new MojoExecutionException("Unable to communicate with docker", e.getCause());
-			}
+	protected Kubernetes getKubernetesClient() throws MojoExecutionException {
+		var kubeconfig = getKubeConfig();
+		if (!Files.exists(kubeconfig)) {
+			throw new MojoExecutionException("Kube config not found at " + kubeconfig);
 		}
-		return dockerClient;
-	}
-
-	protected DockerUtil dockerUtil() throws MojoExecutionException {
-		return new DockerUtil(dockerClient());
-	}
-
-	// kubernetes
-
-	private static Kubernetes kubernetes;
-
-	protected Kubernetes kubernetes() throws MojoExecutionException {
-		if (kubernetes == null) {
-			var kubeconfig = getKubeConfig();
-			if (!Files.exists(kubeconfig)) {
-				throw new MojoExecutionException("Kube config not found at " + kubeconfig);
-			}
-			try {
-				kubernetes = new Kubernetes(new CoreV1Api(Config.fromConfig(kubeconfig.toString())));
-			} catch (IOException e) {
-				throw new MojoExecutionException("Failed to read kube config", e);
-			}
+		try {
+			return new Kubernetes(new CoreV1Api(Config.fromConfig(kubeconfig.toString())));
+		} catch (IOException e) {
+			throw new MojoExecutionException("Failed to read kube config", e);
 		}
-		return kubernetes;
-	}
-
-	protected void resetKubernetes() {
-		kubernetes = null;
 	}
 }

@@ -20,7 +20,6 @@ public class PullMojo extends K3sMojo {
 	/** Always pull k3s image. */
 	@Setter @Parameter(property = "k3s.imagePullAlways", defaultValue = "false")
 	private boolean imagePullAlways;
-
 	/** Skip pull of k3s image. */
 	@Setter @Parameter(property = "k3s.skipPull", defaultValue = "false")
 	private boolean skipPull;
@@ -34,9 +33,9 @@ public class PullMojo extends K3sMojo {
 
 		// check if image is alreay present
 
-		var dockerImage = dockerImage();
+		var dockerImage = getDockerImage();
 		if (!imagePullAlways) {
-			var imagePresent = dockerClient().listImagesCmd()
+			var imagePresent = docker.client().listImagesCmd()
 					.withImageNameFilter(dockerImage)
 					.exec().stream()
 					.flatMap(i -> Optional.ofNullable(i.getRepoTags()).map(Stream::of).orElseGet(Stream::empty))
@@ -51,7 +50,7 @@ public class PullMojo extends K3sMojo {
 
 		try {
 			log.info("Image '{}' not found, start pulling image ...", dockerImage);
-			dockerClient().pullImageCmd(dockerImage).start().awaitCompletion();
+			docker.client().pullImageCmd(dockerImage).start().awaitCompletion();
 			log.info("Image '{}' pulled", dockerImage);
 		} catch (InterruptedException e) {
 			throw new MojoExecutionException("Failed to pull image " + dockerImage, e);

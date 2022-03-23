@@ -20,13 +20,14 @@ import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Network;
 
-import io.kokuwa.maven.k3s.mojo.PullMojo;
 import io.kokuwa.maven.k3s.mojo.RemoveMojo;
+import io.kokuwa.maven.k3s.util.Docker;
 import io.kokuwa.maven.test.MojoExtension;
 
 @ExtendWith(MojoExtension.class)
 public abstract class AbstractTest {
 
+	private final Docker docker = new Docker();
 	private List<InspectVolumeResponse> volumes;
 	private List<Container> containers;
 	private List<Network> networks;
@@ -34,44 +35,32 @@ public abstract class AbstractTest {
 	// volumes
 
 	@BeforeEach
-	void setUp() throws MojoExecutionException {
-		volumes = volumes();
-		containers = containers();
-		networks = networks();
+	void setUp() {
+		volumes = docker.listVolumes();
+		containers = docker.listContainers();
+		networks = docker.listNetworks();
 	}
 
 	@AfterEach
-	void tearDown() throws MojoExecutionException {
+	void tearDown(RemoveMojo mojo) throws MojoExecutionException {
 
 		// delete everything left in docker
 
-		new RemoveMojo().execute();
+		mojo.execute();
 
 		// check for stuff left in docker
 
-		var volumesAfter = volumes();
+		var volumesAfter = docker.listVolumes();
 		volumesAfter.removeIf(after -> volumes.stream().anyMatch(v -> v.getName().equals(after.getName())));
 		assertTrue(volumesAfter.isEmpty(), "test leaked volume");
 
-		var containersAfter = containers();
+		var containersAfter = docker.listContainers();
 		containersAfter.removeIf(after -> containers.stream().anyMatch(c -> c.getId().equals(after.getId())));
 		assertTrue(containersAfter.isEmpty(), "test leaked container");
 
-		var networksAfter = networks();
+		var networksAfter = docker.listNetworks();
 		networksAfter.removeIf(after -> networks.stream().anyMatch(v -> v.getId().equals(after.getId())));
 		assertTrue(networksAfter.isEmpty(), "test leaked networks");
-	}
-
-	List<InspectVolumeResponse> volumes() throws MojoExecutionException {
-		return new PullMojo().dockerClient().listVolumesCmd().exec().getVolumes();
-	}
-
-	List<Network> networks() throws MojoExecutionException {
-		return new PullMojo().dockerClient().listNetworksCmd().exec();
-	}
-
-	List<Container> containers() throws MojoExecutionException {
-		return new PullMojo().dockerClient().listContainersCmd().exec();
 	}
 
 	// assertions
