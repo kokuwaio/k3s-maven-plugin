@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -16,18 +15,12 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.LoggerFactory;
 
-import com.github.dockerjava.api.model.AccessMode;
-import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.PropagationMode;
-import com.github.dockerjava.api.model.SELContext;
-import com.github.dockerjava.api.model.Volume;
 
 import io.kokuwa.maven.k3s.K3sMojo;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
-import io.kokuwa.maven.k3s.util.DockerUtil;
 import lombok.Setter;
 
 /**
@@ -79,48 +72,31 @@ public class StartMojo extends K3sMojo {
 			return;
 		}
 
-		var containerId = dockerUtil().getContainerId().orElse(null);
-		var running = containerId != null && dockerUtil().isRunning(containerId);
-		if (containerId != null) {
+		var container = docker.getK3sContainer().orElse(null);
+		var running = container != null && docker.isRunning(container);
+		if (container != null) {
 			if (!Files.exists(getKubeConfig()) && running) {
 				running = false;
-				dockerClient().stopContainerCmd(containerId).exec();
-				log.info("Container with id '{}' stopped, mount was deleted", containerId);
+				docker.stopContainer(container);
+				log.info("Container with id '{}' stopped, mount was deleted", container.getId());
 			} else if (running) {
-				log.debug("Container with id '{}' found running", containerId);
+				log.debug("Container with id '{}' found running", container.getId());
 			} else {
-				log.debug("Container with id '{}' found stopped", containerId);
+				log.debug("Container with id '{}' found stopped", container.getId());
 			}
 		} else {
-			containerId = createContainer();
+			container = createContainer(getDockerImage());
 		}
 
 		if (!running) {
-			startContainer(containerId);
+			startK3sContainer(container);
 		}
 
-		copyKubeConfigToMountedWorkingDirectory(containerId);
+		copyKubeConfigToMountedWorkingDirectory(container);
 		awaitK3sNodesAndPodsReady();
 	}
 
-	private String createContainer() throws MojoExecutionException {
-
-		// host config (see https://github.com/rancher/k3d/issues/113)
-
-		var hostConfig = new HostConfig()
-				.withPrivileged(true)
-				.withPidMode("host")
-				.withBinds(
-						new Bind(getWorkingDir().toString(), new Volume("/k3s")),
-						new Bind("/var/lib/docker", new Volume("/var/lib/docker"), AccessMode.DEFAULT,
-								SELContext.DEFAULT, null, PropagationMode.RSHARED),
-						new Bind("/var/lib/kubelet", new Volume("/var/lib/kubelet"), AccessMode.DEFAULT,
-								SELContext.DEFAULT, null, PropagationMode.RSHARED),
-						new Bind("/var/run/docker.sock", new Volume("/var/run/docker.sock")))
-				.withPrivileged(true)
-				.withNetworkMode("host");
-
-		// container
+	private Container createContainer(String dockerImage) {
 
 		var command = new ArrayList<>(List.of("server",
 				"--disable-cloud-controller",
@@ -138,34 +114,25 @@ public class StartMojo extends K3sMojo {
 		if (disableTraefik) {
 			command.add("--disable=traefik");
 		}
-
-		var containerId = dockerClient()
-				.createContainerCmd(dockerImage())
-				.withName(DockerUtil.CONTAINER_NAME)
-				.withCmd(command)
-				.withLabels(Map.of(DockerUtil.CONTAINER_LABEL, Boolean.TRUE.toString()))
-				.withHostConfig(hostConfig)
-				.exec().getId();
-		log.info("Container  with id '{}' created, image: ", containerId, dockerImage());
 		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
 
-		return containerId;
+		return docker.createK3sContainer(dockerImage, getWorkDir(), command);
 	}
 
-	private void startContainer(String containerId) throws MojoExecutionException {
+	private void startK3sContainer(Container container) throws MojoExecutionException {
 
 		// check mount path for manifests and kubectl file
 
 		try {
-			Files.createDirectories(getWorkingDir());
+			Files.createDirectories(getWorkDir());
 		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to create workdir " + getWorkingDir(), e);
+			throw new MojoExecutionException("Failed to create workdir " + getWorkDir(), e);
 		}
 
 		// start k3s
+
 		var started = Instant.now();
-		dockerClient().startContainerCmd(containerId).exec();
-		log.info("Container with id '{}' starting", containerId);
+		docker.startContainer(container);
 
 		// logs to console and wait for startup
 
@@ -179,12 +146,7 @@ public class StartMojo extends K3sMojo {
 				}
 			}
 		};
-		dockerClient().logContainerCmd(containerId)
-				.withStdOut(true)
-				.withStdErr(true)
-				.withFollowStream(true)
-				.withSince((int) started.getEpochSecond())
-				.exec(callback);
+		docker.logContainer(container, started, callback);
 		Await.await("k3s is up and running")
 				.timeout(Duration.ofSeconds(nodeTimeout))
 				.onTimeout(callback::replayOnWarn)
@@ -193,41 +155,28 @@ public class StartMojo extends K3sMojo {
 	}
 
 	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
+		var kubernetes = getKubernetesClient();
 
 		// wait for nodes get ready
 
-		Await.await("k3s master node ready").until(kubernetes()::isNodeReady);
+		Await.await("k3s master node ready").until(kubernetes::isNodeReady);
+
+		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
+
+		Await.await("k3s service account ready").until(kubernetes::isServiceAccountReady);
 
 		// wait for pods get ready
 
 		if (podWait) {
-			Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
+			Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes::isPodsReady);
 		}
-
-		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
-
-		Await.await("k3s service account ready").until(kubernetes()::isServiceAccountReady);
 
 		log.info("k3s node ready");
 	}
 
-	private void copyKubeConfigToMountedWorkingDirectory(String containerId) throws MojoExecutionException {
-
+	private void copyKubeConfigToMountedWorkingDirectory(Container container) throws MojoExecutionException {
 		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
-		var execId = dockerClient().execCreateCmd(containerId)
-				.withCmd("/bin/sh", "-c", command)
-				.withAttachStdout(true)
-				.withAttachStderr(true)
-				.exec().getId();
-
-		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.Install"), true);
-		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(command).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
-
-		var response = dockerClient().inspectExecCmd(execId).exec();
-		if (response.getExitCodeLong() != 0) {
-			callback.replayOnWarn();
-			throw new MojoExecutionException("install returned exit code " + response.getExitCodeLong());
-		}
+		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.install"), true);
+		docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback);
 	}
 }

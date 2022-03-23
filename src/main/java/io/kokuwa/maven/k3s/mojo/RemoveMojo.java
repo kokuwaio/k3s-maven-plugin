@@ -1,6 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -28,37 +29,19 @@ public class RemoveMojo extends K3sMojo {
 			return;
 		}
 
-		// get container id
+		// remove containers
 
-		var optionalContainerId = dockerUtil().getContainerId();
-		if (optionalContainerId.isEmpty()) {
-			log.debug("Container not found, skip remove");
-			return;
-		}
-		var containerId = optionalContainerId.get();
-
-		// remove container with volumes
-
-		dockerClient().removeContainerCmd(containerId).withRemoveVolumes(true).withForce(true).exec();
-		log.info("Container with id '{}' removed", containerId);
-
-		// remove spawned container
-
-		for (var container : dockerClient().listContainersCmd().exec()) {
-			if (container.getLabels().containsKey("io.kubernetes.pod.uid")) {
-				dockerClient().removeContainerCmd(container.getId()).withRemoveVolumes(true).withForce(true).exec();
-				log.debug("Container with id '{}' removed", containerId);
-			}
-		}
+		docker.getK3sContainer().ifPresent(docker::removeContainer);
+		docker.getPodContainers().forEach(docker::removeContainer);
 
 		// remove obsolete config
 
 		try {
-			FileUtils.forceDelete(getWorkingDir().toFile());
+			if (Files.exists(getWorkDir())) {
+				FileUtils.forceDelete(getWorkDir().toFile());
+			}
 		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to delete working " + getWorkingDir(), e);
+			throw new MojoExecutionException("Failed to delete working directory at " + getWorkDir(), e);
 		}
-
-		resetKubernetes();
 	}
 }

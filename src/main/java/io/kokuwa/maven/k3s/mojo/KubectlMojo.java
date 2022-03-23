@@ -51,18 +51,10 @@ public class KubectlMojo extends K3sMojo {
 			return;
 		}
 
-		// get container id
-
-		var optionalContainerId = dockerUtil().getContainerId();
-		if (optionalContainerId.isEmpty()) {
-			throw new MojoExecutionException("Container not found");
-		}
-		var containerId = optionalContainerId.get();
-
 		// copy manifests to working directory
 
 		var source = manifests.toPath().toAbsolutePath();
-		var destination = getWorkingDir().resolve("manifests").toAbsolutePath();
+		var destination = getWorkDir().resolve("manifests").toAbsolutePath();
 		try {
 			if (Files.exists(source)) {
 				if (Files.exists(destination)) {
@@ -79,30 +71,24 @@ public class KubectlMojo extends K3sMojo {
 			throw new MojoExecutionException("Failed to copy manifests", e);
 		}
 
-		// exec
+		// execute kubectl in container
 
-		log.info(command);
-		var execId = dockerClient().execCreateCmd(containerId)
+		var container = docker.getK3sContainer();
+		if (container.isEmpty()) {
+			throw new MojoExecutionException("Container not found");
+		}
+
+		log.info("Execute: {}", command);
+		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl"), streamLogs);
+		docker.exec("kubectl", container.get(), cmd -> cmd
 				.withCmd("/bin/sh", "-c", command)
 				.withWorkingDir("/k3s/manifests")
-				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml"))
-				.withAttachStdout(true)
-				.withAttachStderr(true)
-				.exec().getId();
-
-		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl"), streamLogs);
-		dockerClient().execStartCmd(execId).exec(callback);
-		Await.await(command).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
-
-		var response = dockerClient().inspectExecCmd(execId).exec();
-		if (response.getExitCodeLong() != 0) {
-			callback.replayOnWarn();
-			throw new MojoExecutionException("kubectl returned exit code " + response.getExitCodeLong());
-		}
+				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback);
 
 		// wait for pods to be ready
 
-		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes()::isPodsReady);
+		var kubernetes = getKubernetesClient();
+		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes::isPodsReady);
 		log.debug("k3s pods ready");
 	}
 }
