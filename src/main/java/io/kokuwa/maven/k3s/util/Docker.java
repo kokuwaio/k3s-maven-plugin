@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -43,11 +44,6 @@ public class Docker {
 		client = DockerClientImpl.getInstance(config, httpClient);
 	}
 
-	@Deprecated
-	public DockerClient client() {
-		return client;
-	}
-
 	public List<Container> listContainers() {
 		return client.listContainersCmd().exec();
 	}
@@ -71,7 +67,8 @@ public class Docker {
 
 	public boolean isRunning(Container container) {
 		var running = EnumSet.of(DockerState.RUNNING, DockerState.RESTARTING).contains(DockerState.valueOf(container));
-		log.trace("Container '{}' is {}running (state: {})", running ? "" : "not ", container.getState());
+		log.trace("Container '{}' is {}running (state: {})", container.getId(), running ? "" : "not ",
+				container.getState());
 		return running;
 	}
 
@@ -101,7 +98,7 @@ public class Docker {
 				.withLabels(Map.of(Docker.K3S_LABEL, Boolean.TRUE.toString()))
 				.withHostConfig(hostConfig)
 				.exec();
-		log.info("Container with id '{}' created, image: ", container.getId(), dockerImage);
+		log.debug("Container with id '{}' created, image: {}", container.getId(), dockerImage);
 
 		return getK3sContainer().get();
 	}
@@ -154,5 +151,17 @@ public class Docker {
 			callback.replayOnWarn();
 			throw new MojoExecutionException(message + " returned exit code " + response.getExitCodeLong());
 		}
+	}
+
+	public boolean hasImage(String image) {
+		var has = client.listImagesCmd().withImageNameFilter(image).exec().stream()
+				.flatMap(i -> Optional.ofNullable(i.getRepoTags()).map(Stream::of).orElseGet(Stream::empty))
+				.anyMatch(image::equals);
+		log.debug("Image '{}' {}", image, has ? "already present" : "not found");
+		return has;
+	}
+
+	public DockerPullCallback pullImage(String image) {
+		return client.pullImageCmd(image).exec(new DockerPullCallback(log, image));
 	}
 }
