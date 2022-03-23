@@ -91,7 +91,7 @@
 		<version.org.apache.maven.plugins.checkstyle>3.1.2</version.org.apache.maven.plugins.checkstyle>
 		<version.org.apache.maven.plugins.clean>3.1.0</version.org.apache.maven.plugins.clean>
 		<version.org.apache.maven.plugins.compiler>3.10.1</version.org.apache.maven.plugins.compiler>
-		<version.org.apache.maven.plugins.dependency_>3.2.0</version.org.apache.maven.plugins.dependency_>
+		<version.org.apache.maven.plugins.dependency_>3.3.0</version.org.apache.maven.plugins.dependency_>
 		<version.org.apache.maven.plugins.deploy>3.0.0-M2</version.org.apache.maven.plugins.deploy>
 		<version.org.apache.maven.plugins.gpg>3.0.1</version.org.apache.maven.plugins.gpg>
 		<version.org.apache.maven.plugins.install>3.0.0-M1</version.org.apache.maven.plugins.install>
@@ -110,7 +110,7 @@
 
 		<!-- dependencies -->
 
-		<version.org.apache.maven.api>3.8.4</version.org.apache.maven.api>
+		<version.org.apache.maven.api>3.8.5</version.org.apache.maven.api>
 		<version.org.apache.maven.annotations>3.6.4</version.org.apache.maven.annotations>
 		<version.org.junit.jupiter>5.8.2</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.22</version.org.projectlombok>
