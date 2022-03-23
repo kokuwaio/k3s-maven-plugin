@@ -110,7 +110,7 @@
 
 		<!-- dependencies -->
 
-		<version.org.apache.maven.api>3.8.4</version.org.apache.maven.api>
+		<version.org.apache.maven.api>3.8.5</version.org.apache.maven.api>
 		<version.org.apache.maven.annotations>3.6.4</version.org.apache.maven.annotations>
 		<version.org.junit.jupiter>5.8.2</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.22</version.org.projectlombok>
