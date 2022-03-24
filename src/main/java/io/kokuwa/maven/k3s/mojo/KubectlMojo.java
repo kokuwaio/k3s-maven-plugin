@@ -2,6 +2,9 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
@@ -16,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import io.kokuwa.maven.k3s.K3sMojo;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
+import io.kokuwa.maven.k3s.util.Kubernetes;
+import io.kubernetes.client.openapi.ApiException;
 import lombok.Setter;
 
 /**
@@ -90,5 +95,31 @@ public class KubectlMojo extends K3sMojo {
 		var kubernetes = getKubernetesClient();
 		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes::isPodsReady);
 		log.debug("k3s pods ready");
+
+		// wait for hostports to be ready
+
+		Await.await("host ports in use").timeout(Duration.ofSeconds(podTimeout)).until(() -> isPortsBound(kubernetes));
+		log.debug("host ports in use");
+	}
+
+	private boolean isPortsBound(Kubernetes kubernetes) throws MojoExecutionException, ApiException {
+		var ports = kubernetes.getHostPorts();
+		log.trace("Check ports: {}", ports);
+		for (var port : ports) {
+			if (isTcpPortAvailable(port)) {
+				log.trace("Port {} is available.", port);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean isTcpPortAvailable(int port) {
+		try (var socket = new Socket()) {
+			socket.connect(new InetSocketAddress(InetAddress.getLocalHost(), port), 20);
+			return false;
+		} catch (Throwable e) {
+			return true;
+		}
 	}
 }
