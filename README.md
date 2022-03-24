@@ -47,6 +47,7 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 ### [Pod using HostPort](/src/it/pod-with-hostport)
 
 * manifest are applied with `k3s:kubectl`
+* `k3s` and pod image is always pulled via `k3s:pull`, pod has [imagePullPolicy: Never](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L9)
 * Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
 * [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
 

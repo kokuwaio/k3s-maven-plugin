@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: kafdrop
-      image: docker.io/obsidiandynamics/kafdrop:3.28.0
+      image: obsidiandynamics/kafdrop:3.28.0
       env:
         - name: KAFKA_BROKERCONNECT
           value: kafka:9092

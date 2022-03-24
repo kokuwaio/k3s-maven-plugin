@@ -48,7 +48,7 @@ public class KafkaIT {
 		producer.send(new ProducerRecord<>(topic, key, value)).get();
 
 		consumer.subscribe(Set.of(topic));
-		var consumerRecords = consumer.poll(Duration.ofSeconds(60));
+		var consumerRecords = consumer.poll(Duration.ofSeconds(120));
 		consumer.commitSync();
 		assertEquals(1, consumerRecords.count(), "count");
 		var consumerRecord = consumerRecords.iterator().next();

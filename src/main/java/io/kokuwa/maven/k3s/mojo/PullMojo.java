@@ -1,7 +1,9 @@
 package io.kokuwa.maven.k3s.mojo;
 
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -9,6 +11,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.K3sMojo;
+import io.kokuwa.maven.k3s.util.Await;
+import io.kokuwa.maven.k3s.util.DockerPullCallback;
 import lombok.Setter;
 
 /**
@@ -17,9 +21,18 @@ import lombok.Setter;
 @Mojo(name = "pull", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class PullMojo extends K3sMojo {
 
-	/** Always pull k3s image. */
-	@Setter @Parameter(property = "k3s.imagePullAlways", defaultValue = "false")
-	private boolean imagePullAlways;
+	/** Always pull images. */
+	@Setter @Parameter(property = "k3s.pullAlways", defaultValue = "false")
+	private boolean pullAlways;
+
+	/** Pull images in seconds. */
+	@Setter @Parameter(property = "k3s.pullTimeout", defaultValue = "300")
+	private int pullTimeout;
+
+	/** Additional images to pull. */
+	@Setter @Parameter(property = "k3s.pullAdditionalImages")
+	private List<String> pullAdditionalImages;
+
 	/** Skip pull of k3s image. */
 	@Setter @Parameter(property = "k3s.skipPull", defaultValue = "false")
 	private boolean skipPull;
@@ -31,29 +44,28 @@ public class PullMojo extends K3sMojo {
 			return;
 		}
 
+		// get list of images
+
+		var images = new ArrayList<String>();
+		images.add(getDockerImage());
+		if (pullAdditionalImages != null) {
+			images.addAll(pullAdditionalImages);
+		}
+
 		// check if image is alreay present
 
-		var dockerImage = getDockerImage();
-		if (!imagePullAlways) {
-			var imagePresent = docker.client().listImagesCmd()
-					.withImageNameFilter(dockerImage)
-					.exec().stream()
-					.flatMap(i -> Optional.ofNullable(i.getRepoTags()).map(Stream::of).orElseGet(Stream::empty))
-					.anyMatch(dockerImage::equals);
-			if (imagePresent) {
-				log.debug("Image '{}' found, skip pull", dockerImage);
-				return;
-			}
+		if (!pullAlways) {
+			images.removeIf(docker::hasImage);
 		}
 
 		// pull image
 
-		try {
-			log.info("Image '{}' not found, start pulling image ...", dockerImage);
-			docker.client().pullImageCmd(dockerImage).start().awaitCompletion();
-			log.info("Image '{}' pulled", dockerImage);
-		} catch (InterruptedException e) {
-			throw new MojoExecutionException("Failed to pull image " + dockerImage, e);
+		var callbacks = images.stream().map(docker::pullImage).collect(Collectors.toSet());
+		Await.await("pull images")
+				.timeout(Duration.ofSeconds(pullTimeout))
+				.until(() -> callbacks.stream().allMatch(DockerPullCallback::isCompleted));
+		if (callbacks.stream().anyMatch(callback -> !callback.isSuccess())) {
+			throw new MojoExecutionException("Failed to pull images");
 		}
 	}
 }
