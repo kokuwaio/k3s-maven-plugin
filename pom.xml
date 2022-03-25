@@ -298,6 +298,8 @@
 						<releaseProfiles>release</releaseProfiles>
 						<localCheckout>true</localCheckout>
 						<signTag>true</signTag>
+						<preparationGoals>clean</preparationGoals>
+						<goals>clean package -DskipTests -Dinvoker.skip</goals>
 					</configuration>
 				</plugin>
 				<plugin>
