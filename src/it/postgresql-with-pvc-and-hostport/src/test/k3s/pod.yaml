@@ -6,6 +6,7 @@ spec:
   containers:
     - name: postgresql
       image: postgres:14.1-alpine
+      imagePullPolicy: IfNotPresent
       envFrom:
         - secretRef:
             name: postgresql-secret
@@ -20,6 +21,9 @@ spec:
         periodSeconds: 1
         successThreshold: 1
         failureThreshold: 55
+      readinessProbe:
+        exec:
+          command: ["/bin/sh", "-c", "exec pg_isready --user=postgres"]
       livenessProbe:
         exec:
           command: ["/bin/sh", "-c", "exec pg_isready --user=postgres"]

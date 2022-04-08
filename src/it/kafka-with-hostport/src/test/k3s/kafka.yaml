@@ -8,6 +8,7 @@ spec:
   containers:
     - name: kafka
       image: quay.io/strimzi/kafka:latest-kafka-2.8.1
+      imagePullPolicy: IfNotPresent
       command:
         - /bin/sh
         - -c

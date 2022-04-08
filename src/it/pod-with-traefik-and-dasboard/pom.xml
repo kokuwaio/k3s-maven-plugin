@@ -18,7 +18,7 @@
 				<executions>
 					<execution>
 						<goals>
-							<goal>pull</goal>
+							<goal>create</goal>
 							<goal>start</goal>
 							<goal>kubectl</goal>
 							<goal>rm</goal>
@@ -27,6 +27,9 @@
 				</executions>
 				<configuration>
 					<command>kubectl apply -k .</command>
+					<portBindings>
+						<portBinding>8080:8080</portBinding>
+					</portBindings>
 				</configuration>
 			</plugin>
 		</plugins>

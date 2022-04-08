@@ -5,8 +5,11 @@ metadata:
 spec:
   containers:
     - name: micronaut
-      image: k3s-maven-plugin-it-pod-with-local-image
+      image: k3s-maven-plugin-it-pod-with-local-image-from-tar
       imagePullPolicy: Never
+      env:
+        - name: ENDPOINTS_HEALTH_DISK_SPACE_ENABLED
+          value: "false"
       ports:
         - name: http
           containerPort: 8080

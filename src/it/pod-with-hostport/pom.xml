@@ -18,19 +18,21 @@
 				<executions>
 					<execution>
 						<goals>
-							<goal>pull</goal>
+							<goal>create</goal>
 							<goal>start</goal>
 							<goal>kubectl</goal>
 							<goal>rm</goal>
 						</goals>
 						<configuration>
 							<imageTag>v1.23.4-k3s1</imageTag>
-							<pullAlways>true</pullAlways>
-							<pullAdditionalImages>
-								<pullAdditionalImage>rancher/mirrored-coredns-coredns:1.8.6</pullAdditionalImage>
-								<pullAdditionalImage>rancher/mirrored-pause:3.6</pullAdditionalImage>
-								<pullAdditionalImage>jmalloc/echo-server:0.3.1</pullAdditionalImage>
-							</pullAdditionalImages>
+							<ctrImages>
+								<ctrImage>rancher/mirrored-coredns-coredns:1.8.6</ctrImage>
+								<ctrImage>rancher/mirrored-pause:3.6</ctrImage>
+								<ctrImage>jmalloc/echo-server:0.3.1</ctrImage>
+							</ctrImages>
+							<portBindings>
+								<portBinding>8080:8080</portBinding>
+							</portBindings>
 						</configuration>
 					</execution>
 				</executions>

@@ -19,6 +19,11 @@ jobs:
           server-id: sonatype-nexus
           server-username: SERVER_USERNAME
           server-password: SERVER_PASSWORD
+      - name: Cache multiple paths
+        uses: actions/cache@v3
+        with:
+          path: /tmp/k3s-maven-plugin/rancher/
+          key: rancher
       - run: mvn -B dependency:go-offline
       - run: mvn -B deploy
         env:
