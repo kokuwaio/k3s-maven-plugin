@@ -9,7 +9,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import io.kokuwa.maven.k3s.K3sMojo;
 import lombok.Setter;
 
 /**
@@ -17,6 +16,10 @@ import lombok.Setter;
  */
 @Mojo(name = "rm", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class RemoveMojo extends K3sMojo {
+
+	/** Delete not only docker container, delete also cached data. */
+	@Setter @Parameter(property = "k3s.includeCache", defaultValue = "false")
+	private boolean includeCache;
 
 	/** Skip remove of k3s container. */
 	@Setter @Parameter(property = "k3s.skipRm", defaultValue = "false")
@@ -31,17 +34,18 @@ public class RemoveMojo extends K3sMojo {
 
 		// remove containers
 
-		docker.getK3sContainer().ifPresent(docker::removeContainer);
-		docker.getPodContainers().forEach(docker::removeContainer);
+		docker.getContainer().ifPresent(docker::removeContainer);
 
-		// remove obsolete config
+		// remove obsolete config mounted to container
 
+		var directory = includeCache ? getCacheDir() : getMountDir();
+		log.debug("Remove directory: {}", directory);
 		try {
-			if (Files.exists(getWorkDir())) {
-				FileUtils.forceDelete(getWorkDir().toFile());
+			if (Files.exists(directory)) {
+				FileUtils.forceDelete(directory.toFile());
 			}
 		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to delete working directory at " + getWorkDir(), e);
+			throw new MojoExecutionException("Failed to delete directory at " + directory, e);
 		}
 	}
 }

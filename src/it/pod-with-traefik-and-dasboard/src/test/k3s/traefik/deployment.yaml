@@ -16,6 +16,7 @@ spec:
       containers:
         - name: traefik
           image: traefik:v2.6.0
+          imagePullPolicy: IfNotPresent
           args:
             - --providers.kubernetesingress=true
             - --entrypoints.traefik.address=:8090
@@ -43,6 +44,10 @@ spec:
             periodSeconds: 1
             successThreshold: 1
             failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: admin
           livenessProbe:
             httpGet:
               path: /ping

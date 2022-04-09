@@ -6,6 +6,7 @@ spec:
   containers:
     - name: kafdrop
       image: obsidiandynamics/kafdrop:3.28.0
+      imagePullPolicy: IfNotPresent
       env:
         - name: KAFKA_BROKERCONNECT
           value: kafka:9092
@@ -21,6 +22,14 @@ spec:
         periodSeconds: 1
         successThreshold: 1
         failureThreshold: 55
+      readinessProbe:
+        httpGet:
+          path: /actuator/health
+          port: http
+      livenessProbe:
+        httpGet:
+          path: /actuator/health
+          port: http
       securityContext:
         runAsUser: 10001
         runAsGroup: 10001

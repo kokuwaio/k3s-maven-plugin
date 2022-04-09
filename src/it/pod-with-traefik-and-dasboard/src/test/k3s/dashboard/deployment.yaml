@@ -29,6 +29,10 @@ spec:
             periodSeconds: 1
             successThreshold: 1
             failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
           livenessProbe:
             httpGet:
               path: /

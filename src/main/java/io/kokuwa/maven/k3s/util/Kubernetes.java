@@ -1,10 +1,9 @@
 package io.kokuwa.maven.k3s.util;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1NodeCondition;
+import io.kubernetes.client.openapi.models.V1PodCondition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +18,7 @@ public class Kubernetes {
 				.listNode(null, null, null, null, null, null, null, null, null, null).getItems().stream()
 				.allMatch(node -> {
 					var ready = node.getStatus().getConditions().stream()
-							.filter(condition -> condition.getType().equals("Ready"))
+							.filter(condition -> condition.getType().equals(V1NodeCondition.TypeEnum.READY))
 							.map(condition -> Boolean.parseBoolean(condition.getStatus().strip()))
 							.findAny().orElse(false);
 					if (!ready) {
@@ -34,7 +33,7 @@ public class Kubernetes {
 				.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null).getItems().stream()
 				.allMatch(pod -> {
 					var ready = pod.getStatus().getConditions().stream()
-							.filter(condition -> condition.getType().equals("Ready"))
+							.filter(condition -> condition.getType().equals(V1PodCondition.TypeEnum.READY))
 							.map(condition -> Boolean.parseBoolean(condition.getStatus().strip()))
 							.findAny().orElse(false);
 					if (!ready) {
@@ -42,16 +41,6 @@ public class Kubernetes {
 					}
 					return ready;
 				});
-	}
-
-	public Set<Integer> getHostPorts() throws ApiException {
-		return api
-				.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null).getItems().stream()
-				.flatMap(pod -> pod.getSpec().getContainers().stream())
-				.flatMap(container -> container.getPorts().stream())
-				.filter(port -> port.getHostPort() != null)
-				.map(port -> port.getHostPort())
-				.collect(Collectors.toSet());
 	}
 
 	public boolean isServiceAccountReady() throws ApiException {

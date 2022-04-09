@@ -5,7 +5,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import io.kokuwa.maven.k3s.K3sMojo;
 import lombok.Setter;
 
 /**
@@ -27,7 +26,6 @@ public class StopMojo extends K3sMojo {
 
 		// stop container
 
-		docker.getK3sContainer().ifPresent(docker::stopContainer);
-		docker.getPodContainers().forEach(docker::stopContainer);
+		docker.getContainer().ifPresent(docker::stopContainer);
 	}
 }

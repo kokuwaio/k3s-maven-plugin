@@ -27,7 +27,7 @@ import io.kokuwa.maven.test.MojoExtension;
 @ExtendWith(MojoExtension.class)
 public abstract class AbstractTest {
 
-	private final Docker docker = new Docker();
+	protected final Docker docker = new Docker();
 	private List<InspectVolumeResponse> volumes;
 	private List<Container> containers;
 	private List<Network> networks;

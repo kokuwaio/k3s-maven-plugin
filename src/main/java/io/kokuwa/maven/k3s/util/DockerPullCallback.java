@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.PullResponseItem;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -16,7 +17,7 @@ public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 	private final String image;
 	private Boolean completed = false;
 	private Boolean success = false;
-	private PullResponseItem response;
+	private @Getter PullResponseItem response;
 
 	public boolean isCompleted() {
 		return completed;

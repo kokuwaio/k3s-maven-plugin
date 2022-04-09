@@ -7,8 +7,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
@@ -61,13 +59,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 		var mojoDescriptor = mojoDescriptors.get(parameterContext.getParameter().getType());
 		var mojoId = mojoDescriptor.getId();
 
-		var classValues = Stream
-				.of(context.getRequiredTestClass().getAnnotationsByType(MojoParameter.class))
-				.collect(Collectors.toMap(MojoParameter::name, MojoParameter::value));
-		var methodValues = Stream
-				.of(context.getRequiredTestMethod().getAnnotationsByType(MojoParameter.class))
-				.collect(Collectors.toMap(MojoParameter::name, MojoParameter::value));
-
 		try {
 
 			log.trace("{} - create mojo", mojoId);
@@ -80,16 +71,8 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 				field.setAccessible(true);
 
 				var defaultValue = parameter.getDefaultValue();
-				var classValue = classValues.get(name);
-				var methodValue = methodValues.get(name);
 
-				if (methodValue != null) {
-					log.trace("{}#{} - set value from method: {}", mojoId, name, methodValue);
-					setMojoParameterValue(mojo, field, methodValue);
-				} else if (classValue != null) {
-					log.trace("{}#{} - set value from class: {}", mojoId, name, classValue);
-					setMojoParameterValue(mojo, field, classValue);
-				} else if (defaultValue != null) {
+				if (defaultValue != null) {
 					log.trace("{}#{} - set default value: {}", mojoId, name, defaultValue);
 					setMojoParameterValue(mojo, field, defaultValue);
 				} else if (parameter.isRequired()) {

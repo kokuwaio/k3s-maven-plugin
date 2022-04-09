@@ -37,11 +37,19 @@
 		<!-- dependencies -->
 
 		<version.org.junit.jupiter>@version.org.junit.jupiter@</version.org.junit.jupiter>
+		<version.org.slf4j>@version.org.slf4j@</version.org.slf4j>
 
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+
+			<!-- libraries -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>${version.org.slf4j}</version>
+			</dependency>
 
 			<!-- test -->
 			<dependency>

@@ -17,9 +17,7 @@ If your production system is Kubernetes it would be better to use some kind of K
 * [`kind`](https://kind.sigs.k8s.io/)
 * [`minikube`](https://minikube.sigs.k8s.io/docs/)
 
-Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`. This plugin runs `k3s` as docker container (like `k3d`) and is configured to use hosts docker daemon for its containers (not containerd). With this setup it is possible to use image caching between runs and reusing docker config for remote repositories.
-
-As alternative it was considered to use `k3s` without docker and in rootless mode. This assumes packages like `newguimap` which are not installed everywhere. Feel free to create a PR for adding a non-docker mode of this plugin.
+Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`. This plugin runs `k3s` as docker container (like `k3d`). As alternative it was considered to use `k3s` in rootless mode. This assumes packages like `newguimap` which are not installed everywhere. Feel free to create a PR for adding a non-docker mode of this plugin.
 
 If you don't like to use this plugin you can:
 
@@ -32,17 +30,18 @@ If you don't like to use this plugin you can:
 
 ## Goals
 
-| Goal                                       | Description                      | Default Lifecycle Phase |
-| ------------------------------------------ | -------------------------------- | ----------------------- |
-| [`k3s:pull`](docs/goal/pull.md)            | Pull k3s image                   | pre-integration-test    |
-| [`k3s:start`](docs/goal/start.md)          | Create and start k3s container   | pre-integration-test    |
-| [`k3s:kubectl`](docs/goal/kubectl.md)      | Run kubectl                      | pre-integration-test    |
-| [`k3s:stop`](docs/goal/stop.md)            | Stop k3s container               |                         |
-| [`k3s:rm`](docs/goal/rm.md)                | Stop and destroy k3s containers  | post-integration-test   |
+| Goal                                       | Description                     | Default Lifecycle Phase |
+| ------------------------------------------ | ------------------------------- | ----------------------- |
+| [`k3s:create`](docs/goal/create.md)        | Create k3s container            | pre-integration-test    |
+| [`k3s:start`](docs/goal/start.md)          | Start k3s container             | pre-integration-test    |
+| [`k3s:image`](docs/goal/image.md)          | Prepare images for containerd   | pre-integration-test    |
+| [`k3s:kubectl`](docs/goal/kubectl.md)      | Run kubectl                     | pre-integration-test    |
+| [`k3s:stop`](docs/goal/stop.md)            | Stop k3s container              | post-integration-test   |
+| [`k3s:rm`](docs/goal/rm.md)                | Stop and remove k3s containers  | post-integration-test   |
 
 ## Examples
 
-To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as examples.
+To plugin is tested with `maven-invoker-plugin`. The testcases can be used as examples.
 
 ### [Pod using HostPort](/src/it/pod-with-hostport)
 
@@ -51,12 +50,23 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be uses as ex
 * Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
 * [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
 
-### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image)
+### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image-from-tar)
 
 * manifest are applied with `k3s:kubectl`
-* image is [Never](/src/it/pod-with-local-image/src/test/k3s/pod.yaml#L9) pull from registries
-* Pod is running with [hostport](/src/it/pod-with-local-image/src/test/k3s/pod.yaml#L13) 8080
-* [test](/src/it/pod-with-local-image/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
+* image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to tar file
+* image is imported from tar file
+* image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
+* Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
+* [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
+
+### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image-from-docker)
+
+* manifest are applied with `k3s:kubectl`
+* image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to local docker deamon
+* image is imported from local docker deamon
+* image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
+* Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
+* [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
 
 ### [Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
 
@@ -94,7 +104,7 @@ Add to your `settings.xml` (or prefix goals with groupId):
 Start k3s with deployments for manual testing:
 
 ```sh
-mvn k3s:pull k3s:start k3s:kubectl \
+mvn k3s:create k3s:start k3s:kubectl \
   -Dk3s.portBindings=8080:8080 \
   -Dk3s.kubectl.manifests=src/it/pod-with-traefik-and-dasboard/src/test/k3s \
   -Dk3s.streamLogs
@@ -110,7 +120,7 @@ Now you can access this urls:
 Use external `kubectl`:
 
 ```sh
-export KUBECONFIG=target/k3s/kubeconfig.yaml && kubectl get all --all-namespaces
+export KUBECONFIG=/tmp/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces
 ```
 
 Stop k3s after manual testing:

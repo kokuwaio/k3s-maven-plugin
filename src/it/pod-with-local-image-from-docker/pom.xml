@@ -8,14 +8,14 @@
 		<version>LOCAL-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>@project.artifactId@-it-pod-with-local-image</artifactId>
+	<artifactId>@project.artifactId@-it-pod-with-local-image-from-docker</artifactId>
 
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>io.micronaut</groupId>
 				<artifactId>micronaut-bom</artifactId>
-				<version>3.3.4</version>
+				<version>3.4.1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -36,6 +36,11 @@
 			<artifactId>micronaut-management</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -43,7 +48,7 @@
 			<plugin>
 				<groupId>com.google.cloud.tools</groupId>
 				<artifactId>jib-maven-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -52,7 +57,7 @@
 						</goals>
 						<configuration>
 							<from>
-								<image>gcr.io/distroless/java:11</image>
+								<image>gcr.io/distroless/java:11-nonroot</image>
 							</from>
 							<to>
 								<image>${project.artifactId}</image>
@@ -67,11 +72,20 @@
 				<executions>
 					<execution>
 						<goals>
-							<goal>pull</goal>
+							<goal>create</goal>
 							<goal>start</goal>
+							<goal>image</goal>
 							<goal>kubectl</goal>
 							<goal>rm</goal>
 						</goals>
+						<configuration>
+							<dockerImages>
+								<dockerImage>${project.artifactId}</dockerImage>
+							</dockerImages>
+							<portBindings>
+								<portBinding>8080:8080</portBinding>
+							</portBindings>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

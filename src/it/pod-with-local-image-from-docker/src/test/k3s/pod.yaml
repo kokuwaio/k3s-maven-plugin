@@ -1,27 +1,22 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: echo
+  name: micronaut
 spec:
   containers:
-    - name: echo
-      image: jmalloc/echo-server:0.3.1
+    - name: micronaut
+      image: k3s-maven-plugin-it-pod-with-local-image-from-docker
       imagePullPolicy: Never
+      env:
+        - name: ENDPOINTS_HEALTH_DISK_SPACE_ENABLED
+          value: "false"
       ports:
         - name: http
           containerPort: 8080
           hostPort: 8080
       startupProbe:
         httpGet:
-          path: /
-          port: http
-      readinessProbe:
-        httpGet:
-          path: /
-          port: http
-      livenessProbe:
-        httpGet:
-          path: /
+          path: /health
           port: http
       securityContext:
         runAsUser: 10001
