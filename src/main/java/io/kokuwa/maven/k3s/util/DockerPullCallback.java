@@ -51,7 +51,7 @@ public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 	public void onComplete() {
 		if (response != null && response.isPullSuccessIndicated()) {
 			success = true;
-			log.info("Image '{}' pullled: {}", image, response.getStatus());
+			log.info("Image '{}' pulled: {}", image, response.getStatus());
 		}
 		completed = true;
 	}

@@ -86,6 +86,7 @@ public class ImageMojo extends K3sMojo {
 			Files.createDirectories(targetPath.getParent());
 			Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
 			docker.exec(container, "ctr image import /k3s/images/" + sourcePath.getFileName());
+			log.info("Imported tar from {}", sourcePath);
 		}
 	}
 
@@ -99,9 +100,9 @@ public class ImageMojo extends K3sMojo {
 		for (var requestedImage : images) {
 			var image = docker.normalizeDockerImage(requestedImage);
 			if (existingImages.contains(image)) {
-				log.debug("Image {} found", image);
+				log.info("Image {} found, skip pulling", image);
 			} else {
-				log.debug("Image {} not found, start pulling", image);
+				log.info("Image {} not found, start pulling", image);
 				docker.exec(container, "ctr image pull " + image);
 				log.info("Image {} pulled", image);
 			}
@@ -149,6 +150,7 @@ public class ImageMojo extends K3sMojo {
 			}
 
 			docker.exec(container, "ctr image import /k3s/images/" + filename);
+			log.info("Image {} copied from docker deamon", image);
 		}
 	}
 

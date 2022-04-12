@@ -58,7 +58,7 @@ public class StartMojo extends K3sMojo {
 
 		var running = docker.isRunning(container);
 		if (running) {
-			log.debug("Container with id '{}' found running", container.getId());
+			log.info("Container with id '{}' found running, skip start", container.getId());
 		} else {
 			log.debug("Container with id '{}' found stopped", container.getId());
 			startK3sContainer(container);

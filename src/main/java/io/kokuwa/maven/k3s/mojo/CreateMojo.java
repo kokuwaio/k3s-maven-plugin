@@ -66,7 +66,7 @@ public class CreateMojo extends K3sMojo {
 
 		var container = docker.getContainer();
 		if (container.isPresent()) {
-			log.debug("Container with id '{}' found", container.get().getId());
+			log.info("Container with id '{}' found, skip creating", container.get().getId());
 			return;
 		}
 
@@ -90,6 +90,7 @@ public class CreateMojo extends K3sMojo {
 			if (!callback.isSuccess()) {
 				throw new MojoExecutionException("Failed to pull image");
 			}
+			log.info("Docker image {} pulled");
 		}
 
 		// check mount path for manifests and kubectl file
