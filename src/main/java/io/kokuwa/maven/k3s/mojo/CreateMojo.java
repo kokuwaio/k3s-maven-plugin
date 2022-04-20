@@ -83,14 +83,14 @@ public class CreateMojo extends K3sMojo {
 		// pull image if not present
 
 		if (docker.findImage(image).isPresent()) {
-			log.debug("Docker image {} found.");
+			log.debug("Docker image {} found.", image);
 		} else {
 			var callback = docker.pullImage(image);
 			Await.await("pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
 			if (!callback.isSuccess()) {
-				throw new MojoExecutionException("Failed to pull image");
+				throw new MojoExecutionException("Failed to pull image " + image);
 			}
-			log.info("Docker image {} pulled");
+			log.info("Docker image {} pulled", image);
 		}
 
 		// check mount path for manifests and kubectl file
