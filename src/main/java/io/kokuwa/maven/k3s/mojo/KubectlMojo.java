@@ -85,10 +85,13 @@ public class KubectlMojo extends K3sMojo {
 				.withWorkingDir("/k3s/manifests")
 				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback);
 
-		// wait for pods to be ready
+		// wait for stuff to be ready
 
 		var kubernetes = getKubernetesClient();
-		Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes::isPodsReady);
-		log.debug("k3s pods ready");
+		Await.await("k3s pods ready")
+				.timeout(Duration.ofSeconds(podTimeout))
+				.until(() -> kubernetes.isDeploymentsReady()
+						&& kubernetes.isStatefulSetsReady()
+						&& kubernetes.isPodsReady());
 	}
 }
