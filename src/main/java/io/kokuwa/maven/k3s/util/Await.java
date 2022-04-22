@@ -30,7 +30,7 @@ public class Await {
 	private Await(String text) {
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);
-		this.interval = Duration.ofMillis(250);
+		this.interval = Duration.ofMillis(500);
 		this.onTimeout = () -> {};
 	}
 

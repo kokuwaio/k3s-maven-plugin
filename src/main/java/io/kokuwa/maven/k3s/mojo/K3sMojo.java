@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.util.Docker;
 import io.kokuwa.maven.k3s.util.Kubernetes;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 import lombok.Setter;
 
@@ -43,7 +42,7 @@ public abstract class K3sMojo extends AbstractMojo {
 			throw new MojoExecutionException("Kube config not found at " + kubeconfig);
 		}
 		try {
-			return new Kubernetes(new CoreV1Api(Config.fromConfig(kubeconfig.toString())));
+			return new Kubernetes(Config.fromConfig(kubeconfig.toString()));
 		} catch (IOException e) {
 			throw new MojoExecutionException("Failed to read kube config", e);
 		}
