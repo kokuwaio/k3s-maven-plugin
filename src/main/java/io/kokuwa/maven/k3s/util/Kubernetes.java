@@ -70,10 +70,7 @@ public class Kubernetes {
 				.listStatefulSetForAllNamespaces(null, null, null, null, null, null, null, null, null, null)
 				.getItems().stream()
 				.allMatch(statefulSet -> {
-					var ready = statefulSet.getStatus().getConditions().stream()
-							.filter(condition -> condition.getType().equalsIgnoreCase("Available"))
-							.map(condition -> Boolean.parseBoolean(condition.getStatus().strip()))
-							.findAny().orElse(false);
+					var ready = statefulSet.getSpec().getReplicas() == statefulSet.getStatus().getAvailableReplicas();
 					if (!ready) {
 						log.debug("StatefulSet {} is not ready", statefulSet.getMetadata().getName());
 					}
