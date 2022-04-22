@@ -39,6 +39,10 @@ public class KubectlMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
 	private String command;
 
+	/** `kubectl` to use on host. */
+	@Setter @Parameter(property = "k3s.kubectl.path")
+	private String kubectlPath;
+
 	/** Skip applying kubectl manifests. */
 	@Setter @Parameter(property = "k3s.skipKubectl", defaultValue = "false")
 	private boolean skipKubectl;
@@ -79,11 +83,28 @@ public class KubectlMojo extends K3sMojo {
 		var container = containerOptional.get();
 
 		log.info("Execute: {}", command);
-		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl"), streamLogs);
-		docker.exec("kubectl", container, cmd -> cmd
-				.withCmd("/bin/sh", "-c", command)
-				.withWorkingDir("/k3s/manifests")
-				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback);
+		if (kubectlPath == null) {
+			var logger = LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl");
+			var callback = new DockerLogCallback(logger, streamLogs);
+			docker.exec("kubectl", container, cmd -> cmd
+					.withCmd("/bin/sh", "-c", command)
+					.withWorkingDir("/k3s/manifests")
+					.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback);
+		} else {
+			try {
+				var processBuilder = new ProcessBuilder();
+				processBuilder.environment().put("KUBECONFIG", getKubeConfig().toString());
+				processBuilder.command("/bin/sh", "-c", command);
+				processBuilder.directory(getManifestsDir().toFile());
+				processBuilder.inheritIO();
+				var exitCode = processBuilder.start().waitFor();
+				if (exitCode != 0) {
+					throw new MojoExecutionException("Failed to execute manifests, exit code: " + exitCode);
+				}
+			} catch (IOException | InterruptedException e) {
+				throw new MojoExecutionException("Failed to execute manifests", e);
+			}
+		}
 
 		// wait for stuff to be ready
 
