@@ -31,6 +31,10 @@ public class KubectlMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests;
 
+	/** Timeout in seconds to wait for kubectl finished. */
+	@Setter @Parameter(property = "k3s.kubectl.timeout", defaultValue = "30")
+	private int kubectlTimeout;
+
 	/** Timeout in seconds to wait for pods getting ready. */
 	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
 	private int podTimeout;
@@ -89,7 +93,7 @@ public class KubectlMojo extends K3sMojo {
 			docker.exec("kubectl", container, cmd -> cmd
 					.withCmd("/bin/sh", "-c", command)
 					.withWorkingDir("/k3s/manifests")
-					.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback);
+					.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback, Duration.ofSeconds(kubectlTimeout));
 		} else {
 			try {
 				var processBuilder = new ProcessBuilder();

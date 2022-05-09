@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,7 +112,7 @@ public class ImageMojoTest extends AbstractTest {
 
 	@SneakyThrows
 	private boolean hasCtrImage(String image) {
-		var callback = docker.exec(docker.getContainer().get(), "ctr image list --quiet");
+		var callback = docker.exec(docker.getContainer().get(), "ctr image list --quiet", Duration.ofMinutes(1));
 		var output = callback.getMessages().stream().collect(Collectors.joining());
 		return List.of(output.split("\n")).contains(docker.normalizeDockerImage(image));
 	}
@@ -123,6 +124,9 @@ public class ImageMojoTest extends AbstractTest {
 
 	@SneakyThrows
 	private void removeCtrImage(String image) {
-		docker.exec(docker.getContainer().get(), "ctr image remove " + docker.normalizeDockerImage(image));
+		docker.exec(
+				docker.getContainer().get(),
+				"ctr image remove " + docker.normalizeDockerImage(image),
+				Duration.ofMinutes(1));
 	}
 }

@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.util;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
@@ -174,9 +175,10 @@ public class Docker {
 				.exec(callback);
 	}
 
-	public DockerLogCallback exec(Container container, String cmdString) throws MojoExecutionException {
+	public DockerLogCallback exec(Container container, String cmdString, Duration timeout)
+			throws MojoExecutionException {
 		var callback = new DockerLogCallback(log, log.isDebugEnabled());
-		exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback);
+		exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback, timeout);
 		return callback;
 	}
 
@@ -184,7 +186,8 @@ public class Docker {
 			String message,
 			Container container,
 			Consumer<ExecCreateCmd> modifier,
-			DockerLogCallback callback)
+			DockerLogCallback callback,
+			Duration timeout)
 			throws MojoExecutionException {
 
 		var cmd = client.execCreateCmd(container.getId())
@@ -194,7 +197,7 @@ public class Docker {
 		var execId = cmd.exec().getId();
 
 		client.execStartCmd(execId).exec(callback);
-		Await.await("exec " + message).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
+		Await.await("exec " + message).timeout(timeout).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 
 		var response = client.inspectExecCmd(execId).exec();
 		if (response.getExitCodeLong() != 0) {
