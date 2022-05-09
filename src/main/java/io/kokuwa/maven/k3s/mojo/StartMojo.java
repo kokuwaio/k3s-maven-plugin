@@ -118,6 +118,7 @@ public class StartMojo extends K3sMojo {
 	private void copyKubeConfigToMountedWorkingDirectory(Container container) throws MojoExecutionException {
 		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
 		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.install"), true);
-		docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback);
+		var timeout = Duration.ofSeconds(30);
+		docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback, timeout);
 	}
 }
