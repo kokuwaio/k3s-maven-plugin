@@ -33,6 +33,10 @@ public class CreateMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.imageTag")
 	private String imageTag;
 
+	/** Disable servicelb. */
+	@Setter @Parameter(property = "k3s.disableServicelb", defaultValue = "false")
+	private boolean disableServicelb;
+
 	/** Disable helm controller. */
 	@Setter @Parameter(property = "k3s.disableHelmController", defaultValue = "true")
 	private boolean disableHelmController;
@@ -41,9 +45,21 @@ public class CreateMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.disableLocalStorage", defaultValue = "true")
 	private boolean disableLocalStorage;
 
+	/** Disable metrics-server. */
+	@Setter @Parameter(property = "k3s.disableMetricsServer", defaultValue = "true")
+	private boolean disableMetricsServer;
+
 	/** Disable traefik. */
 	@Setter @Parameter(property = "k3s.disableTraefik", defaultValue = "true")
 	private boolean disableTraefik;
+
+	/** Disable cloud-controller. */
+	@Setter @Parameter(property = "k3s.disableCloudController", defaultValue = "true")
+	private boolean disableCloudController;
+
+	/** Disable network-policy. */
+	@Setter @Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
+	private boolean disableNetworkPolicy;
 
 	/** Additional port bindings e.g. `8080:8080`. */
 	@Setter @Parameter(property = "k3s.portBindings")
@@ -104,12 +120,19 @@ public class CreateMojo extends K3sMojo {
 
 		// create command
 
-		var command = new ArrayList<>(List.of("server",
-				"--disable-cloud-controller",
-				"--disable-network-policy",
-				"--disable=metrics-server",
-				"--disable=servicelb",
-				"--https-listen-port=" + portKubeApi));
+		var command = new ArrayList<>(List.of("server", "--https-listen-port=" + portKubeApi));
+		if (disableCloudController) {
+			command.add("--disable-cloud-controller");
+		}
+		if (disableNetworkPolicy) {
+			command.add("--disable-network-policy");
+		}
+		if (disableMetricsServer) {
+			command.add("--disable=metrics-server");
+		}
+		if (disableServicelb) {
+			command.add("--disable=servicelb");
+		}
 		if (disableHelmController) {
 			command.add("--disable-helm-controller");
 		}
