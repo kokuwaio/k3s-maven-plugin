@@ -89,7 +89,7 @@ public class CreateMojo extends K3sMojo {
 		// get image name
 
 		if (imageTag == null) {
-			imageTag = "v1.23.5-k3s1";
+			imageTag = "v1.23.6-k3s1";
 			log.warn("No image tag provided, '{}' will be used. This will change in newer versions.", imageTag);
 		} else if (imageTag.equals("latest")) {
 			log.warn("Using image tag 'latest' is unstable.");
