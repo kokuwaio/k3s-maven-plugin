@@ -90,10 +90,14 @@ public class KubectlMojo extends K3sMojo {
 		if (kubectlPath == null) {
 			var logger = LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl");
 			var callback = new DockerLogCallback(logger, streamLogs);
-			docker.exec("kubectl", container, cmd -> cmd
+			var result = docker.exec("kubectl", container, cmd -> cmd
 					.withCmd("/bin/sh", "-c", command)
 					.withWorkingDir("/k3s/manifests")
 					.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback, Duration.ofSeconds(kubectlTimeout));
+			if (result.getExitCode() != 0) {
+				callback.replayOnWarn();
+				throw new MojoExecutionException(command + " returned exit code " + result.getExitCode());
+			}
 		} else {
 			try {
 				var processBuilder = new ProcessBuilder();

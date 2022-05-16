@@ -175,14 +175,18 @@ public class Docker {
 				.exec(callback);
 	}
 
-	public DockerLogCallback exec(Container container, String cmdString, Duration timeout)
+	public ExecResult execThrows(Container container, String cmdString, Duration timeout)
 			throws MojoExecutionException {
 		var callback = new DockerLogCallback(log, log.isDebugEnabled());
-		exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback, timeout);
-		return callback;
+		var result = exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback, timeout);
+		if (result.getExitCode() != 0) {
+			callback.replayOnWarn();
+			throw new MojoExecutionException(cmdString + " returned exit code " + result.getExitCode());
+		}
+		return result;
 	}
 
-	public void exec(
+	public ExecResult exec(
 			String message,
 			Container container,
 			Consumer<ExecCreateCmd> modifier,
@@ -199,10 +203,8 @@ public class Docker {
 		client.execStartCmd(execId).exec(callback);
 		Await.await("exec " + message).timeout(timeout).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
 
-		var response = client.inspectExecCmd(execId).exec();
-		if (response.getExitCodeLong() != 0) {
-			callback.replayOnWarn();
-			throw new MojoExecutionException(message + " returned exit code " + response.getExitCodeLong());
-		}
+		var exitCode = client.inspectExecCmd(execId).exec().getExitCodeLong().intValue();
+		var logs = callback.getMessages();
+		return new ExecResult(exitCode, logs);
 	}
 }

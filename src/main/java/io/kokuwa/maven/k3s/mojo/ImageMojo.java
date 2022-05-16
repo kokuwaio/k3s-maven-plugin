@@ -89,7 +89,8 @@ public class ImageMojo extends K3sMojo {
 			var targetPath = getImageDir().resolve(sourcePath.getFileName());
 			Files.createDirectories(targetPath.getParent());
 			Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-			docker.exec(container, "ctr image import /k3s/images/" + sourcePath.getFileName(), Duration.ofSeconds(300));
+			docker.execThrows(container, "ctr image import /k3s/images/" + sourcePath.getFileName(),
+					Duration.ofSeconds(300));
 			log.info("Imported tar from {}", sourcePath);
 		}
 	}
@@ -107,7 +108,7 @@ public class ImageMojo extends K3sMojo {
 				log.info("Image {} found, skip pulling", image);
 			} else {
 				log.info("Image {} not found, start pulling", image);
-				docker.exec(container, "ctr image pull " + image, Duration.ofSeconds(pullTimeout));
+				docker.execThrows(container, "ctr image pull " + image, Duration.ofSeconds(pullTimeout));
 				log.info("Image {} pulled", image);
 			}
 		}
@@ -153,14 +154,14 @@ public class ImageMojo extends K3sMojo {
 				throw new MojoExecutionException("Failed to write image to " + tarPath, e);
 			}
 
-			docker.exec(container, "ctr image import /k3s/images/" + filename, Duration.ofSeconds(300));
+			docker.execThrows(container, "ctr image import /k3s/images/" + filename, Duration.ofSeconds(300));
 			log.info("Image {} copied from docker deamon", image);
 		}
 	}
 
 	private List<String> listImages(Container container) throws MojoExecutionException {
-		var callback = docker.exec(container, "ctr image list --quiet", Duration.ofSeconds(30));
-		var output = callback.getMessages().stream().collect(Collectors.joining());
+		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
+		var output = result.getMessages().stream().collect(Collectors.joining());
 		return List.of(output.split("\n"));
 	}
 

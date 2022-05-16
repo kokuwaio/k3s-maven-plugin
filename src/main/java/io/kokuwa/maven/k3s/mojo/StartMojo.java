@@ -119,6 +119,10 @@ public class StartMojo extends K3sMojo {
 		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
 		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.install"), true);
 		var timeout = Duration.ofSeconds(30);
-		docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback, timeout);
+		var result = docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback, timeout);
+		if (result.getExitCode() != 0) {
+			callback.replayOnWarn();
+			throw new MojoExecutionException("install returned exit code " + result.getExitCode());
+		}
 	}
 }
