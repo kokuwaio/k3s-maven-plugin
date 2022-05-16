@@ -8,7 +8,7 @@
 		<version>LOCAL-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>@project.artifactId@-it-pod-with-traefik-and-dasboard</artifactId>
+	<artifactId>@project.artifactId@-it-traefik</artifactId>
 
 	<build>
 		<plugins>

@@ -68,14 +68,14 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 * Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
 * [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
 
-### [Traefik and Dashboard](src/it/pod-with-traefik-and-dasboard)
+### [Traefik and Dashboard](src/it/traefik)
 
 * manifest are applied with `k3s:kubectl` using custom command with kustomize
-* Traefik for subdomains of `127.0.0.1.nip.io` with [hostport](/src/it/pod-with-traefik-and-dasboard/src/test/k3s/traefik/deployment.yaml#L35) 8080
+* Traefik for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/traefik/src/test/k3s/traefik/service.yaml#L18) on port 8080
 * Traefik Admin available at [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
 * Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io)
 * Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
-* [test](/src/it/pod-with-traefik-and-dasboard/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
+* [test](/src/it/traefik/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
 
 ### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
 
@@ -106,7 +106,7 @@ Start k3s with deployments for manual testing:
 ```sh
 mvn k3s:create k3s:start k3s:kubectl \
   -Dk3s.portBindings=8080:8080 \
-  -Dk3s.kubectl.manifests=src/it/pod-with-traefik-and-dasboard/src/test/k3s \
+  -Dk3s.kubectl.manifests=src/it/traefik/src/test/k3s \
   -Dk3s.streamLogs
   -Dk3s.command='kubectl apply -k .'
 ```
