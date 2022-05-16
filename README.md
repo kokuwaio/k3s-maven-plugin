@@ -73,9 +73,17 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 * manifest are applied with `k3s:kubectl` using custom command with kustomize
 * Traefik for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/traefik/src/test/k3s/traefik/service.yaml#L18) on port 8080
 * Traefik Admin available at [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
-* Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io)
+* Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
 * Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
 * [test](/src/it/traefik/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
+
+### [Istio and Dashboard](src/it/istio)
+
+* manifest are applied with `k3s:kubectl` using custom command with kustomize
+* Istio for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/istio/src/test/k3s/istio/istio.yaml#L9334) on port 80
+* Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:80](http://dashboard.127.0.0.1.nip.io)
+* Deployment with Ingress [http://echo.127.0.0.1.nip.io:80](http://echo.127.0.0.1.nip.io:80)
+* [test](/src/it/istio/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:80` as endpoint
 
 ### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
 

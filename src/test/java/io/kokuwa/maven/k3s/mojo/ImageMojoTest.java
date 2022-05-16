@@ -112,8 +112,8 @@ public class ImageMojoTest extends AbstractTest {
 
 	@SneakyThrows
 	private boolean hasCtrImage(String image) {
-		var callback = docker.exec(docker.getContainer().get(), "ctr image list --quiet", Duration.ofMinutes(1));
-		var output = callback.getMessages().stream().collect(Collectors.joining());
+		var result = docker.execThrows(docker.getContainer().get(), "ctr image list --quiet", Duration.ofMinutes(1));
+		var output = result.getMessages().stream().collect(Collectors.joining());
 		return List.of(output.split("\n")).contains(docker.normalizeDockerImage(image));
 	}
 
@@ -124,7 +124,7 @@ public class ImageMojoTest extends AbstractTest {
 
 	@SneakyThrows
 	private void removeCtrImage(String image) {
-		docker.exec(
+		docker.execThrows(
 				docker.getContainer().get(),
 				"ctr image remove " + docker.normalizeDockerImage(image),
 				Duration.ofMinutes(1));
