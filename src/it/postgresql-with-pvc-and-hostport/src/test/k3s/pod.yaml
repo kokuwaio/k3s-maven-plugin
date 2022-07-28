@@ -16,17 +16,17 @@ spec:
           hostPort: 5432
       startupProbe:
         exec:
-          command: ["/bin/sh", "-c", "exec pg_isready --user=postgres"]
+          command: [/bin/sh, -c, exec pg_isready --user=postgres]
         initialDelaySeconds: 5
         periodSeconds: 1
         successThreshold: 1
         failureThreshold: 55
       readinessProbe:
         exec:
-          command: ["/bin/sh", "-c", "exec pg_isready --user=postgres"]
+          command: [/bin/sh, -c, exec pg_isready --user=postgres]
       livenessProbe:
         exec:
-          command: ["/bin/sh", "-c", "exec pg_isready --user=postgres"]
+          command: [/bin/sh, -c, exec pg_isready --user=postgres]
       volumeMounts:
         - name: config
           mountPath: /docker-entrypoint-initdb.d/init.sh
