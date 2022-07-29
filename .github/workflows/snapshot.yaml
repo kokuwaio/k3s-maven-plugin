@@ -1,10 +1,10 @@
 name: Snapshot
 
-"on":
+on:
   workflow_dispatch: {}
   push:
     branches: [main]
-    paths-ignore: ['**.md']
+    paths-ignore: ["**.md"]
 
 jobs:
   build:
