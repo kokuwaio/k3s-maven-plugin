@@ -9,6 +9,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -19,9 +22,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import com.github.dockerjava.api.model.Container;
 
 import io.kokuwa.maven.k3s.util.Await;
-import io.kokuwa.maven.k3s.util.DockerPullCallback;
 import lombok.Setter;
-import lombok.SneakyThrows;
 
 /**
  * Import images into k3s containerd.
@@ -70,99 +71,126 @@ public class ImageMojo extends K3sMojo {
 		}
 		var container = containerOptional.get();
 
-		// handle images
+		// get callables that handle images
 
-		tar(container, tarFiles);
-		docker(container, dockerImages);
-		ctr(container, ctrImages);
+		var existingImages = getCtrImages(container);
+		var tasks = new HashSet<Callable<Boolean>>();
+		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(container, existingImages, requestedImage)));
+		tarFiles.forEach(tarFile -> tasks.add(() -> tar(container, tarFile)));
+		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(container, existingImages, requestedImage)));
+
+		// execute callables
+
+		try {
+			var success = true;
+			for (var future : Executors.newWorkStealingPool().invokeAll(tasks)) {
+				success &= future.get();
+			}
+			if (!success) {
+				throw new MojoExecutionException("Failed to handle images, see previous log");
+			}
+		} catch (InterruptedException | ExecutionException e) {
+			throw new MojoExecutionException("Failed to handle images", e);
+		}
 	}
 
-	@SneakyThrows(IOException.class)
-	private void tar(Container container, List<String> tars) throws MojoExecutionException {
-		for (var tar : tars) {
+	private boolean tar(Container container, String tar) {
 
-			var sourcePath = Paths.get(tar).toAbsolutePath();
-			if (!Files.isRegularFile(sourcePath)) {
-				throw new MojoExecutionException("Tar not found: " + sourcePath);
-			}
+		var sourcePath = Paths.get(tar).toAbsolutePath();
+		if (!Files.isRegularFile(sourcePath)) {
+			log.error("Tar not found: {}", sourcePath);
+			return false;
+		}
 
-			var targetPath = getImageDir().resolve(sourcePath.getFileName());
+		var filename = sourcePath.hashCode() + ".tar";
+		var targetPath = getImageDir().resolve(filename);
+		try {
 			Files.createDirectories(targetPath.getParent());
 			Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-			docker.execThrows(container, "ctr image import /k3s/images/" + sourcePath.getFileName(),
-					Duration.ofSeconds(300));
-			log.info("Imported tar from {}", sourcePath);
+			docker.execThrows(container, "ctr image import /k3s/images/" + filename,
+					Duration.ofMinutes(1));
+		} catch (MojoExecutionException | IOException e) {
+			log.error("Failed to import tar {}", filename, e);
+			return false;
 		}
+
+		log.info("Imported tar from {}", sourcePath);
+		return true;
 	}
 
-	private void ctr(Container container, List<String> images) throws MojoExecutionException {
+	private boolean ctr(Container container, List<String> existingImages, String image) {
 
-		if (images.isEmpty()) {
-			return;
+		var normalizedImage = docker.normalizeDockerImage(image);
+		if (existingImages.contains(normalizedImage)) {
+			log.debug("Image {} found in ctr, skip pulling", image);
+			return true;
 		}
 
-		var existingImages = listImages(container);
-		for (var requestedImage : images) {
-			var image = docker.normalizeDockerImage(requestedImage);
-			if (existingImages.contains(image)) {
-				log.info("Image {} found, skip pulling", image);
-			} else {
-				log.info("Image {} not found, start pulling", image);
-				docker.execThrows(container, "ctr image pull " + image, Duration.ofSeconds(pullTimeout));
-				log.info("Image {} pulled", image);
-			}
+		log.info("Image {} not found, start pulling", image);
+		try {
+			docker.execThrows(container, "ctr image pull " + normalizedImage, Duration.ofSeconds(pullTimeout));
+		} catch (MojoExecutionException e) {
+			log.error("Failed to pull ctr image {}", image, e);
+			return false;
 		}
+
+		log.info("Image {} pulled", image);
+		return true;
 	}
 
-	private void docker(Container container, List<String> images) throws MojoExecutionException {
+	private boolean docker(Container container, List<String> existingImages, String image) {
 
-		if (images.isEmpty()) {
-			return;
+		if (existingImages.contains(image)) {
+			log.debug("Image {} found in ctr, skip copy from docker", image);
+			return true;
 		}
 
-		// pull missing images
+		// pull image
 
-		var pulls = new HashSet<DockerPullCallback>();
-		for (var image : images) {
-			if (docker.findImage(image).isEmpty()) {
-				log.debug("Image {} not found in docker, pulling ...", image);
-				pulls.add(docker.pullImage(image));
-			} else {
-				log.debug("Image {} found in docker", image);
+		if (docker.findImage(image).isEmpty()) {
+			log.debug("Image {} not found in docker, pulling ...", image);
+			var pull = docker.pullImage(image);
+			try {
+				Await.await("docker pull image '" + image + "'")
+						.timeout(Duration.ofSeconds(pullTimeout))
+						.until(pull::isCompleted);
+			} catch (MojoExecutionException e) {
+				log.error("Failed to pull docker image {}", image, e);
+				return false;
 			}
-		}
-		if (!pulls.isEmpty()) {
-			Await.await("docker pull images")
-					.timeout(Duration.ofSeconds(pullTimeout))
-					.until(() -> pulls.stream().allMatch(DockerPullCallback::isCompleted));
-			var failure = pulls.stream().filter(result -> !result.isSuccess()).findAny();
-			if (failure.isPresent()) {
-				throw new MojoExecutionException("Docker pull failed: " + failure.get().getResponse());
+			if (!pull.isSuccess()) {
+				log.error("Failed to pull docker image {}: {}", image, pull.getResponse());
+				return false;
 			}
+		} else {
+			log.debug("Image {} found in docker", image);
 		}
 
 		// move from docker to ctr
 
-		for (var image : images) {
-
-			var filename = image.hashCode() + ".tar";
-			var tarPath = getImageDir().resolve(filename);
-			try {
-				Files.createDirectories(getImageDir());
-				docker.saveImage(image, tarPath);
-			} catch (IOException e) {
-				throw new MojoExecutionException("Failed to write image to " + tarPath, e);
-			}
-
-			docker.execThrows(container, "ctr image import /k3s/images/" + filename, Duration.ofSeconds(300));
-			log.info("Image {} copied from docker deamon", image);
+		var filename = image.hashCode() + ".tar";
+		var tarPath = getImageDir().resolve(filename);
+		try {
+			Files.createDirectories(getImageDir());
+			docker.saveImage(image, tarPath);
+			docker.execThrows(container, "ctr image import /k3s/images/" + filename, Duration.ofMinutes(1));
+		} catch (MojoExecutionException | IOException e) {
+			log.error("Failed to import tar {}", filename, e);
+			return false;
 		}
+
+		log.info("Image {} copied from docker deamon", image);
+		return true;
 	}
 
-	private List<String> listImages(Container container) throws MojoExecutionException {
+	private List<String> getCtrImages(Container container) throws MojoExecutionException {
 		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
 		var output = result.getMessages().stream().collect(Collectors.joining());
-		return List.of(output.split("\n"));
+		var images = List.of(output.split("\n"));
+		if (log.isDebugEnabled()) {
+			images.forEach(image -> log.debug("Found ctr image: {}", image));
+		}
+		return images;
 	}
 
 	private Path getImageDir() {

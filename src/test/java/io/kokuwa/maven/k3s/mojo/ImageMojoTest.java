@@ -1,6 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,10 +64,10 @@ public class ImageMojoTest extends AbstractTest {
 		mojo.setCtrImages(List.of(HELLO_WORLD)).setTarFiles(List.of()).setDockerImages(List.of());
 
 		assertFalse(hasDockerImage(HELLO_WORLD));
-		assertFalse(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, false);
 		assertDoesNotThrow(mojo::execute);
 		assertFalse(hasDockerImage(HELLO_WORLD));
-		assertTrue(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, true);
 	}
 
 	private void assertTagFiles(ImageMojo mojo) {
@@ -77,10 +78,10 @@ public class ImageMojoTest extends AbstractTest {
 				.setDockerImages(List.of());
 
 		assertFalse(hasDockerImage(HELLO_WORLD));
-		assertFalse(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, false);
 		assertDoesNotThrow(mojo::execute);
 		assertFalse(hasDockerImage(HELLO_WORLD));
-		assertTrue(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, true);
 	}
 
 	private void assertDockerWithCachedImage(ImageMojo mojo) {
@@ -89,10 +90,10 @@ public class ImageMojoTest extends AbstractTest {
 		mojo.setCtrImages(List.of()).setTarFiles(List.of()).setDockerImages(List.of(HELLO_WORLD));
 
 		assertTrue(hasDockerImage(HELLO_WORLD));
-		assertFalse(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, false);
 		assertDoesNotThrow(mojo::execute);
 		assertTrue(hasDockerImage(HELLO_WORLD));
-		assertTrue(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, true);
 	}
 
 	private void assertDockerWithoutImage(ImageMojo mojo) {
@@ -102,19 +103,23 @@ public class ImageMojoTest extends AbstractTest {
 		mojo.setCtrImages(List.of()).setTarFiles(List.of()).setDockerImages(List.of(HELLO_WORLD));
 
 		assertFalse(hasDockerImage(HELLO_WORLD));
-		assertFalse(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, false);
 		assertDoesNotThrow(mojo::execute);
 		assertTrue(hasDockerImage(HELLO_WORLD));
-		assertTrue(hasCtrImage(HELLO_WORLD));
+		assertCtrImage(HELLO_WORLD, true);
 	}
 
 	// internal
 
 	@SneakyThrows
-	private boolean hasCtrImage(String image) {
-		var result = docker.execThrows(docker.getContainer().get(), "ctr image list --quiet", Duration.ofMinutes(1));
+	private void assertCtrImage(String image, boolean exists) {
+		var container = docker.getContainer().get();
+		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
 		var output = result.getMessages().stream().collect(Collectors.joining());
-		return List.of(output.split("\n")).contains(docker.normalizeDockerImage(image));
+		var images = List.of(output.split("\n"));
+		var normalizedImage = docker.normalizeDockerImage(image);
+		assertEquals(exists, images.contains(docker.normalizeDockerImage(image)),
+				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + output);
 	}
 
 	@SneakyThrows
