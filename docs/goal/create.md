@@ -7,7 +7,7 @@ Create k3s container.
 | `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations. | `java.io.tmpdir` |
 | `imageRegistry` | `k3s.imageRegistry` | k3s image registry | |
 | `imageRepository` | `k3s.imageRepository` | k3s image repository | rancher/k3s |
-| `imageTag` | `k3s.imageTag` | k3s image tag | v1.23.4-k3s1 |
+| `imageTag` | `k3s.imageTag` | k3s image tag | v1.24.3-k3s1 |
 | `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
 | `disableServicelb` | `k3s.disableServicelb` | Disable service load balancer. | false |
