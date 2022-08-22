@@ -30,38 +30,31 @@ public class KubectlMojo extends K3sMojo {
 			.compile("customresourcedefinition\\.apiextensions\\.k8s\\.io/.* created");
 
 	/** Stream logs of `kubectl` to maven logger. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
+	@Setter	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
 	private boolean streamLogs;
 
 	/** Path where to find manifest files. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
+	@Setter	@Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests;
 
 	/** Timeout in seconds to wait for kubectl finished. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.timeout", defaultValue = "30")
+	@Setter	@Parameter(property = "k3s.kubectl.timeout", defaultValue = "30")
 	private int kubectlTimeout;
 
 	/** Timeout in seconds to wait for pods getting ready. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
+	@Setter	@Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
 	private int podTimeout;
 
 	/** Command to use for applying manifest files. Will process the directory recursively by default. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -R -f .")
+	@Setter	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -R -f .")
 	private String command;
 
 	/** `kubectl` to use on host. */
-	@Setter
-	@Parameter(property = "k3s.kubectl.path")
+	@Setter	@Parameter(property = "k3s.kubectl.path")
 	private String kubectlPath;
 
 	/** Skip applying kubectl manifests. */
-	@Setter
-	@Parameter(property = "k3s.skipKubectl", defaultValue = "false")
+	@Setter	@Parameter(property = "k3s.skipKubectl", defaultValue = "false")
 	private boolean skipKubectl;
 
 	@Override
