@@ -45,8 +45,8 @@ public class KubectlMojo extends K3sMojo {
 	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
 	private int podTimeout;
 
-	/** Command to use for applying kustomize files. */
-	@Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
+	/** Command to use for applying manifest files. Will process the directory recursively by default. */
+	@Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -R -f .")
 	private String command;
 
 	/** `kubectl` to use on host. */
