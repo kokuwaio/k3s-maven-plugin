@@ -58,18 +58,11 @@ public class KubectlMojo extends K3sMojo {
 	private int podTimeout;
 
 	/**
-	 * Command to use for applying kustomize files.
+	 * Command to use for applying manifest files. Will process the directory recursively by default.
 	 */
 	@Setter
-	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
+	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -R -f .")
 	private String command;
-
-	/**
-	 * Should kubectl process the directory in -f recursively?
-	 */
-	@Setter
-	@Parameter(property = "k3s.kubectl.applyRecursive", defaultValue = "true")
-	private boolean applyRecursive;
 
 	/**
 	 * `kubectl` to use on host.
@@ -115,7 +108,6 @@ public class KubectlMojo extends K3sMojo {
 		}
 
 		// execute command
-		command = buildCommand(command, applyRecursive);
 
 		log.info("Execute: {}", command);
 		var result = kubectlPath == null ? execDocker() : execLocal();
@@ -140,13 +132,6 @@ public class KubectlMojo extends K3sMojo {
 				.until(() -> kubernetes.isDeploymentsReady()
 						&& kubernetes.isStatefulSetsReady()
 						&& kubernetes.isPodsReady());
-	}
-
-	private String buildCommand(String command, boolean applyRecursive) {
-		if (applyRecursive) {
-			return command + " -R";
-		}
-		return command;
 	}
 
 	private ExecResult execDocker() throws MojoExecutionException {
