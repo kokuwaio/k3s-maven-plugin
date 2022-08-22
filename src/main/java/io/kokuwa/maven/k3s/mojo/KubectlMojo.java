@@ -29,32 +29,60 @@ public class KubectlMojo extends K3sMojo {
 	private static final Pattern PATTERN = Pattern
 			.compile("customresourcedefinition\\.apiextensions\\.k8s\\.io/.* created");
 
-	/** Stream logs of `kubectl` to maven logger. */
-	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
+	/**
+	 * Stream logs of `kubectl` to maven logger.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
 	private boolean streamLogs;
 
-	/** Path where to find manifest files. */
-	@Setter @Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
+	/**
+	 * Path where to find manifest files.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.manifests", defaultValue = "src/test/k3s")
 	private File manifests;
 
-	/** Timeout in seconds to wait for kubectl finished. */
-	@Setter @Parameter(property = "k3s.kubectl.timeout", defaultValue = "30")
+	/**
+	 * Timeout in seconds to wait for kubectl finished.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.timeout", defaultValue = "30")
 	private int kubectlTimeout;
 
-	/** Timeout in seconds to wait for pods getting ready. */
-	@Setter @Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
+	/**
+	 * Timeout in seconds to wait for pods getting ready.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.podTimeout", defaultValue = "1200")
 	private int podTimeout;
 
-	/** Command to use for applying kustomize files. */
-	@Setter @Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
+	/**
+	 * Command to use for applying kustomize files.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.command", defaultValue = "kubectl apply -f .")
 	private String command;
 
-	/** `kubectl` to use on host. */
-	@Setter @Parameter(property = "k3s.kubectl.path")
+	/**
+	 * Should kubectl process the directory in -f recursively?
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.applyRecursive", defaultValue = "true")
+	private boolean applyRecursive;
+
+	/**
+	 * `kubectl` to use on host.
+	 */
+	@Setter
+	@Parameter(property = "k3s.kubectl.path")
 	private String kubectlPath;
 
-	/** Skip applying kubectl manifests. */
-	@Setter @Parameter(property = "k3s.skipKubectl", defaultValue = "false")
+	/**
+	 * Skip applying kubectl manifests.
+	 */
+	@Setter
+	@Parameter(property = "k3s.skipKubectl", defaultValue = "false")
 	private boolean skipKubectl;
 
 	@Override
@@ -87,6 +115,7 @@ public class KubectlMojo extends K3sMojo {
 		}
 
 		// execute command
+		command = buildCommand(command, applyRecursive);
 
 		log.info("Execute: {}", command);
 		var result = kubectlPath == null ? execDocker() : execLocal();
@@ -98,7 +127,8 @@ public class KubectlMojo extends K3sMojo {
 			}
 			if (result.getExitCode() != 0) {
 				result.getMessages().forEach(log::warn);
-				throw new MojoExecutionException("Failed to execute manifests, exit code: " + result.getExitCode());
+				throw new MojoExecutionException("Failed to execute manifests, exit code: " +
+						result.getMessages().toString());
 			}
 		}
 
@@ -110,6 +140,13 @@ public class KubectlMojo extends K3sMojo {
 				.until(() -> kubernetes.isDeploymentsReady()
 						&& kubernetes.isStatefulSetsReady()
 						&& kubernetes.isPodsReady());
+	}
+
+	private String buildCommand(String command, boolean applyRecursive) {
+		if (applyRecursive) {
+			return command + " -R";
+		}
+		return command;
 	}
 
 	private ExecResult execDocker() throws MojoExecutionException {
