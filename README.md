@@ -97,6 +97,12 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 * [Kafka Web UI](https://github.com/obsidiandynamics/kafdrop) available at [http://kafdrop.127.0.0.1.nip.io:9000](http://kafdrop.127.0.0.1.nip.io:9000)
 * [test](/src/it/kafka-with-hostport/src/test/java/io/kokuwa/maven/k3s/KafkaIT.java#L30) uses `http://kafka.127.0.0.1.nip.io:9091` as endpoint
 
+### [Cert-Manager](src/it/cert-manager)
+
+* manifest are generated with `helm template`, using the [helm-maven-plugin](https://github.com/kokuwaio/helm-maven-plugin)
+* manifest are applied with `k3s:kubectl`
+* test itself doesn't assert anything, but success verifies that the job completed and was taken as success.
+
 ### Usage out of Build
 
 Add to your `settings.xml` (or prefix goals with groupId):

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>@project.groupId@</groupId>
+        <artifactId>@project.artifactId@-it</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>@project.artifactId@-it-cert-manager</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.kokuwa.maven</groupId>
+                <artifactId>helm-maven-plugin</artifactId>
+                <version>6.3.0</version>
+                <configuration>
+                    <chartDirectory>${project.basedir}/src/test/charts</chartDirectory>
+                    <skipTemplate>false</skipTemplate>
+                    <additionalArguments>--output-dir ${project.build.directory}/it/cert-manager/k3s</additionalArguments>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-deployment</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>init</goal>
+                            <goal>dependency-build</goal>
+                            <goal>template</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>io.kokuwa.maven</groupId>
+                <artifactId>k3s-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>create</goal>
+                            <goal>start</goal>
+                            <goal>kubectl</goal>
+                            <goal>rm</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <manifests>${project.build.directory}/it/cert-manager/k3s</manifests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
