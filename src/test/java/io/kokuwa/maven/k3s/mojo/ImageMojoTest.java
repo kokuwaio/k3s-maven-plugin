@@ -115,7 +115,7 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertCtrImage(String image, boolean exists) {
 		var container = docker.getContainer().get();
 		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
-		var output = result.getMessages().stream().collect(Collectors.joining());
+		var output = result.getMessages().stream().collect(Collectors.joining("\n"));
 		var images = List.of(output.split("\n"));
 		var normalizedImage = docker.normalizeDockerImage(image);
 		assertEquals(exists, images.contains(docker.normalizeDockerImage(image)),
