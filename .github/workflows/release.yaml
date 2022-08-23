@@ -12,12 +12,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
       - id: pr
         uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
       - id: type
         shell: bash
         run: |
@@ -31,9 +29,8 @@ jobs:
             echo "::set-output name=pr-type::patch"
             exit 0
           fi
-          echo "Failed: No supported label found in '${{ steps.pr.outputs.labels }}'." 
+          echo "Failed: No supported label found in '${{ steps.pr.outputs.labels }}'."
           exit 1
-
       - uses: zwaldowski/semver-release-action@v2
         with:
           dry_run: true
@@ -45,7 +42,7 @@ jobs:
         run: echo "::set-output name=version::$(echo ${VERSION})"
 
   release:
-    needs: [ "generate-version" ]
+    needs: [ generate-version ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -79,7 +76,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
   git-release:
-    needs: [ "generate-version", "release"]
+    needs: [ generate-version, release]
 
     runs-on: ubuntu-latest
 

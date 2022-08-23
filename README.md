@@ -136,7 +136,6 @@ Stop k3s after manual testing:
 mvn k3s:rm
 ```
 
-
 ## Contributing
 
 In order to contribute to the project:
@@ -149,4 +148,4 @@ In order to contribute to the project:
 * make sure that all checks on the PR run successfully
 * resolve all questions
 
-* After the change is merged, your changes will automatically be released.
+After the change is merged, your changes will automatically be released.
