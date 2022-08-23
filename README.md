@@ -103,7 +103,6 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 * manifest are applied with `k3s:kubectl`
 * test itself doesn't assert anything, but success verifies that the job completed and was taken as success.
 
-
 ### Usage out of Build
 
 Add to your `settings.xml` (or prefix goals with groupId):
