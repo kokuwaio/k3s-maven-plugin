@@ -49,8 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GIT_ACTION_TOKEN }}
 
       - uses: actions/setup-java@v3
         with:
