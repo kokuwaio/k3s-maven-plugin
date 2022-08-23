@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           
-          if [[ " ${'${{ steps.pr.outputs.labels }}'[*]} " =~ "bug" ]]; then
+          if [[ "${{ steps.pr.outputs.labels }}" =~ "bug" ]]; then
             echo "Found"
           fi
           echo "not found"
