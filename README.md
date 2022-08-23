@@ -135,3 +135,18 @@ Stop k3s after manual testing:
 ```sh
 mvn k3s:rm
 ```
+
+
+## Contributing
+
+In order to contribute to the project:
+
+* create a fork and apply your changes
+* open a PullRequest and apply at least one of the following labels:
+  * ```patch```: In case the change is only a small bug-fix or a dependency update
+  * ```minor```: If you contribute a new feature or a bigger bug-fix. :warning: If this is a breaking change, do not use minor.
+  * ```major```: In case of breaking changes or big refactorings, use major.
+* make sure that all checks on the PR run successfully
+* resolve all questions
+
+* After the change is merged, your changes will automatically be released.
