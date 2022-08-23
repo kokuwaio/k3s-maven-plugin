@@ -1,6 +1,7 @@
 name: Release
 
-on: workflow_dispatch
+on:
+  pull_request: {}
 
 jobs:
   generate-version:
@@ -20,5 +21,7 @@ jobs:
       - id: type
         shell: bash
         run: |
-          
-          echo ${{ steps.pr.outputs.labels }}
+          if [[ " ${${{ steps.pr.outputs.labels }}[*]} " =~ " bug " ]]; then
+            echo "Found"
+          fi
+          echo "not found"
