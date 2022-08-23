@@ -185,7 +185,7 @@ public class ImageMojo extends K3sMojo {
 
 	private List<String> getCtrImages(Container container) throws MojoExecutionException {
 		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
-		var output = result.getMessages().stream().collect(Collectors.joining());
+		var output = result.getMessages().stream().collect(Collectors.joining("\n"));
 		var images = List.of(output.split("\n"));
 		if (log.isDebugEnabled()) {
 			images.forEach(image -> log.debug("Found ctr image: {}", image));
