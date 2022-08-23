@@ -20,4 +20,5 @@ jobs:
       - id: type
         shell: bash
         run: |
+          
           echo ${{ steps.pr.outputs.labels }}
