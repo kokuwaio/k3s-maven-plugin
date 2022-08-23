@@ -43,3 +43,34 @@ jobs:
       - name: Set version output
         id: out
         run: echo "::set-output name=version::$(echo ${VERSION})"
+
+  build:
+    needs: [ "generate-version" ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GIT_ACTION_TOKEN }}
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - run: mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
+
+  git-release:
+    needs: [ "generate-version", "build"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ needs.generate-version.outputs.version }}
+          prerelease: false
+          title: ${{ needs.generate-version.outputs.version }}
