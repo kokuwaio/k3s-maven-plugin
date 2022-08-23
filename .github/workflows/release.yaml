@@ -21,8 +21,25 @@ jobs:
       - id: type
         shell: bash
         run: |
-          
-          if [[ "${{ steps.pr.outputs.labels }}" =~ "bug" ]]; then
-            echo "Found"
+          if [[ "${{ steps.pr.outputs.labels }}" =~ "major" ]]; then
+            echo "::set-output name=pr-type::major"
+            exit 0
+          elif [[ "${{ steps.pr.outputs.labels }}" =~ "minor" ]]; then
+            echo "::set-output name=pr-type::minor"
+            exit 0
+          elif [[ "${{ steps.pr.outputs.labels }}" =~ "patch" ]]; then
+            echo "::set-output name=pr-type::patch"
+            exit 0
           fi
-          echo "not found"
+          echo "Failed: No supported label found in '${{ steps.pr.outputs.labels }}'." 
+          exit 1
+
+      - uses: zwaldowski/semver-release-action@v2
+        with:
+          dry_run: true
+          bump: ${{ steps.type.outputs.pr-type }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version output
+        id: out
+        run: echo "::set-output name=version::$(echo ${VERSION})"
