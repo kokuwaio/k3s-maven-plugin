@@ -32,7 +32,7 @@
 		<version.org.apache.maven.plugins.resources>@version.org.apache.maven.plugins.resources@</version.org.apache.maven.plugins.resources>
 		<version.org.apache.maven.plugins.surefire>@version.org.apache.maven.plugins.surefire@</version.org.apache.maven.plugins.surefire>
 		<version.org.codehaus.mojo.tidy>@version.org.codehaus.mojo.tidy@</version.org.codehaus.mojo.tidy>
-		<version.io.kokuwa.maven.helm>6.3.0</version.io.kokuwa.maven.helm>
+		<version.io.kokuwa.maven.helm>6.4.0</version.io.kokuwa.maven.helm>
 		<version.io.kokuwa.maven.k3s>@project.version@</version.io.kokuwa.maven.k3s>
 
 		<!-- dependencies -->
