@@ -12,7 +12,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import lombok.Setter;
 
 /**
- * Mojo to remove k3s docker container.
+ * Mojo to remove k3s container.
  */
 @Mojo(name = "rm", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class RemoveMojo extends K3sMojo {

@@ -8,7 +8,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import lombok.Setter;
 
 /**
- * Mojo for stopping k3s.
+ * Mojo for stopping k3s container.
  */
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class StopMojo extends K3sMojo {
