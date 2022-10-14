@@ -75,7 +75,7 @@ public class ImageMojo extends K3sMojo {
 
 		var existingImages = getCtrImages(container);
 		var tasks = new HashSet<Callable<Boolean>>();
-		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(container, existingImages, requestedImage)));
+		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(container, requestedImage)));
 		tarFiles.forEach(tarFile -> tasks.add(() -> tar(container, tarFile)));
 		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(container, existingImages, requestedImage)));
 
@@ -138,12 +138,7 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	private boolean docker(Container container, List<String> existingImages, String image) {
-
-		if (existingImages.contains(image)) {
-			log.debug("Image {} found in ctr, skip copy from docker", image);
-			return true;
-		}
+	private boolean docker(Container container, String image) {
 
 		// pull image
 
