@@ -9,11 +9,17 @@ import lombok.Setter;
 
 /**
  * Mojo for stopping k3s container.
+ *
+ * @since 0.1.0
  */
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class StopMojo extends K3sMojo {
 
-	/** Skip stoppping of k3s container. */
+	/**
+	 * Skip stoppping of k3s container.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.skipStop", defaultValue = "false")
 	private boolean skipStop;
 

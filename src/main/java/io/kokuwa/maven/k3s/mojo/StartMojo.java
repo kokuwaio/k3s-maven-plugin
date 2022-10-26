@@ -19,27 +19,49 @@ import lombok.Setter;
 
 /**
  * Mojo for start k3s container.
+ *
+ * @since 0.1.0
  */
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class StartMojo extends K3sMojo {
 
-	/** Stream logs of `k3s` to maven logger. */
+	/**
+	 * Stream logs of k3s to maven logger.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
 	private boolean streamLogs;
 
-	/** Timeout in seconds to wait for nodes getting ready. */
+	/**
+	 * Timeout in seconds to wait for nodes getting ready.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.nodeTimeout", defaultValue = "120")
 	private int nodeTimeout;
 
-	/** Timeout in seconds to wait for pods getting ready. */
+	/**
+	 * Timeout in seconds to wait for pods getting ready.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
 	private int podTimeout;
 
-	/** Wait for pods getting ready. */
+	/**
+	 * Wait for pods getting ready.
+	 *
+	 * @since 0.2.0
+	 */
 	@Setter @Parameter(property = "k3s.podWait", defaultValue = "false")
 	private boolean podWait;
 
-	/** Skip starting of k3s container. */
+	/**
+	 * Skip starting of k3s container.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.skipStart", defaultValue = "false")
 	private boolean skipStart;
 

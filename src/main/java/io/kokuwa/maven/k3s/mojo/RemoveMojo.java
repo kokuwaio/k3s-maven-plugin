@@ -13,15 +13,25 @@ import lombok.Setter;
 
 /**
  * Mojo to remove k3s container.
+ *
+ * @since 0.1.0
  */
 @Mojo(name = "rm", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)
 public class RemoveMojo extends K3sMojo {
 
-	/** Delete not only docker container, delete also cached data. */
+	/**
+	 * Delete not only docker container, delete also cached data.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.includeCache", defaultValue = "false")
 	private boolean includeCache;
 
-	/** Skip remove of k3s container. */
+	/**
+	 * Skip remove of k3s container.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.skipRm", defaultValue = "false")
 	private boolean skipRm;
 
