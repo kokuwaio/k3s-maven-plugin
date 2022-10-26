@@ -16,60 +16,114 @@ import io.kokuwa.maven.k3s.util.Await;
 import lombok.Setter;
 
 /**
- * Mojo for create and start k3s.
+ * Mojo for create k3s docker container.
+ *
+ * @since 0.3.0
  */
 @Mojo(name = "create", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class CreateMojo extends K3sMojo {
 
-	/** k3s image registry. */
+	/**
+	 * k3s image registry.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
 
-	/** k3s image repository. */
+	/**
+	 * k3s image repository.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "rancher/k3s")
 	private String imageRepository = "rancher/k3s";
 
-	/** k3s image tag. */
+	/**
+	 * k3s image tag.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.imageTag")
 	private String imageTag;
 
-	/** Disable servicelb. */
+	/**
+	 * Disable servicelb.
+	 *
+	 * @since 0.4.0
+	 */
 	@Setter @Parameter(property = "k3s.disableServicelb", defaultValue = "false")
 	private boolean disableServicelb;
 
-	/** Disable helm controller. */
+	/**
+	 * Disable helm controller.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.disableHelmController", defaultValue = "true")
 	private boolean disableHelmController;
 
-	/** Disable local storage. */
+	/**
+	 * Disable local storage.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.disableLocalStorage", defaultValue = "true")
 	private boolean disableLocalStorage;
 
-	/** Disable metrics-server. */
+	/**
+	 * Disable metrics-server.
+	 *
+	 * @since 0.4.0
+	 */
 	@Setter @Parameter(property = "k3s.disableMetricsServer", defaultValue = "true")
 	private boolean disableMetricsServer;
 
-	/** Disable traefik. */
+	/**
+	 * Disable traefik.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.disableTraefik", defaultValue = "true")
 	private boolean disableTraefik;
 
-	/** Disable cloud-controller. */
+	/**
+	 * Disable cloud-controller.
+	 *
+	 * @since 0.4.0
+	 */
 	@Setter @Parameter(property = "k3s.disableCloudController", defaultValue = "true")
 	private boolean disableCloudController;
 
-	/** Disable network-policy. */
+	/**
+	 * Disable network-policy.
+	 *
+	 * @since 0.4.0
+	 */
 	@Setter @Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
 	private boolean disableNetworkPolicy;
 
-	/** Additional port bindings e.g. `8080:8080`. */
+	/**
+	 * Additional port bindings e.g. 8080:8080.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
 
-	/** KubeApi port to expose to host. */
+	/**
+	 * KubeApi port to expose to host.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private int portKubeApi;
 
-	/** Skip creation of k3s container. */
+	/**
+	 * Skip creation of k3s container.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.skipCreate", defaultValue = "false")
 	private boolean skipCreate;
 
