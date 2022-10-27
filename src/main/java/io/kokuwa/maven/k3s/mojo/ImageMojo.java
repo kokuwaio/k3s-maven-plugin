@@ -26,27 +26,49 @@ import lombok.Setter;
 
 /**
  * Import images into k3s containerd.
+ *
+ * @since 0.3.0
  */
 @Mojo(name = "image", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
 public class ImageMojo extends K3sMojo {
 
-	/** Download given images via `ctr image pull` inside k3s container. */
+	/**
+	 * Download given images via "ctr image pull" inside k3s container.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.ctrImages")
 	private List<String> ctrImages = new ArrayList<>();
 
-	/** Import given tar files as images via `ctr image import` inside k3s container. */
+	/**
+	 * Import given tar files as images via "ctr image import" inside k3s container.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.tarFiles")
 	private List<String> tarFiles = new ArrayList<>();
 
-	/** Copy given images from docker deamon via `ctr image import` inside k3s container. */
+	/**
+	 * Copy given images from docker deamon via "ctr image import" inside k3s container.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.dockerImages")
 	private List<String> dockerImages = new ArrayList<>();
 
-	/** Timout for `ctr image pull` or `docker pull` in seconds. */
+	/**
+	 * Timout for "ctr image pull" or "docker pull" in seconds.
+	 *
+	 * @since 0.4.0
+	 */
 	@Setter @Parameter(property = "k3s.pullTimeout", defaultValue = "1200")
 	private int pullTimeout;
 
-	/** Skip starting of k3s container. */
+	/**
+	 * Skip starting of k3s container.
+	 *
+	 * @since 0.3.0
+	 */
 	@Setter @Parameter(property = "k3s.skipImage", defaultValue = "false")
 	private boolean skipImage;
 
