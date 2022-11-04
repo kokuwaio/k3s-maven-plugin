@@ -198,7 +198,7 @@ public class CreateMojo extends K3sMojo {
 		}
 		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
 
-		var ports = new ArrayList(portBindings);
+		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
 		docker.createContainer(image, getMountDir(), getRancherDir(), ports, command);
 	}
