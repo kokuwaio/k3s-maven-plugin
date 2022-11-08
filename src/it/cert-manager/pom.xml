@@ -18,7 +18,7 @@
 				<configuration>
 					<chartDirectory>${project.basedir}/src/test/charts</chartDirectory>
 					<skipTemplate>false</skipTemplate>
-					<additionalArguments>--output-dir ${project.build.directory}/it/cert-manager/k3s</additionalArguments>
+					<templateOutputDir>${project.build.directory}/it/cert-manager/k3s</templateOutputDir>
 				</configuration>
 				<executions>
 					<execution>
