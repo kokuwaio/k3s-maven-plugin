@@ -3,16 +3,36 @@ updates:
   - package-ecosystem: maven
     directory: /
     schedule:
-      interval: daily
+      interval: monthly
+      day: monday
+      # github parses time without quotes to int
+      # yamllint disable-line rule:quoted-strings
+      time: "09:00"
+      timezone: Europe/Berlin
     ignore:
       # minimal maven version is fixed
       - dependency-name: org.apache.maven:maven-plugin-api
       - dependency-name: org.apache.maven:maven-settings
+      # avoid slf4j 2.x
+      - dependency-name: org.slf4j:slf4j-api
+        update-types: [version-update:semver-major]
+      - dependency-name: org.slf4j:slf4j-simple
+        update-types: [version-update:semver-major]
   - package-ecosystem: maven
     directory: /src/it
     schedule:
-      interval: daily
+      interval: monthly
+      day: monday
+      # github parses time without quotes to int
+      # yamllint disable-line rule:quoted-strings
+      time: "09:00"
+      timezone: Europe/Berlin
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+      day: monday
+      # github parses time without quotes to int
+      # yamllint disable-line rule:quoted-strings
+      time: "09:00"
+      timezone: Europe/Berlin

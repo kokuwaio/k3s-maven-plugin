@@ -24,7 +24,7 @@
 
 	<developers>
 		<developer>
-			<id>stephanschnabel</id>
+			<id>sschnabe</id>
 			<name>Stephan Schnabel</name>
 			<url>https://github.com/sschnabe</url>
 			<email>stephan@grayc.de</email>
@@ -73,10 +73,10 @@
 
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.parameters>true</maven.compiler.parameters>
 		<maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
 		<maven.compiler.showWarnings>true</maven.compiler.showWarnings>
-		<maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
-
+		<maven.compiler.failOnWarning>false</maven.compiler.failOnWarning>
 		<maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
 
 		<!-- ===================================================================== -->

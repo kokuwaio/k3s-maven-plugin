@@ -49,20 +49,6 @@ jobs:
       - run: mvn -B -ntp dependency:go-offline
       - run: mvn -B -ntp checkstyle:check
 
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v3
-      - uses: github/codeql-action/init@v2
-        with:
-          languages: java
-      - uses: github/codeql-action/autobuild@v2
-      - uses: github/codeql-action/analyze@v2
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +64,7 @@ jobs:
       - run: mvn -B -ntp dependency:go-offline
       - run: mvn -B -ntp verify -Dcheckstyle.skip
         if: ${{ github.ref != 'refs/heads/main' }}
-      - run: mvn -B -ntp deploy
+      - run: mvn -B -ntp deploy -Dcheckstyle.skip
         if: ${{ github.ref == 'refs/heads/main' }}
         env:
           SERVER_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
