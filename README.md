@@ -133,7 +133,7 @@ Now you can access this urls:
 Use external `kubectl`:
 
 ```sh
-export KUBECONFIG=/tmp/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces
+export KUBECONFIG=~/.kube/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces
 ```
 
 Stop k3s after manual testing:

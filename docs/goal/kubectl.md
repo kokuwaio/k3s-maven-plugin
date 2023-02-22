@@ -4,7 +4,7 @@ Runs kubectl commands, applies Kubernetes manifest files per default.
 
 | Name | User Property | Description | Default |
 | -----| ------------- | ----------- | ------- |
-| `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations. | `java.io.tmpdir` |
+| `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations (mounted to `/var/lib/rancher/k3s/agent`). | `~/.kube/k3s-maven-plugin` |
 | `manifests` | `k3s.kubectl.manifests` | Path where to find manifest files to apply. | src/test/k3s |
 | `command` | `k3s.kubectl.command` | Command to execute. | kubectl apply -R -f . |
 | `kubectlTimeout` | `k3s.kubectl.timeout` | Timeout in seconds to wait for kubectl finished. | 30 |
