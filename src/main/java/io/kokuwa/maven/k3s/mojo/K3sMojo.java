@@ -25,7 +25,7 @@ public abstract class K3sMojo extends AbstractMojo {
 	final Docker docker = new Docker();
 
 	/** Cachedir mounted to `/var/lib/rancher/k3s/agent`. */
-	@Setter @Parameter(property = "k3s.cacheDir")
+	@Setter @Parameter(property = "k3s.cacheDir", defaultValue = "${user.home}/.kube/k3s-maven-plugin")
 	private String cacheDir;
 
 	/** Skip plugin. */
@@ -51,9 +51,7 @@ public abstract class K3sMojo extends AbstractMojo {
 	// directories
 
 	Path getCacheDir() {
-		return cacheDir == null
-				? Paths.get(System.getProperty("java.io.tmpdir")).resolve("k3s-maven-plugin")
-				: Paths.get(cacheDir);
+		return Paths.get(cacheDir);
 	}
 
 	Path getMountDir() {

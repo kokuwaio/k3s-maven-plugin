@@ -73,8 +73,9 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 				var defaultValue = parameter.getDefaultValue();
 
 				if (defaultValue != null) {
-					log.trace("{}#{} - set default value: {}", mojoId, name, defaultValue);
-					setMojoParameterValue(mojo, field, defaultValue);
+					var replacedDefaultValue = defaultValue.replace("${user.home}", System.getProperty("user.home"));
+					log.trace("{}#{} - set default value: {}", mojoId, name, replacedDefaultValue);
+					setMojoParameterValue(mojo, field, replacedDefaultValue);
 				} else if (parameter.isRequired()) {
 					throw new ParameterResolutionException(
 							"Failed to setup mojo " + mojoId + ". Parameter " + name + " is required.");

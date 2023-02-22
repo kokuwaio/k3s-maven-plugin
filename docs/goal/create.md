@@ -4,7 +4,7 @@ Create k3s container.
 
 | Name | User Property | Description | Default |
 | -----| ------------- | ----------- | ------- |
-| `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations. | `java.io.tmpdir` |
+| `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations (mounted to `/var/lib/rancher/k3s/agent`). | `~/.kube/k3s-maven-plugin` |
 | `imageRegistry` | `k3s.imageRegistry` | k3s image registry | |
 | `imageRepository` | `k3s.imageRepository` | k3s image repository | rancher/k3s |
 | `imageTag` | `k3s.imageTag` | k3s image tag | v1.24.3-k3s1 |
