@@ -16,6 +16,7 @@
 				<groupId>io.kokuwa.maven</groupId>
 				<artifactId>helm-maven-plugin</artifactId>
 				<configuration>
+					<helmVersion>3.11.1</helmVersion>
 					<chartDirectory>${project.basedir}/src/test/charts</chartDirectory>
 					<skipTemplate>false</skipTemplate>
 					<additionalArguments>--output-dir ${project.build.directory}/it/cert-manager/k3s</additionalArguments>
