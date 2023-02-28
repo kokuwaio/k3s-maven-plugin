@@ -1,6 +1,9 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,14 +27,29 @@ public class CreateMojoTest extends AbstractTest {
 	void withFailIfExists(CreateMojo mojo) {
 		assertDoesNotThrow(() -> mojo.execute());
 		var msg = assertThrows(MojoExecutionException.class, () -> mojo.setFailIfExists(true).execute()).getMessage();
-		assertTrue(msg.startsWith("Container with id '"), "invalid message: " + msg);
-		assertTrue(msg.endsWith("' found. Please remove that container."), "invalid message: " + msg);
+		assertAll("invalid message: " + msg,
+				() -> assertTrue(msg.startsWith("Container with id '")),
+				() -> assertTrue(msg.endsWith(
+						"' found. Please remove that container or set 'k3s.failIfExists' to false.")));
+	}
+
+	@DisplayName("with replace on existing container")
+	@Test
+	void withReplaceIfExists(CreateMojo mojo) {
+		assertDoesNotThrow(() -> mojo.execute());
+		var containerBefore = docker.getContainer();
+		assertDoesNotThrow(() -> mojo.setFailIfExists(false).setReplaceIfExists(true).execute());
+		var containerAfter = docker.getContainer();
+		assertNotEquals(containerBefore.get().getId(), containerAfter.get().getId(), "container was not replaced");
 	}
 
 	@DisplayName("without fail on existing container")
 	@Test
 	void withoutFailIfExists(CreateMojo mojo) {
 		assertDoesNotThrow(() -> mojo.execute());
-		assertDoesNotThrow(() -> mojo.setFailIfExists(false).execute());
+		var containerBefore = docker.getContainer();
+		assertDoesNotThrow(() -> mojo.setFailIfExists(false).setReplaceIfExists(false).execute());
+		var containerAfter = docker.getContainer();
+		assertEquals(containerBefore.get().getId(), containerAfter.get().getId(), "container shouldn't be replaced");
 	}
 }
