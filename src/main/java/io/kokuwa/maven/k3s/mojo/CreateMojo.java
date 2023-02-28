@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -120,6 +121,22 @@ public class CreateMojo extends K3sMojo {
 	private int portKubeApi;
 
 	/**
+	 * Fail if docker container from previous run exists.
+	 *
+	 * @since 0.8.0
+	 */
+	@Setter @Parameter(property = "k3s.failIfExists", defaultValue = "true")
+	private boolean failIfExists;
+
+	/**
+	 * Replace existing docker container from previous run.
+	 *
+	 * @since 0.8.0
+	 */
+	@Setter @Parameter(property = "k3s.replaceIfExists", defaultValue = "false")
+	private boolean replaceIfExists;
+
+	/**
 	 * Skip creation of k3s container.
 	 *
 	 * @since 0.3.0
@@ -136,8 +153,17 @@ public class CreateMojo extends K3sMojo {
 
 		var container = docker.getContainer();
 		if (container.isPresent()) {
-			log.info("Container with id '{}' found, skip creating", container.get().getId());
-			return;
+			var containerId = container.get().getId();
+			if (failIfExists) {
+				throw new MojoExecutionException("Container with id '" + containerId
+						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
+			} else if (replaceIfExists) {
+				log.info("Container with id '{}' found, replacing", containerId);
+				docker.removeContainer(container.get());
+			} else {
+				log.warn("Container with id '{}' found, skip creating", containerId);
+				return;
+			}
 		}
 
 		// get image name
@@ -163,9 +189,16 @@ public class CreateMojo extends K3sMojo {
 			log.info("Docker image {} pulled", image);
 		}
 
-		// check mount path for manifests and kubectl file
+		// check mount path for manifests and kubectl file, deletes leftover files from previous run
 
 		try {
+			try {
+				if (Files.exists(getMountDir())) {
+					FileUtils.forceDelete(getMountDir().toFile());
+				}
+			} catch (IOException e) {
+				throw new MojoExecutionException("Failed to delete directory at " + getMountDir(), e);
+			}
 			Files.createDirectories(getManifestsDir());
 			Files.createDirectories(getRancherDir());
 		} catch (IOException e) {
