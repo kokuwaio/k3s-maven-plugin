@@ -87,7 +87,7 @@
 
 		<version.org.apache.maven.plugins.checkstyle>3.2.1</version.org.apache.maven.plugins.checkstyle>
 		<version.org.apache.maven.plugins.clean>3.2.0</version.org.apache.maven.plugins.clean>
-		<version.org.apache.maven.plugins.compiler>3.10.1</version.org.apache.maven.plugins.compiler>
+		<version.org.apache.maven.plugins.compiler>3.11.0</version.org.apache.maven.plugins.compiler>
 		<version.org.apache.maven.plugins.dependency>3.5.0</version.org.apache.maven.plugins.dependency>
 		<version.org.apache.maven.plugins.deploy>3.1.0</version.org.apache.maven.plugins.deploy>
 		<version.org.apache.maven.plugins.gpg>3.0.1</version.org.apache.maven.plugins.gpg>
@@ -101,12 +101,12 @@
 		<version.org.apache.maven.plugins.surefire>3.0.0-M9</version.org.apache.maven.plugins.surefire>
 		<version.org.codehaus.mojo.tidy>1.2.0</version.org.codehaus.mojo.tidy>
 		<version.org.sonatype.plugins.nexus-staging>1.6.13</version.org.sonatype.plugins.nexus-staging>
-		<version.com.puppycrawl.tools.checkstyle>10.7.0</version.com.puppycrawl.tools.checkstyle>
+		<version.com.puppycrawl.tools.checkstyle>10.8.0</version.com.puppycrawl.tools.checkstyle>
 		<version.io.kokuwa.checkstyle>0.5.6</version.io.kokuwa.checkstyle>
 
 		<!-- dependencies -->
 
-		<version.org.apache.maven.plugin.tools>3.7.1</version.org.apache.maven.plugin.tools>
+		<version.org.apache.maven.plugin.tools>3.8.1</version.org.apache.maven.plugin.tools>
 		<version.org.junit.jupiter>5.9.2</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.26</version.org.projectlombok>
 		<version.org.slf4j>1.7.36</version.org.slf4j>
@@ -309,6 +309,7 @@
 						<tagNameFormat>@{project.version}</tagNameFormat>
 						<releaseProfiles>release</releaseProfiles>
 						<localCheckout>true</localCheckout>
+						<scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [no ci]</scmReleaseCommitComment>
 						<signTag>true</signTag>
 						<preparationGoals>clean</preparationGoals>
 						<goals>clean deploy -DskipTests -Dinvoker.skip</goals>
