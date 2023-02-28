@@ -17,4 +17,5 @@ Create k3s container.
 | `disableTraefik` | `k3s.disableTraefik` | Disable traefik. | true |
 | `disableCloudController` | `k3s.disableCloudController` | Disable cloud-controller. | true |
 | `disableNetworkPolicy` | `k3s.disableNetworkPolicy` | Disable network-policy. | true |
+| `failIfExists` | `k3s.failIfExists` | Fail if docker container from previous run exists. E.g. with `mvn k3s:rm` | true |
 | `skipStart` | `k3s.skipStart` | Skip starting k3s container. | false |

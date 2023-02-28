@@ -12,6 +12,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.github.dockerjava.api.model.Container;
+
 import io.kokuwa.maven.k3s.util.Await;
 import lombok.Setter;
 
@@ -120,6 +122,14 @@ public class CreateMojo extends K3sMojo {
 	private int portKubeApi;
 
 	/**
+	 * Fail if docker container from previous run exists.
+	 *
+	 * @since 0.8.0
+	 */
+	@Setter @Parameter(property = "k3s.failIfExists", defaultValue = "true")
+	private boolean failIfExists;
+
+	/**
 	 * Skip creation of k3s container.
 	 *
 	 * @since 0.3.0
@@ -134,9 +144,13 @@ public class CreateMojo extends K3sMojo {
 			return;
 		}
 
-		var container = docker.getContainer();
-		if (container.isPresent()) {
-			log.info("Container with id '{}' found, skip creating", container.get().getId());
+		var containerId = docker.getContainer().map(Container::getId).orElse(null);
+		if (containerId != null) {
+			if (failIfExists) {
+				throw new MojoExecutionException(
+						"Container with id '" + containerId + "' found. Please remove that container.");
+			}
+			log.warn("Container with id '{}' found, skip creating", containerId);
 			return;
 		}
 
