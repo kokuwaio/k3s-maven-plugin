@@ -106,7 +106,7 @@
 		<!-- dependencies -->
 
 		<version.org.apache.maven.plugin.tools>3.8.1</version.org.apache.maven.plugin.tools>
-		<version.org.junit.jupiter>5.9.2</version.org.junit.jupiter>
+		<version.org.junit.jupiter>5.9.3</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.26</version.org.projectlombok>
 		<version.org.slf4j>1.7.36</version.org.slf4j>
 		<version.io.kubernetes.client>18.0.0</version.io.kubernetes.client>
