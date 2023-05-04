@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import io.kokuwa.maven.k3s.AgentCacheMode;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -119,18 +121,22 @@ public class Docker {
 
 	public Container createContainer(
 			String dockerImage,
+			AgentCacheMode agentCache,
 			Path mountDir,
-			Path rancherDir,
+			Path agentDir,
 			List<String> portBindings,
 			List<String> command) {
 
 		// host config
 
+		var binds = new ArrayList<Bind>();
+		binds.add(new Bind(mountDir.toString(), new Volume("/k3s")));
+		if (agentCache == AgentCacheMode.HOST) {
+			binds.add(new Bind(agentDir.toString(), new Volume("/var/lib/rancher/k3s/agent")));
+		}
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
-				.withBinds(
-						new Bind(mountDir.toString(), new Volume("/k3s")),
-						new Bind(rancherDir.toString(), new Volume("/var/lib/rancher/k3s/agent")))
+				.withBinds(binds)
 				.withPortBindings(portBindings.stream().map(PortBinding::parse).collect(Collectors.toList()));
 
 		// container

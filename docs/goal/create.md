@@ -19,4 +19,5 @@ Create k3s container.
 | `disableNetworkPolicy` | `k3s.disableNetworkPolicy` | Disable network-policy. | true |
 | `failIfExists` | `k3s.failIfExists` | Fail if docker container from previous run exists. E.g. with `mvn k3s:rm` | true |
 | `replaceIfExists` | `k3s.replaceIfExists` | Replace existing docker container from previous run. | false |
+| `agentCache` | `k3s.agentCache` | Cache mode for k3s agent directory. | [NONE](src/main/java/io/kokuwa/maven/k3s/AgentCacheMode.java#15) |
 | `skipStart` | `k3s.skipStart` | Skip starting k3s container. | false |

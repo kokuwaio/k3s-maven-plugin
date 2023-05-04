@@ -58,10 +58,6 @@ public abstract class K3sMojo extends AbstractMojo {
 		return getCacheDir().resolve("mount");
 	}
 
-	Path getRancherDir() {
-		return getCacheDir().resolve("rancher");
-	}
-
 	Path getManifestsDir() {
 		return getMountDir().resolve("manifests");
 	}
