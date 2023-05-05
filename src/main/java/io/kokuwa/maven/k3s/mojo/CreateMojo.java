@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import io.kokuwa.maven.k3s.AgentCacheMode;
 import io.kokuwa.maven.k3s.util.Await;
 import lombok.Setter;
 
@@ -137,6 +139,14 @@ public class CreateMojo extends K3sMojo {
 	private boolean replaceIfExists;
 
 	/**
+	 * Cache mode for k3s agent directory.
+	 *
+	 * @since 0.9.0
+	 */
+	@Setter @Parameter(property = "k3s.agentCache", defaultValue = "NONE")
+	private AgentCacheMode agentCache;
+
+	/**
 	 * Skip creation of k3s container.
 	 *
 	 * @since 0.3.0
@@ -200,7 +210,9 @@ public class CreateMojo extends K3sMojo {
 				throw new MojoExecutionException("Failed to delete directory at " + getMountDir(), e);
 			}
 			Files.createDirectories(getManifestsDir());
-			Files.createDirectories(getRancherDir());
+			if (agentCache == AgentCacheMode.HOST) {
+				Files.createDirectories(getAgentDir());
+			}
 		} catch (IOException e) {
 			throw new MojoExecutionException("Failed to create directories", e);
 		}
@@ -233,6 +245,10 @@ public class CreateMojo extends K3sMojo {
 
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
-		docker.createContainer(image, getMountDir(), getRancherDir(), ports, command);
+		docker.createContainer(image, agentCache, getMountDir(), getAgentDir(), ports, command);
+	}
+
+	private Path getAgentDir() {
+		return getCacheDir().resolve("agent");
 	}
 }

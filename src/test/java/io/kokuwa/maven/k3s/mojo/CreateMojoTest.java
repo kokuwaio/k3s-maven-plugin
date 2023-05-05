@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.AbstractTest;
+import io.kokuwa.maven.k3s.AgentCacheMode;
 
 @DisplayName("mojo: create")
 public class CreateMojoTest extends AbstractTest {
@@ -51,5 +52,17 @@ public class CreateMojoTest extends AbstractTest {
 		assertDoesNotThrow(() -> mojo.setFailIfExists(false).setReplaceIfExists(false).execute());
 		var containerAfter = docker.getContainer();
 		assertEquals(containerBefore.get().getId(), containerAfter.get().getId(), "container shouldn't be replaced");
+	}
+
+	@DisplayName("with agent cache NONE")
+	@Test
+	void withCacheNone(CreateMojo mojo) {
+		assertDoesNotThrow(() -> mojo.setAgentCache(AgentCacheMode.NONE).execute());
+	}
+
+	@DisplayName("with agent cache HOST")
+	@Test
+	void withCacheHost(CreateMojo mojo) {
+		assertDoesNotThrow(() -> mojo.setAgentCache(AgentCacheMode.HOST).execute());
 	}
 }
