@@ -15,6 +15,13 @@ public enum AgentCacheMode {
 	NONE,
 
 	/**
+	 * Mount agent directory from docker volume, images will be reused in newer runs.
+	 *
+	 * @since 0.9.0
+	 */
+	VOLUME,
+
+	/**
 	 * Mount agent directory from host, images will be reused in newer runs.
 	 *
 	 * @since 0.9.0

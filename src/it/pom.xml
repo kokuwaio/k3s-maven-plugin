@@ -116,6 +116,9 @@
 					<groupId>io.kokuwa.maven</groupId>
 					<artifactId>k3s-maven-plugin</artifactId>
 					<version>${version.io.kokuwa.maven.k3s}</version>
+					<configuration>
+						<agentCache>VOLUME</agentCache>
+					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>io.kokuwa.maven</groupId>

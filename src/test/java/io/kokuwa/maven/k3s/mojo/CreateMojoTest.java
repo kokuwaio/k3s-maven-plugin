@@ -60,6 +60,15 @@ public class CreateMojoTest extends AbstractTest {
 		assertDoesNotThrow(() -> mojo.setAgentCache(AgentCacheMode.NONE).execute());
 	}
 
+	@DisplayName("with agent cache VOLUME")
+	@Test
+	void withCacheVolume(CreateMojo mojo) {
+		assertDoesNotThrow(() -> mojo.setAgentCache(AgentCacheMode.VOLUME).execute());
+		assertTrue(docker.isVolumePresent());
+		docker.getContainer().ifPresent(docker::removeContainer);
+		docker.removeVolume();
+	}
+
 	@DisplayName("with agent cache HOST")
 	@Test
 	void withCacheHost(CreateMojo mojo) {

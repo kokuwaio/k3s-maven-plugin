@@ -20,10 +20,13 @@ import org.apache.maven.plugin.MojoExecutionException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
@@ -129,13 +132,24 @@ public class Docker {
 
 		// host config
 
+		var mounts = new ArrayList<Mount>();
+		if (agentCache == AgentCacheMode.VOLUME) {
+			createVolume();
+			mounts.add(new Mount()
+					.withType(MountType.VOLUME)
+					.withSource(K3S_NAME)
+					.withTarget("/var/lib/rancher/k3s/agent"));
+		}
+
 		var binds = new ArrayList<Bind>();
 		binds.add(new Bind(mountDir.toString(), new Volume("/k3s")));
 		if (agentCache == AgentCacheMode.HOST) {
 			binds.add(new Bind(agentDir.toString(), new Volume("/var/lib/rancher/k3s/agent")));
 		}
+
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
+				.withMounts(mounts)
 				.withBinds(binds)
 				.withPortBindings(portBindings.stream().map(PortBinding::parse).collect(Collectors.toList()));
 
@@ -212,5 +226,31 @@ public class Docker {
 		var exitCode = client.inspectExecCmd(execId).exec().getExitCodeLong().intValue();
 		var logs = callback.getMessages();
 		return new ExecResult(exitCode, logs);
+	}
+
+	public boolean isVolumePresent() {
+		try {
+			return client.inspectVolumeCmd(K3S_NAME).exec() != null;
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+
+	public void createVolume() {
+		if (isVolumePresent()) {
+			client.createVolumeCmd().withName(K3S_NAME).exec();
+			log.debug("Cache volume created");
+		} else {
+			log.debug("Reuse existing cache volume");
+		}
+	}
+
+	public void removeVolume() {
+		if (isVolumePresent()) {
+			client.removeVolumeCmd(K3S_NAME).exec();
+			log.debug("Cache volume removed");
+		} else {
+			log.trace("Cache volume not found, skip removing");
+		}
 	}
 }
