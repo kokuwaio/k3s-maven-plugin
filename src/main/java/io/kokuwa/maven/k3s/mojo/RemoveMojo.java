@@ -42,9 +42,12 @@ public class RemoveMojo extends K3sMojo {
 			return;
 		}
 
-		// remove containers
+		// remove containers & volumes
 
 		docker.getContainer().ifPresent(docker::removeContainer);
+		if (includeCache) {
+			docker.removeVolume();
+		}
 
 		// remove obsolete config mounted to container
 
