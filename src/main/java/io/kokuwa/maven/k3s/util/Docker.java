@@ -197,6 +197,7 @@ public class Docker {
 
 	public ExecResult execThrows(Container container, String cmdString, Duration timeout)
 			throws MojoExecutionException {
+		log.trace("Execute command: {}", cmdString);
 		var callback = new DockerLogCallback(log, log.isDebugEnabled());
 		var result = exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback, timeout);
 		if (result.getExitCode() != 0) {
