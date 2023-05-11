@@ -175,6 +175,7 @@ public class CreateMojo extends K3sMojo {
 				return;
 			}
 		}
+		log.info("k3s will be created with agent cache " + agentCache);
 
 		// get image name
 
