@@ -57,6 +57,14 @@ public class ImageMojo extends K3sMojo {
 	private List<String> dockerImages = new ArrayList<>();
 
 	/**
+	 * Always pull docker images or only if not present.
+	 *
+	 * @since 0.10.0
+	 */
+	@Setter @Parameter(property = "k3s.dockerPullAlways", defaultValue = "false")
+	private boolean dockerPullAlways;
+
+	/**
 	 * Timout for "ctr image pull" or "docker pull" in seconds.
 	 *
 	 * @since 0.4.0
@@ -164,8 +172,13 @@ public class ImageMojo extends K3sMojo {
 
 		// pull image
 
-		if (docker.findImage(image).isEmpty()) {
-			log.debug("Image {} not found in docker, pulling ...", image);
+		var imagePresent = docker.findImage(image).isPresent();
+		if (dockerPullAlways || !imagePresent) {
+			if (imagePresent) {
+				log.debug("Image {} found in docker, pull always ...", image);
+			} else {
+				log.debug("Image {} not found in docker, pulling ...", image);
+			}
 			var pull = docker.pullImage(image);
 			try {
 				Await.await("docker pull image '" + image + "'")
