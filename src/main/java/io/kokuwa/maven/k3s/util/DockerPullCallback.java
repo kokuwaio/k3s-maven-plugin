@@ -36,7 +36,7 @@ public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 	public void onNext(PullResponseItem newResponse) {
 		this.response = newResponse;
 		if (response.isErrorIndicated()) {
-			log.error("Image '{}' failed to pull: {}", image, response.getStatus());
+			log.error("Image '{}' failed to pull: {}", image, response.getErrorDetail().getMessage());
 		} else {
 			log.trace("Image '{}' has status {}", image, response.getStatus());
 		}
