@@ -94,6 +94,9 @@ public class ImageMojoTest extends AbstractTest {
 		assertDoesNotThrow(mojo::execute);
 		assertTrue(hasDockerImage(HELLO_WORLD));
 		assertCtrImage(HELLO_WORLD, true);
+
+		mojo.setDockerPullAlways(true);
+		assertDoesNotThrow(mojo::execute);
 	}
 
 	private void assertDockerWithoutImage(ImageMojo mojo) {
