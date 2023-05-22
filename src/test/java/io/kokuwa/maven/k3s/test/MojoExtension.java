@@ -1,18 +1,17 @@
-package io.kokuwa.maven.test;
+package io.kokuwa.maven.k3s.test;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
-import org.codehaus.plexus.util.ReflectionUtils;
 import org.codehaus.plexus.util.xml.XmlStreamReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -23,6 +22,11 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * JUnit extension to provide prepared mojos as test parameter.
+ *
+ * @author stephan.schnabel@posteo.de
+ */
 @Slf4j
 public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
@@ -67,15 +71,12 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			for (var parameter : mojoDescriptor.getParameters()) {
 
 				var name = parameter.getName();
-				var field = ReflectionUtils.getFieldByNameIncludingSuperclasses(name, mojoType);
-				field.setAccessible(true);
-
 				var defaultValue = parameter.getDefaultValue();
 
 				if (defaultValue != null) {
 					var replacedDefaultValue = defaultValue.replace("${user.home}", System.getProperty("user.home"));
 					log.trace("{}#{} - set default value: {}", mojoId, name, replacedDefaultValue);
-					setMojoParameterValue(mojo, field, replacedDefaultValue);
+					setMojoParameterValue(mojo, name, replacedDefaultValue);
 				} else if (parameter.isRequired()) {
 					throw new ParameterResolutionException(
 							"Failed to setup mojo " + mojoId + ". Parameter " + name + " is required.");
@@ -90,19 +91,25 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 		}
 	}
 
-	private void setMojoParameterValue(Mojo mojo, Field field, String value) throws ReflectiveOperationException {
-		if (String.class.equals(field.getType())) {
-			field.set(mojo, value);
-		} else if (Enum.class.isAssignableFrom(field.getType())) {
-			field.set(mojo, Enum.valueOf((Class<Enum>) field.getType(), value));
-		} else if (File.class.equals(field.getType())) {
-			field.set(mojo, new File(value));
-		} else if (boolean.class.equals(field.getType())) {
-			field.set(mojo, Boolean.valueOf(value));
-		} else if (int.class.equals(field.getType())) {
-			field.set(mojo, Integer.valueOf(value));
+	private void setMojoParameterValue(Mojo mojo, String field, String value) throws ReflectiveOperationException {
+
+		var setter = Stream.of(mojo.getClass().getMethods())
+				.filter(m -> m.getName().equalsIgnoreCase("set" + field))
+				.findAny().orElseThrow(() -> new ParameterResolutionException(mojo + " missing field " + field));
+		var type = setter.getParameterTypes()[0];
+
+		if (String.class.equals(type)) {
+			setter.invoke(mojo, value);
+		} else if (Enum.class.isAssignableFrom(type)) {
+			setter.invoke(mojo, Enum.valueOf((Class<Enum>) type, value));
+		} else if (File.class.equals(type)) {
+			setter.invoke(mojo, new File(value));
+		} else if (boolean.class.equals(type)) {
+			setter.invoke(mojo, Boolean.valueOf(value));
+		} else if (int.class.equals(type)) {
+			setter.invoke(mojo, Integer.valueOf(value));
 		} else {
-			fail(field.getName() + " has unknown type: " + field.getType());
+			fail(field + " has unknown type: " + type);
 		}
 	}
 }
