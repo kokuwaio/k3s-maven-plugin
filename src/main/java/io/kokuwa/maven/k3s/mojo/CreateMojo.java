@@ -47,7 +47,7 @@ public class CreateMojo extends K3sMojo {
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.imageTag")
+	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag;
 
 	/**
@@ -179,10 +179,7 @@ public class CreateMojo extends K3sMojo {
 
 		// get image name
 
-		if (imageTag == null) {
-			imageTag = "v1.27.1-k3s1";
-			log.warn("No image tag provided, '{}' will be used. This will change in newer versions.", imageTag);
-		} else if (imageTag.equals("latest")) {
+		if (imageTag.equals("latest")) {
 			log.warn("Using image tag 'latest' is unstable.");
 		}
 		var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
