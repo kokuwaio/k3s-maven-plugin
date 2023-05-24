@@ -63,14 +63,6 @@ public class KubectlMojo extends K3sMojo {
 	private String command;
 
 	/**
-	 * "kubectl" to use on host.
-	 *
-	 * @since 0.3.1
-	 */
-	@Setter @Parameter(property = "k3s.kubectl.path")
-	private String kubectlPath;
-
-	/**
 	 * Skip applying kubectl manifests.
 	 *
 	 * @since 0.2.0
@@ -85,26 +77,30 @@ public class KubectlMojo extends K3sMojo {
 			return;
 		}
 
+		// verify container
+
+		if (getDocker().getContainer().isEmpty()) {
+			throw new MojoExecutionException("No k3s container found");
+		}
+
 		// copy manifests to mounted directory (docker mode only)
 
 		var source = manifests.toPath().toAbsolutePath();
-		if (kubectlPath == null) {
-			var destination = getManifestsDir().toAbsolutePath();
-			try {
-				if (Files.exists(source)) {
-					if (Files.exists(destination)) {
-						FileUtils.forceDelete(destination.toFile());
-					}
-					if (Files.isDirectory(source)) {
-						FileUtils.copyDirectory(source.toFile(), destination.toFile());
-					} else {
-						Files.createDirectories(destination);
-						Files.copy(source, destination.resolve(source.getFileName()));
-					}
+		var destination = getManifestsDir().toAbsolutePath();
+		try {
+			if (Files.exists(source)) {
+				if (Files.exists(destination)) {
+					FileUtils.forceDelete(destination.toFile());
 				}
-			} catch (IOException e) {
-				throw new MojoExecutionException("Failed to copy manifests", e);
+				if (Files.isDirectory(source)) {
+					FileUtils.copyDirectory(source.toFile(), destination.toFile());
+				} else {
+					Files.createDirectories(destination);
+					Files.copy(source, destination.resolve(source.getFileName()));
+				}
 			}
+		} catch (IOException e) {
+			throw new MojoExecutionException("Failed to copy manifests", e);
 		}
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
@@ -114,12 +110,12 @@ public class KubectlMojo extends K3sMojo {
 		// execute command
 
 		getLog().info("Execute: " + command);
-		var result = kubectlPath == null ? execDocker() : execLocal();
+		var result = exec();
 		if (result.getExitCode() != 0) {
 			var crd = result.getMessages().stream().map(PATTERN::matcher).anyMatch(Matcher::matches);
 			if (crd) {
 				getLog().info("Found CRDs created, but kubectl failed. Try again ...");
-				result = kubectlPath == null ? execDocker() : execLocal();
+				result = exec();
 			}
 			if (result.getExitCode() != 0) {
 				result.getMessages().forEach(getLog()::warn);
@@ -137,34 +133,11 @@ public class KubectlMojo extends K3sMojo {
 						&& kubernetes.isPodsReady());
 	}
 
-	private ExecResult execDocker() throws MojoExecutionException {
-
-		var containerOptional = getDocker().getContainer();
-		if (containerOptional.isEmpty()) {
-			throw new MojoExecutionException("No k3s container found");
-		}
-
+	private ExecResult exec() throws MojoExecutionException {
 		var callback = new DockerLogCallback(getLog());
-		return getDocker().exec("kubectl", containerOptional.get(), cmd -> cmd
+		return getDocker().exec("kubectl", getDocker().getContainer().get(), cmd -> cmd
 				.withCmd("/bin/sh", "-c", command)
 				.withWorkingDir("/k3s/manifests")
 				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback, Duration.ofSeconds(kubectlTimeout));
-	}
-
-	private ExecResult execLocal() throws MojoExecutionException {
-
-		var processBuilder = new ProcessBuilder();
-		processBuilder.environment().put("KUBECONFIG", getKubeConfig().toString());
-		processBuilder.command("/bin/sh", "-c", command);
-		processBuilder.directory(manifests);
-
-		try {
-			var process = processBuilder.start();
-			var exitCode = process.waitFor();
-			var logs = List.of(new String(process.getInputStream().readAllBytes()).split("\n"));
-			return new ExecResult(exitCode, logs);
-		} catch (InterruptedException | IOException e) {
-			throw new MojoExecutionException("Failed to execute manifests", e);
-		}
 	}
 }
