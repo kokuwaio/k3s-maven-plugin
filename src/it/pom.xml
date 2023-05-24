@@ -18,7 +18,10 @@
 
 		<maven.compiler.source>@maven.compiler.source@</maven.compiler.source>
 		<maven.compiler.target>@maven.compiler.target@</maven.compiler.target>
-		<maven.compiler.parameters>true</maven.compiler.parameters>
+		<maven.compiler.parameters>@maven.compiler.parameters</maven.compiler.parameters>
+		<maven.compiler.showDeprecation>@maven.compiler.showDeprecation</maven.compiler.showDeprecation>
+		<maven.compiler.showWarnings>@maven.compiler.showWarnings</maven.compiler.showWarnings>
+		<maven.compiler.failOnWarning>@maven.compiler.failOnWarning</maven.compiler.failOnWarning>
 
 		<!-- ===================================================================== -->
 		<!-- ============================= Libaries ============================== -->

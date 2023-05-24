@@ -33,9 +33,13 @@ public abstract class K3sMojo extends AbstractMojo {
 	@Setter @Parameter(property = "k3s.debug", defaultValue = "false")
 	private boolean debug;
 
-	/** Skip plugin. */
+	/**
+	 * Skip plugin.
+	 *
+	 * @since 0.1.0
+	 */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
-	private boolean skip = false;
+	private boolean skip;
 
 	/** Name for the create docker container. */
 	@Setter @Parameter(defaultValue = "k3s-maven-plugin", readonly = true)

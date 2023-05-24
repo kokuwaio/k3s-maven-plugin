@@ -51,7 +51,7 @@
 						</goals>
 						<configuration>
 							<from>
-								<image>gcr.io/distroless/java:11-nonroot</image>
+								<image>gcr.io/distroless/java:${maven.compiler.target}-nonroot</image>
 							</from>
 							<to>
 								<image>${project.artifactId}</image>

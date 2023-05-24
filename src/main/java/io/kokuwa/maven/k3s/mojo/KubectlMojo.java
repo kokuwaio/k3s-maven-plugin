@@ -31,16 +31,6 @@ public class KubectlMojo extends K3sMojo {
 			.compile("customresourcedefinition\\.apiextensions\\.k8s\\.io/.* created");
 
 	/**
-	 * Stream logs of "kubectl" to maven logger.
-	 *
-	 * @since 0.2.0
-	 * @deprecated Removed with 1.0.0
-	 */
-	@Deprecated(since = "0.11.0", forRemoval = true)
-	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
-	private boolean streamLogs;
-
-	/**
 	 * Path where to find manifest files.
 	 *
 	 * @since 0.2.0
@@ -175,16 +165,6 @@ public class KubectlMojo extends K3sMojo {
 			return new ExecResult(exitCode, logs);
 		} catch (InterruptedException | IOException e) {
 			throw new MojoExecutionException("Failed to execute manifests", e);
-		}
-	}
-
-	// setter
-
-	public void setStreamLogs(boolean streamLogs) {
-		this.streamLogs = streamLogs;
-		if (streamLogs == true) {
-			getLog().warn("Used deprecated confuguration `streamLogs`, use `debug` instead");
-			this.setDebug(true);
 		}
 	}
 }
