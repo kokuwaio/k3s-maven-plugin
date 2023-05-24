@@ -75,7 +75,7 @@ public class Await {
 			wait(interval);
 		}
 
-		if (lastException == null) {
+		if (lastException != null) {
 			log.error("Await " + text + " had exception while waiting", lastException);
 		}
 

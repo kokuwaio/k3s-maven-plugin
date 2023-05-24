@@ -10,6 +10,7 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,8 @@ import io.kokuwa.maven.k3s.util.Docker;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public abstract class AbstractTest {
 
-	protected final Docker docker = new Docker(new SystemStreamLog());
+	protected final Log log = new SystemStreamLog();
+	protected final Docker docker = new Docker(log);
 
 	@BeforeEach
 	@AfterEach

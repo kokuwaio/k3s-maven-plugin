@@ -12,6 +12,7 @@ import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.codehaus.plexus.util.xml.XmlStreamReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -21,16 +22,14 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * JUnit extension to provide prepared mojos as test parameter.
  *
  * @author stephan.schnabel@posteo.de
  */
-@Slf4j
 public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
+	private static Log log = new SystemStreamLog();
 	private static PluginDescriptor plugin;
 	private static Map<Class<Mojo>, MojoDescriptor> mojoDescriptors = new HashMap<>();
 
@@ -44,9 +43,9 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			}
 
 			plugin = new PluginDescriptorBuilder().build(new BufferedReader(new XmlStreamReader(inputStream)));
-			log.debug("Found plugin: {}", plugin.getId());
+			log.debug("Found plugin: " + plugin.getId());
 			for (var mojo : plugin.getMojos()) {
-				log.debug("Found mojo: {}", mojo.getId());
+				log.debug("Found mojo: " + mojo.getId());
 				mojoDescriptors.put((Class<Mojo>) Class.forName(mojo.getImplementation()), mojo);
 			}
 		}
@@ -66,9 +65,9 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 		try {
 
-			log.trace("{} - create mojo", mojoId);
+			log.debug(mojoId + " - create mojo");
 			var mojo = mojoType.getDeclaredConstructor().newInstance();
-			mojo.setLog(new SystemStreamLog());
+			mojo.setLog(log);
 
 			for (var parameter : mojoDescriptor.getParameters()) {
 
@@ -77,13 +76,13 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 				if (defaultValue != null) {
 					var replacedDefaultValue = defaultValue.replace("${user.home}", System.getProperty("user.home"));
-					log.trace("{}#{} - set default value: {}", mojoId, name, replacedDefaultValue);
+					log.debug(mojoId + "#" + name + " - set default value: " + replacedDefaultValue);
 					setMojoParameterValue(mojo, name, replacedDefaultValue);
 				} else if (parameter.isRequired()) {
 					throw new ParameterResolutionException(
 							"Failed to setup mojo " + mojoId + ". Parameter " + name + " is required.");
 				} else {
-					log.trace("{}#{} - no value set", mojoId, name);
+					log.debug(mojoId + "#" + name + " - no value set");
 				}
 			}
 

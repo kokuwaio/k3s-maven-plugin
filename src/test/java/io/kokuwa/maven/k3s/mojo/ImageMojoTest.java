@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
-import lombok.SneakyThrows;
 
 /**
  * Test for {@link ImageMojo}.
@@ -49,7 +48,7 @@ public class ImageMojoTest extends AbstractTest {
 
 	@DisplayName("with images")
 	@Test
-	void withImages(CreateMojo createMojo, StartMojo startMojo, ImageMojo imageMojo) {
+	void withImages(CreateMojo createMojo, StartMojo startMojo, ImageMojo imageMojo) throws MojoExecutionException {
 		docker.removeImage(helloWorld());
 		assertDoesNotThrow(createMojo::execute);
 		assertDoesNotThrow(startMojo::execute);
@@ -61,7 +60,7 @@ public class ImageMojoTest extends AbstractTest {
 
 	// test
 
-	private void assertCtrPull(ImageMojo mojo) {
+	private void assertCtrPull(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
 		mojo.setCtrImages(List.of(helloWorld())).setTarFiles(List.of()).setDockerImages(List.of());
@@ -73,7 +72,7 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), true);
 	}
 
-	private void assertTagFiles(ImageMojo mojo) {
+	private void assertTagFiles(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
 		mojo.setCtrImages(List.of()).setTarFiles(List.of("src/test/resources/hello-world.tar"))
@@ -86,7 +85,7 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), true);
 	}
 
-	private void assertDockerWithCachedImage(ImageMojo mojo) {
+	private void assertDockerWithCachedImage(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
 		mojo.setCtrImages(List.of()).setTarFiles(List.of()).setDockerImages(List.of(helloWorld()));
@@ -101,7 +100,7 @@ public class ImageMojoTest extends AbstractTest {
 		assertDoesNotThrow(mojo::execute);
 	}
 
-	private void assertDockerWithoutImage(ImageMojo mojo) {
+	private void assertDockerWithoutImage(ImageMojo mojo) throws MojoExecutionException {
 
 		docker.removeImage(helloWorld());
 		removeCtrImage(helloWorld());
@@ -116,8 +115,7 @@ public class ImageMojoTest extends AbstractTest {
 
 	// internal
 
-	@SneakyThrows
-	private void assertCtrImage(String image, boolean exists) {
+	private void assertCtrImage(String image, boolean exists) throws MojoExecutionException {
 		var container = docker.getContainer().get();
 		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
 		var output = result.getMessages().stream().collect(Collectors.joining("\n"));
@@ -127,13 +125,11 @@ public class ImageMojoTest extends AbstractTest {
 				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + output);
 	}
 
-	@SneakyThrows
 	private boolean hasDockerImage(String image) {
 		return docker.findImage(image).isPresent();
 	}
 
-	@SneakyThrows
-	private void removeCtrImage(String image) {
+	private void removeCtrImage(String image) throws MojoExecutionException {
 		docker.execThrows(
 				docker.getContainer().get(),
 				"ctr image remove " + docker.normalizeDockerImage(image),

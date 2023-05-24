@@ -8,7 +8,6 @@ import java.time.Duration;
 import java.util.function.BiConsumer;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,7 @@ public class DockerTest extends AbstractTest {
 		docker.removeImage(helloWorld());
 
 		var callback = docker.pullImage(helloWorld());
-		Await.await(new SystemStreamLog(), "pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
+		Await.await(log, "pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
 		if (!callback.isSuccess()) {
 			throw new MojoExecutionException("Failed to pull image " + helloWorld());
 		}
