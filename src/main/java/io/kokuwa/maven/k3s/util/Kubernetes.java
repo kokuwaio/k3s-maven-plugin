@@ -1,19 +1,21 @@
 package io.kokuwa.maven.k3s.util;
 
+import org.apache.maven.plugin.logging.Log;
+
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1PodStatus;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class Kubernetes {
 
 	private final CoreV1Api core;
 	private final AppsV1Api apps;
+	private final Log log;
 
-	public Kubernetes(ApiClient client) {
+	public Kubernetes(Log log, ApiClient client) {
+		this.log = log;
 		this.core = new CoreV1Api(client);
 		this.apps = new AppsV1Api(client);
 	}
@@ -27,7 +29,7 @@ public class Kubernetes {
 							.map(condition -> Boolean.parseBoolean(condition.getStatus().strip()))
 							.findAny().orElse(false);
 					if (!ready) {
-						log.debug("Node {} is not ready", node.getMetadata().getName());
+						log.debug("Node " + node.getMetadata().getName() + " is not ready");
 					}
 					return ready;
 				});
@@ -39,7 +41,7 @@ public class Kubernetes {
 				.allMatch(pod -> {
 					var ready = checkPodState(pod.getStatus());
 					if (!ready) {
-						log.debug("Pod {} is not ready", pod.getMetadata().getName());
+						log.debug("Pod " + pod.getMetadata().getName() + " is not ready");
 					}
 					return ready;
 				});
@@ -75,7 +77,7 @@ public class Kubernetes {
 							.map(condition -> Boolean.parseBoolean(condition.getStatus().strip()))
 							.findAny().orElse(false);
 					if (!ready) {
-						log.debug("Deployment {} is not ready", deployment.getMetadata().getName());
+						log.debug("Deployment " + deployment.getMetadata().getName() + " is not ready");
 					}
 					return ready;
 				});
@@ -88,7 +90,7 @@ public class Kubernetes {
 				.allMatch(statefulSet -> {
 					var ready = statefulSet.getSpec().getReplicas() == statefulSet.getStatus().getAvailableReplicas();
 					if (!ready) {
-						log.debug("StatefulSet {} is not ready", statefulSet.getMetadata().getName());
+						log.debug("StatefulSet " + statefulSet.getMetadata().getName() + " is not ready");
 					}
 					return ready;
 				});

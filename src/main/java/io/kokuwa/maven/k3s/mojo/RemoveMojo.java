@@ -44,15 +44,15 @@ public class RemoveMojo extends K3sMojo {
 
 		// remove containers & volumes
 
-		docker.getContainer().ifPresent(docker::removeContainer);
+		getDocker().getContainer().ifPresent(getDocker()::removeContainer);
 		if (includeCache) {
-			docker.removeVolume();
+			getDocker().removeVolume();
 		}
 
 		// remove obsolete config mounted to container
 
 		var directory = includeCache ? getCacheDir() : getMountDir();
-		log.debug("Remove directory: {}", directory);
+		getLog().debug("Remove directory: " + directory);
 		try {
 			if (Files.exists(directory)) {
 				FileUtils.forceDelete(directory.toFile());

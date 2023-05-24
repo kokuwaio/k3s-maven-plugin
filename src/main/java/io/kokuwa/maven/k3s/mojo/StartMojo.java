@@ -8,7 +8,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
@@ -29,8 +28,10 @@ public class StartMojo extends K3sMojo {
 	 * Stream logs of k3s to maven logger.
 	 *
 	 * @since 0.1.0
+	 * @deprecated Removed with 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.streamLogs", defaultValue = "false")
+	@Deprecated(since = "0.11.0", forRemoval = true)
+	@Parameter(property = "k3s.streamLogs", defaultValue = "false")
 	private boolean streamLogs;
 
 	/**
@@ -72,17 +73,17 @@ public class StartMojo extends K3sMojo {
 			return;
 		}
 
-		var containerOptional = docker.getContainer();
+		var containerOptional = getDocker().getContainer();
 		if (containerOptional.isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
 		var container = containerOptional.get();
 
-		var running = docker.isRunning(container);
+		var running = getDocker().isRunning(container);
 		if (running) {
-			log.info("Container with id '{}' found running, skip start", container.getId());
+			getLog().info("Container with id '" + container.getId() + "' found running, skip start");
 		} else {
-			log.debug("Container with id '{}' found stopped", container.getId());
+			getLog().debug("Container with id '" + container.getId() + "' found stopped");
 			startK3sContainer(container);
 		}
 
@@ -95,12 +96,12 @@ public class StartMojo extends K3sMojo {
 		// start k3s
 
 		var started = Instant.now();
-		docker.startContainer(container);
+		getDocker().startContainer(container);
 
 		// logs to console and wait for startup
 
 		var k3sStarted = new AtomicBoolean();
-		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.k3s"), streamLogs) {
+		var callback = new DockerLogCallback(getLog()) {
 			@Override
 			public void onNext(Frame frame) {
 				super.onNext(frame);
@@ -109,12 +110,12 @@ public class StartMojo extends K3sMojo {
 				}
 			}
 		};
-		docker.logContainer(container, started, callback);
-		Await.await("k3s is up and running")
+		getDocker().logContainer(container, started, callback);
+		Await.await(getLog(), "k3s is up and running")
 				.timeout(Duration.ofSeconds(nodeTimeout))
 				.onTimeout(callback::replayOnWarn)
 				.until(k3sStarted::get);
-		log.info("k3s is up and running");
+		getLog().info("k3s ready, connect via: KUBECONFIG=" + getKubeConfig() + " kubectl get all --all-namespaces");
 	}
 
 	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
@@ -122,29 +123,42 @@ public class StartMojo extends K3sMojo {
 
 		// wait for nodes get ready
 
-		Await.await("k3s master node ready").until(kubernetes::isNodeReady);
+		Await.await(getLog(), "k3s master node ready").until(kubernetes::isNodeReady);
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
-		Await.await("k3s service account ready").until(kubernetes::isServiceAccountReady);
+		Await.await(getLog(), "k3s service account ready").until(kubernetes::isServiceAccountReady);
 
 		// wait for pods get ready
 
 		if (podWait) {
-			Await.await("k3s pods ready").timeout(Duration.ofSeconds(podTimeout)).until(kubernetes::isPodsReady);
+			Await.await(getLog(), "k3s pods ready")
+					.timeout(Duration.ofSeconds(podTimeout))
+					.until(kubernetes::isPodsReady);
 		}
 
-		log.info("k3s node ready");
+		getLog().info("k3s node ready");
 	}
 
 	private void copyKubeConfigToMountedWorkingDirectory(Container container) throws MojoExecutionException {
 		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
-		var callback = new DockerLogCallback(LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.install"), true);
+		var callback = new DockerLogCallback(getLog());
 		var timeout = Duration.ofSeconds(30);
-		var result = docker.exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback, timeout);
+		var result = getDocker().exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback,
+				timeout);
 		if (result.getExitCode() != 0) {
 			callback.replayOnWarn();
 			throw new MojoExecutionException("install returned exit code " + result.getExitCode());
+		}
+	}
+
+	// setter
+
+	public void setStreamLogs(boolean streamLogs) {
+		this.streamLogs = streamLogs;
+		if (streamLogs == true) {
+			getLog().warn("Used deprecated confuguration `streamLogs`, use `debug` instead");
+			this.setDebug(true);
 		}
 	}
 }

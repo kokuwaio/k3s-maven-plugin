@@ -12,6 +12,7 @@ import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.codehaus.plexus.util.xml.XmlStreamReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -67,6 +68,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 			log.trace("{} - create mojo", mojoId);
 			var mojo = mojoType.getDeclaredConstructor().newInstance();
+			mojo.setLog(new SystemStreamLog());
 
 			for (var parameter : mojoDescriptor.getParameters()) {
 

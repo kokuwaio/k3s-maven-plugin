@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -35,20 +36,20 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 import io.kokuwa.maven.k3s.AgentCacheMode;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class Docker {
 
 	public static final String K3S_NAME = "k3s-maven-plugin";
 	public static final String K3S_LABEL = "io.kokuwa.maven.k3s";
 
+	private final Log log;
 	private final DockerClient client;
 
-	public Docker() {
+	public Docker(Log log) {
 		var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
 		var httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
-		client = DockerClientImpl.getInstance(config, httpClient);
+		this.client = DockerClientImpl.getInstance(config, httpClient);
+		this.log = log;
 	}
 
 	// images
@@ -117,8 +118,8 @@ public class Docker {
 
 	public boolean isRunning(Container container) {
 		var running = EnumSet.of(DockerState.RUNNING, DockerState.RESTARTING).contains(DockerState.valueOf(container));
-		log.trace("Container '{}' is {}running (state: {})", container.getId(), running ? "" : "not ",
-				container.getState());
+		log.debug("Container '" + container.getId() + "' is " + (running ? "" : "not ") + " running (state: "
+				+ container.getState() + ")");
 		return running;
 	}
 
@@ -163,27 +164,28 @@ public class Docker {
 				.withExposedPorts(List.copyOf(hostConfig.getPortBindings().getBindings().keySet()))
 				.withHostConfig(hostConfig)
 				.exec();
-		log.debug("Container with id '{}' created, image: {}", container.getId(), dockerImage);
+		log.debug("Container with id '" + container.getId() + "' created, image: " + dockerImage);
 
 		return getContainer().get();
 	}
 
 	public void startContainer(Container container) {
 		client.startContainerCmd(container.getId()).exec();
-		log.debug("Container with id '{}' and name '{}' started", container.getId(), container.getNames()[0]);
+		log.debug("Container with id '" + container.getId() + "' and name '" + container.getNames()[0] + "' started");
 	}
 
 	public void stopContainer(Container container) {
 		if (isRunning(container)) {
 			client.stopContainerCmd(container.getId()).withTimeout(300).exec();
-			log.debug("Container with id '{}' and name '{}' stopped", container.getId(), container.getNames()[0]);
+			log.debug(
+					"Container with id '" + container.getId() + "' and name '" + container.getNames()[0] + "' stopped");
 		}
 	}
 
 	public void removeContainer(Container container) {
 		stopContainer(container);
 		client.removeContainerCmd(container.getId()).withRemoveVolumes(true).withForce(true).exec();
-		log.debug("Container with id '{}' and name '{}' removed", container.getId(), container.getNames()[0]);
+		log.debug("Container with id '" + container.getId() + "' and name '" + container.getNames()[0] + "' removed");
 	}
 
 	public void logContainer(Container container, Instant since, DockerLogCallback callback) {
@@ -197,8 +199,8 @@ public class Docker {
 
 	public ExecResult execThrows(Container container, String cmdString, Duration timeout)
 			throws MojoExecutionException {
-		log.trace("Execute command: {}", cmdString);
-		var callback = new DockerLogCallback(log, log.isDebugEnabled());
+		log.debug("Execute command: " + cmdString);
+		var callback = new DockerLogCallback(log);
 		var result = exec(cmdString, container, cmd -> cmd.withCmd(cmdString.split(" ")), callback, timeout);
 		if (result.getExitCode() != 0) {
 			callback.replayOnWarn();
@@ -222,7 +224,8 @@ public class Docker {
 		var execId = cmd.exec().getId();
 
 		client.execStartCmd(execId).exec(callback);
-		Await.await("exec " + message).timeout(timeout).onTimeout(callback::replayOnWarn).until(callback::isCompleted);
+		Await.await(log, "exec " + message).timeout(timeout).onTimeout(callback::replayOnWarn)
+				.until(callback::isCompleted);
 
 		var exitCode = client.inspectExecCmd(execId).exec().getExitCodeLong().intValue();
 		var logs = callback.getMessages();
@@ -251,7 +254,7 @@ public class Docker {
 			client.removeVolumeCmd(K3S_NAME).exec();
 			log.debug("Cache volume removed");
 		} else {
-			log.trace("Cache volume not found, skip removing");
+			log.debug("Cache volume not found, skip removing");
 		}
 	}
 }

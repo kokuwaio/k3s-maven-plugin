@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 /**
  * Utility for waits.
@@ -18,16 +19,18 @@ import org.apache.maven.plugin.MojoExecutionException;
  */
 public class Await {
 
-	public static Await await(String text) {
-		return new Await(text);
+	public static Await await(Log log, String text) {
+		return new Await(log, text);
 	}
 
+	private final Log log;
 	private final String text;
 	private Duration timeout;
 	private Duration interval;
 	private Runnable onTimeout;
 
-	private Await(String text) {
+	private Await(Log log, String text) {
+		this.log = log;
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);
 		this.interval = Duration.ofMillis(500);
@@ -55,15 +58,25 @@ public class Await {
 
 	public <V> V until(Callable<V> supplier, Function<V, Boolean> check) throws MojoExecutionException {
 
+		Exception lastException = null;
 		var started = Instant.now().plus(timeout);
 		while (Instant.now().isBefore(started)) {
 			try {
 				V value = supplier.call();
 				if (check.apply(value)) {
+					log.debug(text);
 					return value;
 				}
-			} catch (Exception e) {}
+				lastException = null;
+			} catch (Exception e) {
+				lastException = e;
+				log.debug("Await " + text + " failed with exception " + e.getMessage());
+			}
 			wait(interval);
+		}
+
+		if (lastException == null) {
+			log.error("Await " + text + " had exception while waiting", lastException);
 		}
 
 		onTimeout.run();

@@ -161,40 +161,40 @@ public class CreateMojo extends K3sMojo {
 			return;
 		}
 
-		var container = docker.getContainer();
+		var container = getDocker().getContainer();
 		if (container.isPresent()) {
 			var containerId = container.get().getId();
 			if (failIfExists) {
 				throw new MojoExecutionException("Container with id '" + containerId
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
-				log.info("Container with id '{}' found, replacing", containerId);
-				docker.removeContainer(container.get());
+				getLog().info("Container with id '" + containerId + "' found, replacing");
+				getDocker().removeContainer(container.get());
 			} else {
-				log.warn("Container with id '{}' found, skip creating", containerId);
+				getLog().warn("Container with id '" + containerId + "' found, skip creating");
 				return;
 			}
 		}
-		log.info("k3s will be created with agent cache " + agentCache);
+		getLog().info("k3s will be created with agent cache " + agentCache);
 
 		// get image name
 
 		if (imageTag.equals("latest")) {
-			log.warn("Using image tag 'latest' is unstable.");
+			getLog().warn("Using image tag 'latest' is unstable.");
 		}
 		var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 
 		// pull image if not present
 
-		if (docker.findImage(image).isPresent()) {
-			log.debug("Docker image {} found.", image);
+		if (getDocker().findImage(image).isPresent()) {
+			getLog().debug("Docker image " + image + "found.");
 		} else {
-			var callback = docker.pullImage(image);
-			Await.await("pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
+			var callback = getDocker().pullImage(image);
+			Await.await(getLog(), "pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
 			if (!callback.isSuccess()) {
 				throw new MojoExecutionException("Failed to pull image " + image);
 			}
-			log.info("Docker image {} pulled", image);
+			getLog().info("Docker image " + image + " pulled");
 		}
 
 		// check mount path for manifests and kubectl file, deletes leftover files from previous run
@@ -239,11 +239,11 @@ public class CreateMojo extends K3sMojo {
 		if (disableTraefik) {
 			command.add("--disable=traefik");
 		}
-		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
+		getLog().info("k3s " + command.stream().collect(Collectors.joining(" ")));
 
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
-		docker.createContainer(image, agentCache, getMountDir(), getAgentDir(), ports, command);
+		getDocker().createContainer(image, agentCache, getMountDir(), getAgentDir(), ports, command);
 	}
 
 	private Path getAgentDir() {
