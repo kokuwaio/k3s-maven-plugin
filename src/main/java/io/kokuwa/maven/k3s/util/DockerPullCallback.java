@@ -2,7 +2,7 @@ package io.kokuwa.maven.k3s.util;
 
 import java.io.Closeable;
 
-import org.slf4j.Logger;
+import org.apache.maven.plugin.logging.Log;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.PullResponseItem;
@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 
-	private final Logger log;
+	private final Log log;
 	private final String image;
 	private Boolean completed = false;
 	private Boolean success = false;
@@ -29,29 +29,29 @@ public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 
 	@Override
 	public void onStart(Closeable closeable) {
-		log.debug("Image '{}' pulling image ...", image);
+		log.debug("Image '" + image + "' pulling image ...");
 	}
 
 	@Override
 	public void onNext(PullResponseItem newResponse) {
 		this.response = newResponse;
 		if (response.isErrorIndicated()) {
-			log.error("Image '{}' failed to pull: {}", image, response.getErrorDetail().getMessage());
+			log.error("Image '" + image + "' failed to pull: " + response.getErrorDetail().getMessage());
 		} else {
-			log.trace("Image '{}' has status {}", image, response.getStatus());
+			log.debug("Image '" + image + "' has status " + response.getStatus());
 		}
 	}
 
 	@Override
 	public void onError(Throwable throwable) {
-		log.error("Image '{}' failed to pull", image, throwable);
+		log.error("Image '" + image + "' failed to pull", throwable);
 	}
 
 	@Override
 	public void onComplete() {
 		if (response != null && response.isPullSuccessIndicated()) {
 			success = true;
-			log.info("Image '{}' pulled: {}", image, response.getStatus());
+			log.info("Image '" + image + "' pulled: " + response.getStatus());
 		}
 		completed = true;
 	}

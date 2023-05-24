@@ -7,10 +7,10 @@ import java.nio.file.Paths;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import io.kokuwa.maven.k3s.util.DebugLog;
 import io.kokuwa.maven.k3s.util.Docker;
 import io.kokuwa.maven.k3s.util.Kubernetes;
 import io.kubernetes.client.util.Config;
@@ -21,12 +21,17 @@ import lombok.Setter;
  */
 public abstract class K3sMojo extends AbstractMojo {
 
-	final Logger log = LoggerFactory.getLogger(getClass());
-	final Docker docker = new Docker();
-
 	/** Cachedir mounted to `/var/lib/rancher/k3s/agent`. */
 	@Setter @Parameter(property = "k3s.cacheDir", defaultValue = "${user.home}/.kube/k3s-maven-plugin")
 	private String cacheDir;
+
+	/**
+	 * Enable debuging of docker and k3s logs.
+	 *
+	 * @since 1.0.0
+	 */
+	@Setter @Parameter(property = "k3s.debug", defaultValue = "false")
+	private boolean debug;
 
 	/** Skip plugin. */
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
@@ -42,10 +47,19 @@ public abstract class K3sMojo extends AbstractMojo {
 			throw new MojoExecutionException("Kube config not found at " + kubeconfig);
 		}
 		try {
-			return new Kubernetes(Config.fromConfig(kubeconfig.toString()));
+			return new Kubernetes(getLog(), Config.fromConfig(kubeconfig.toString()));
 		} catch (IOException e) {
 			throw new MojoExecutionException("Failed to read kube config", e);
 		}
+	}
+
+	@Override
+	public Log getLog() {
+		return new DebugLog(super.getLog(), debug);
+	}
+
+	public Docker getDocker() {
+		return new Docker(getLog());
 	}
 
 	// directories

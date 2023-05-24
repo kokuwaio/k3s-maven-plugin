@@ -21,3 +21,4 @@ Create k3s container.
 | `replaceIfExists` | `k3s.replaceIfExists` | Replace existing docker container from previous run. | false |
 | `agentCache` | `k3s.agentCache` | Cache mode for k3s agent directory. | [NONE](src/main/java/io/kokuwa/maven/k3s/AgentCacheMode.java#15) |
 | `skipStart` | `k3s.skipStart` | Skip starting k3s container. | false |
+| `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |

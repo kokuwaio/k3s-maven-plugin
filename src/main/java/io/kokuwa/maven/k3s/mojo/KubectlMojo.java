@@ -13,7 +13,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.DockerLogCallback;
@@ -35,8 +34,10 @@ public class KubectlMojo extends K3sMojo {
 	 * Stream logs of "kubectl" to maven logger.
 	 *
 	 * @since 0.2.0
+	 * @deprecated Removed with 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
+	@Deprecated(since = "0.11.0", forRemoval = true)
+	@Parameter(property = "k3s.kubectl.streamLogs", defaultValue = "false")
 	private boolean streamLogs;
 
 	/**
@@ -118,16 +119,16 @@ public class KubectlMojo extends K3sMojo {
 
 		// execute command
 
-		log.info("Execute: {}", command);
+		getLog().info("Execute: " + command);
 		var result = kubectlPath == null ? execDocker() : execLocal();
 		if (result.getExitCode() != 0) {
 			var crd = result.getMessages().stream().map(PATTERN::matcher).anyMatch(Matcher::matches);
 			if (crd) {
-				log.info("Found CRDs created, but kubectl failed. Try again ...");
+				getLog().info("Found CRDs created, but kubectl failed. Try again ...");
 				result = kubectlPath == null ? execDocker() : execLocal();
 			}
 			if (result.getExitCode() != 0) {
-				result.getMessages().forEach(log::warn);
+				result.getMessages().forEach(getLog()::warn);
 				throw new MojoExecutionException("Failed to execute manifests, exit code: " + result.getExitCode());
 			}
 		}
@@ -135,7 +136,7 @@ public class KubectlMojo extends K3sMojo {
 		// wait for stuff to be ready
 
 		var kubernetes = getKubernetesClient();
-		Await.await("k3s pods ready")
+		Await.await(getLog(), "k3s pods ready")
 				.timeout(Duration.ofSeconds(podTimeout))
 				.until(() -> kubernetes.isDeploymentsReady()
 						&& kubernetes.isStatefulSetsReady()
@@ -144,14 +145,13 @@ public class KubectlMojo extends K3sMojo {
 
 	private ExecResult execDocker() throws MojoExecutionException {
 
-		var containerOptional = docker.getContainer();
+		var containerOptional = getDocker().getContainer();
 		if (containerOptional.isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
 
-		var logger = LoggerFactory.getLogger("io.kokuwa.maven.k3s.docker.kubectl");
-		var callback = new DockerLogCallback(logger, streamLogs);
-		return docker.exec("kubectl", containerOptional.get(), cmd -> cmd
+		var callback = new DockerLogCallback(getLog());
+		return getDocker().exec("kubectl", containerOptional.get(), cmd -> cmd
 				.withCmd("/bin/sh", "-c", command)
 				.withWorkingDir("/k3s/manifests")
 				.withEnv(List.of("KUBECONFIG=/k3s/kubeconfig.yaml")), callback, Duration.ofSeconds(kubectlTimeout));
@@ -171,6 +171,16 @@ public class KubectlMojo extends K3sMojo {
 			return new ExecResult(exitCode, logs);
 		} catch (InterruptedException | IOException e) {
 			throw new MojoExecutionException("Failed to execute manifests", e);
+		}
+	}
+
+	// setter
+
+	public void setStreamLogs(boolean streamLogs) {
+		this.streamLogs = streamLogs;
+		if (streamLogs == true) {
+			getLog().warn("Used deprecated confuguration `streamLogs`, use `debug` instead");
+			this.setDebug(true);
 		}
 	}
 }

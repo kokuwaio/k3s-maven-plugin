@@ -95,7 +95,7 @@ public class ImageMojo extends K3sMojo {
 
 		// get container
 
-		var containerOptional = docker.getContainer();
+		var containerOptional = getDocker().getContainer();
 		if (containerOptional.isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
@@ -128,7 +128,7 @@ public class ImageMojo extends K3sMojo {
 
 		var sourcePath = Paths.get(tar).toAbsolutePath();
 		if (!Files.isRegularFile(sourcePath)) {
-			log.error("Tar not found: {}", sourcePath);
+			getLog().error("Tar not found: " + sourcePath);
 			return false;
 		}
 
@@ -137,34 +137,34 @@ public class ImageMojo extends K3sMojo {
 		try {
 			Files.createDirectories(targetPath.getParent());
 			Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-			docker.execThrows(container, "ctr image import /k3s/images/" + filename,
+			getDocker().execThrows(container, "ctr image import /k3s/images/" + filename,
 					Duration.ofMinutes(1));
 		} catch (MojoExecutionException | IOException e) {
-			log.error("Failed to import tar {}", filename, e);
+			getLog().error("Failed to import tar: " + filename, e);
 			return false;
 		}
 
-		log.info("Imported tar from {}", sourcePath);
+		getLog().info("Imported tar from " + sourcePath);
 		return true;
 	}
 
 	private boolean ctr(Container container, List<String> existingImages, String image) {
 
-		var normalizedImage = docker.normalizeDockerImage(image);
+		var normalizedImage = getDocker().normalizeDockerImage(image);
 		if (existingImages.contains(normalizedImage)) {
-			log.debug("Image {} found in ctr, skip pulling", image);
+			getLog().debug("Image " + image + " found in ctr, skip pulling");
 			return true;
 		}
 
-		log.info("Image {} not found, start pulling", image);
+		getLog().info("Image " + image + " not found, start pulling");
 		try {
-			docker.execThrows(container, "ctr image pull " + normalizedImage, Duration.ofSeconds(pullTimeout));
+			getDocker().execThrows(container, "ctr image pull " + normalizedImage, Duration.ofSeconds(pullTimeout));
 		} catch (MojoExecutionException e) {
-			log.error("Failed to pull ctr image {}", image, e);
+			getLog().error("Failed to pull ctr image " + image, e);
 			return false;
 		}
 
-		log.info("Image {} pulled", image);
+		getLog().info("Image " + image + " pulled");
 		return true;
 	}
 
@@ -172,28 +172,28 @@ public class ImageMojo extends K3sMojo {
 
 		// pull image
 
-		var imagePresent = docker.findImage(image).isPresent();
+		var imagePresent = getDocker().findImage(image).isPresent();
 		if (dockerPullAlways || !imagePresent) {
 			if (imagePresent) {
-				log.debug("Image {} found in docker, pull always ...", image);
+				getLog().debug("Image " + image + " found in docker, pull always ...");
 			} else {
-				log.debug("Image {} not found in docker, pulling ...", image);
+				getLog().debug("Image " + image + " not found in docker, pulling ...");
 			}
-			var pull = docker.pullImage(image);
+			var pull = getDocker().pullImage(image);
 			try {
-				Await.await("docker pull image '" + image + "'")
+				Await.await(getLog(), "docker pull image '" + image + "'")
 						.timeout(Duration.ofSeconds(pullTimeout))
 						.until(pull::isCompleted);
 			} catch (MojoExecutionException e) {
-				log.error("Failed to pull docker image {}", image, e);
+				getLog().error("Failed to pull docker image " + image, e);
 				return false;
 			}
 			if (!pull.isSuccess()) {
-				log.error("Failed to pull docker image {}: {}", image, pull.getResponse());
+				getLog().error("Failed to pull docker image " + image + ": " + pull.getResponse());
 				return false;
 			}
 		} else {
-			log.debug("Image {} found in docker", image);
+			getLog().debug("Image " + image + " found in docker");
 		}
 
 		// move from docker to ctr
@@ -202,24 +202,22 @@ public class ImageMojo extends K3sMojo {
 		var tarPath = getImageDir().resolve(filename);
 		try {
 			Files.createDirectories(getImageDir());
-			docker.saveImage(image, tarPath);
-			docker.execThrows(container, "ctr image import /k3s/images/" + filename, Duration.ofMinutes(1));
+			getDocker().saveImage(image, tarPath);
+			getDocker().execThrows(container, "ctr image import /k3s/images/" + filename, Duration.ofMinutes(1));
 		} catch (MojoExecutionException | IOException e) {
-			log.error("Failed to import tar {}", filename, e);
+			getLog().error("Failed to import tar: " + filename, e);
 			return false;
 		}
 
-		log.info("Image {} copied from docker deamon", image);
+		getLog().info("Image " + image + " copied from docker deamon");
 		return true;
 	}
 
 	private List<String> getCtrImages(Container container) throws MojoExecutionException {
-		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
+		var result = getDocker().execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
 		var output = result.getMessages().stream().collect(Collectors.joining("\n"));
 		var images = List.of(output.split("\n"));
-		if (log.isDebugEnabled()) {
-			images.forEach(image -> log.debug("Found ctr image: {}", image));
-		}
+		images.forEach(image -> getLog().debug("Found ctr image: " + image));
 		return images;
 	}
 

@@ -32,6 +32,6 @@ public class StopMojo extends K3sMojo {
 
 		// stop container
 
-		docker.getContainer().ifPresent(docker::stopContainer);
+		getDocker().getContainer().ifPresent(getDocker()::stopContainer);
 	}
 }

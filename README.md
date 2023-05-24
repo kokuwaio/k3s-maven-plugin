@@ -120,7 +120,7 @@ Start k3s with deployments for manual testing:
 mvn k3s:create k3s:start k3s:kubectl \
   -Dk3s.portBindings=8080:8080 \
   -Dk3s.kubectl.manifests=src/it/traefik/src/test/k3s \
-  -Dk3s.streamLogs
+  -Dk3s.debug
   -Dk3s.command='kubectl apply -k .'
 ```
 

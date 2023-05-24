@@ -9,6 +9,6 @@ Runs kubectl commands, applies Kubernetes manifest files per default.
 | `command` | `k3s.kubectl.command` | Command to execute. | kubectl apply -R -f . |
 | `kubectlTimeout` | `k3s.kubectl.timeout` | Timeout in seconds to wait for kubectl finished. | 30 |
 | `podTimeout` | `k3s.kubectl.podTimeout` | Timeout in seconds to wait for pods getting ready. | 300 |
-| `streamLogs` | `k3s.kubectl.streamLogs` | Stream logs of `kubectl` to maven logger. | false |
 | `kubectlPath` | `k3s.kubectl.path` | `kubectl` to use on host | |
 | `skipKubectl` | `k3s.skipKubectl` | Skip plugin. | false |
+| `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
