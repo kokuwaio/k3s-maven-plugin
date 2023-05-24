@@ -125,10 +125,6 @@ public class StartMojo extends K3sMojo {
 
 		Await.await(getLog(), "k3s master node ready").until(kubernetes::isNodeReady);
 
-		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
-
-		Await.await(getLog(), "k3s service account ready").until(kubernetes::isServiceAccountReady);
-
 		// wait for pods get ready
 
 		if (podWait) {

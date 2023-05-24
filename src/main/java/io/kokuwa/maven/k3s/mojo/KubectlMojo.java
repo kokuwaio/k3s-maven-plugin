@@ -117,6 +117,10 @@ public class KubectlMojo extends K3sMojo {
 			}
 		}
 
+		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
+
+		Await.await(getLog(), "k3s service account ready").until(getKubernetesClient()::isServiceAccountReady);
+
 		// execute command
 
 		getLog().info("Execute: " + command);
