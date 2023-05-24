@@ -48,10 +48,8 @@ public class ImageMojoTest extends AbstractTest {
 
 	@DisplayName("with images")
 	@Test
-	void withImages(CreateMojo createMojo, StartMojo startMojo, ImageMojo imageMojo) throws MojoExecutionException {
-		docker.removeImage(helloWorld());
-		assertDoesNotThrow(createMojo::execute);
-		assertDoesNotThrow(startMojo::execute);
+	void withImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
+		assertDoesNotThrow(runMojo::execute);
 		assertCtrPull(imageMojo);
 		assertTagFiles(imageMojo);
 		assertDockerWithoutImage(imageMojo);

@@ -1,12 +1,12 @@
-# k3s:create
+# k3s:run
 
-Create k3s container.
+Start and run k3s container.
 
 | Name | User Property | Description | Default |
 | -----| ------------- | ----------- | ------- |
 | `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations (mounted to `/var/lib/rancher/k3s/agent`). | `~/.kube/k3s-maven-plugin` |
 | `imageRegistry` | `k3s.imageRegistry` | k3s image registry | |
-| `imageRepository` | `k3s.imageRepository` | k3s image repository | rancher/k3s |
+| `imageRepository` | `k3s.imageRepository` | k3s image repository | docker.io/rancher/k3s |
 | `imageTag` | `k3s.imageTag` | k3s image tag | latest |
 | `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
@@ -19,5 +19,6 @@ Create k3s container.
 | `disableNetworkPolicy` | `k3s.disableNetworkPolicy` | Disable network-policy. | true |
 | `failIfExists` | `k3s.failIfExists` | Fail if docker container from previous run exists. E.g. with `mvn k3s:rm` | true |
 | `replaceIfExists` | `k3s.replaceIfExists` | Replace existing docker container from previous run. | false |
-| `skipStart` | `k3s.skipStart` | Skip starting k3s container. | false |
+| `nodeTimeout` | `k3s.nodeTimeout` | Timeout in seconds to wait for nodes getting ready. | 30 |
+| `skipRun` | `skipRun` | Skip running of k3s. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |

@@ -30,13 +30,12 @@ If you don't like to use this plugin you can:
 
 ## Goals
 
-| Goal                                       | Description                     | Default Lifecycle Phase |
-| ------------------------------------------ | ------------------------------- | ----------------------- |
-| [`k3s:create`](docs/goal/create.md)        | Create k3s container            | pre-integration-test    |
-| [`k3s:start`](docs/goal/start.md)          | Start k3s container             | pre-integration-test    |
-| [`k3s:image`](docs/goal/image.md)          | Prepare images for containerd   | pre-integration-test    |
-| [`k3s:kubectl`](docs/goal/kubectl.md)      | Run kubectl                     | pre-integration-test    |
-| [`k3s:rm`](docs/goal/rm.md)                | Stop and remove k3s containers  | post-integration-test   |
+| Goal                                  | Description                     | Default Lifecycle Phase |
+| ------------------------------------- | ------------------------------- | ----------------------- |
+| [`k3s:run`](docs/goal/run.md)         | Create and start k3s container  | pre-integration-test    |
+| [`k3s:image`](docs/goal/image.md)     | Prepare images for containerd   | pre-integration-test    |
+| [`k3s:kubectl`](docs/goal/kubectl.md) | Run kubectl                     | pre-integration-test    |
+| [`k3s:rm`](docs/goal/rm.md)           | Stop and remove k3s containers  | post-integration-test   |
 
 ## Examples
 
@@ -117,7 +116,7 @@ Add to your `settings.xml` (or prefix goals with groupId):
 Start k3s with deployments for manual testing:
 
 ```sh
-mvn k3s:create k3s:start k3s:kubectl \
+mvn k3s:run k3s:kubectl \
   -Dk3s.portBindings=8080:8080 \
   -Dk3s.kubectl.manifests=src/it/traefik/src/test/k3s \
   -Dk3s.debug

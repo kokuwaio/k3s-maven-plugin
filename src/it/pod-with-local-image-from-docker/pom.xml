@@ -67,8 +67,7 @@
 				<executions>
 					<execution>
 						<goals>
-							<goal>create</goal>
-							<goal>start</goal>
+							<goal>run</goal>
 							<goal>image</goal>
 							<goal>kubectl</goal>
 							<goal>rm</goal>

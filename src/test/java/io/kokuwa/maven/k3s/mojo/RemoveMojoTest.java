@@ -44,8 +44,8 @@ public class RemoveMojoTest extends AbstractTest {
 
 	@DisplayName("with container")
 	@Test
-	void withContainer(CreateMojo createMojo, RemoveMojo removeMojo) {
-		assertDoesNotThrow(createMojo::execute);
+	void withContainer(RunMojo runMojo, RemoveMojo removeMojo) {
+		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
 		assertTrue(docker.isVolumePresent());
@@ -54,9 +54,9 @@ public class RemoveMojoTest extends AbstractTest {
 	@DisplayName("with container and cache")
 	@Disabled("flaky because of host mount")
 	@Test
-	void withContainerAndCache(CreateMojo createMojo, RemoveMojo removeMojo) {
+	void withContainerAndCache(RunMojo runMojo, RemoveMojo removeMojo) {
 		removeMojo.setIncludeCache(true);
-		assertDoesNotThrow(createMojo::execute);
+		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
 		assertFalse(docker.isVolumePresent());

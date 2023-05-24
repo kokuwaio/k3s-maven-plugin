@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.util;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -174,12 +173,12 @@ public class Docker {
 		log.debug("Container with id '" + container.getId() + "' and name '" + container.getNames()[0] + "' removed");
 	}
 
-	public void logContainer(Container container, Instant since, DockerLogCallback callback) {
+	public void logContainer(Container container, DockerLogCallback callback) {
 		client.logContainerCmd(container.getId())
 				.withStdOut(true)
 				.withStdErr(true)
 				.withFollowStream(true)
-				.withSince((int) since.getEpochSecond())
+				.withSince(0)
 				.exec(callback);
 	}
 
