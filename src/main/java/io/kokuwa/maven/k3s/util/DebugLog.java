@@ -76,17 +76,17 @@ public class DebugLog implements Log {
 
 	@Override
 	public void warn(CharSequence content) {
-		log.info(content);
+		log.warn(content);
 	}
 
 	@Override
 	public void warn(CharSequence content, Throwable error) {
-		log.info(content, error);
+		log.warn(content, error);
 	}
 
 	@Override
 	public void warn(Throwable error) {
-		log.info(error);
+		log.warn(error);
 	}
 
 	@Override
@@ -96,16 +96,16 @@ public class DebugLog implements Log {
 
 	@Override
 	public void error(CharSequence content) {
-		log.info(content);
+		log.error(content);
 	}
 
 	@Override
 	public void error(CharSequence content, Throwable error) {
-		log.info(content, error);
+		log.error(content, error);
 	}
 
 	@Override
 	public void error(Throwable error) {
-		log.info(error);
+		log.error(error);
 	}
 }
