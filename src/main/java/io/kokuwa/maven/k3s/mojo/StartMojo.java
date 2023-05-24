@@ -33,22 +33,6 @@ public class StartMojo extends K3sMojo {
 	private int nodeTimeout;
 
 	/**
-	 * Timeout in seconds to wait for pods getting ready.
-	 *
-	 * @since 0.1.0
-	 */
-	@Setter @Parameter(property = "k3s.podTimeout", defaultValue = "300")
-	private int podTimeout;
-
-	/**
-	 * Wait for pods getting ready.
-	 *
-	 * @since 0.2.0
-	 */
-	@Setter @Parameter(property = "k3s.podWait", defaultValue = "false")
-	private boolean podWait;
-
-	/**
 	 * Skip starting of k3s container.
 	 *
 	 * @since 0.1.0
@@ -110,19 +94,7 @@ public class StartMojo extends K3sMojo {
 
 	private void awaitK3sNodesAndPodsReady() throws MojoExecutionException {
 		var kubernetes = getKubernetesClient();
-
-		// wait for nodes get ready
-
 		Await.await(getLog(), "k3s master node ready").until(kubernetes::isNodeReady);
-
-		// wait for pods get ready
-
-		if (podWait) {
-			Await.await(getLog(), "k3s pods ready")
-					.timeout(Duration.ofSeconds(podTimeout))
-					.until(kubernetes::isPodsReady);
-		}
-
 		getLog().info("k3s node ready");
 	}
 
