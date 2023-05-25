@@ -25,7 +25,6 @@
 					</execution>
 				</executions>
 				<configuration>
-					<kustomize>true</kustomize>
 					<portBindings>
 						<portBinding>80:80</portBinding>
 					</portBindings>
