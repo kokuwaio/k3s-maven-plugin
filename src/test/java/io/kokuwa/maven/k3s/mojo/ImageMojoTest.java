@@ -61,8 +61,36 @@ public class ImageMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		assertCtrPull(imageMojo);
 		assertTagFiles(imageMojo);
-		assertDockerWithoutImage(imageMojo);
-		assertDockerWithCachedImage(imageMojo);
+	}
+
+	@DisplayName("with dockerImages")
+	@Test
+	void dockerImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
+
+		imageMojo.setDockerImages(List.of(helloWorld()));
+		assertDoesNotThrow(runMojo::execute);
+
+		// pull image because not present in host docker daemon
+
+		assertFalse(hasDockerImage(helloWorld()));
+		assertCtrImage(helloWorld(), false);
+		assertDoesNotThrow(imageMojo::execute);
+		assertTrue(hasDockerImage(helloWorld()));
+		assertCtrImage(helloWorld(), true);
+
+		// skip copy image because already present
+
+		assertCtrImage(helloWorld(), true);
+		assertDoesNotThrow(imageMojo::execute);
+		assertCtrImage(helloWorld(), true);
+
+		// pull again in docker, and copy to container because digest was changed
+
+		imageMojo.setDockerPullAlways(true);
+		docker.exec("ctr", "image", "label", docker.normalizeImage(helloWorld()), "k3s-maven-digest=nope");
+		assertCtrImage(helloWorld(), true);
+		assertDoesNotThrow(imageMojo::execute);
+		assertCtrImage(helloWorld(), true);
 	}
 
 	// test
@@ -92,38 +120,6 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), false);
 		assertDoesNotThrow(mojo::execute);
 		assertFalse(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), true);
-	}
-
-	private void assertDockerWithCachedImage(ImageMojo mojo) throws MojoExecutionException {
-
-		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of());
-		mojo.setTarFiles(List.of());
-		mojo.setDockerImages(List.of(helloWorld()));
-
-		assertTrue(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), false);
-		assertDoesNotThrow(mojo::execute);
-		assertTrue(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), true);
-
-		mojo.setDockerPullAlways(true);
-		assertDoesNotThrow(mojo::execute);
-	}
-
-	private void assertDockerWithoutImage(ImageMojo mojo) throws MojoExecutionException {
-
-		docker.removeImage(helloWorld());
-		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of());
-		mojo.setTarFiles(List.of());
-		mojo.setDockerImages(List.of(helloWorld()));
-
-		assertFalse(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), false);
-		assertDoesNotThrow(mojo::execute);
-		assertTrue(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), true);
 	}
 

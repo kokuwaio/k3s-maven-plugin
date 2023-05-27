@@ -6,16 +6,20 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import io.kokuwa.maven.k3s.util.Docker.ContainerImage;
 
 /**
  * Import images into k3s containerd.
@@ -94,9 +98,9 @@ public class ImageMojo extends K3sMojo {
 
 		// get callables that handle images
 
-		var existingImages = getDocker().exec("ctr", "image", "list", "--quiet");
+		var existingImages = getCtrImages();
 		var tasks = new HashSet<Callable<Boolean>>();
-		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(requestedImage)));
+		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(existingImages, requestedImage)));
 		tarFiles.forEach(tarFile -> tasks.add(() -> tar(tarFile)));
 		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(existingImages, requestedImage)));
 
@@ -135,9 +139,9 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	private boolean ctr(List<String> existingImages, String image) throws MojoExecutionException {
+	private boolean ctr(Map<String, Map<String, ?>> existingImages, String image) throws MojoExecutionException {
 
-		if (existingImages.contains(image)) {
+		if (existingImages.containsKey(image)) {
 			getLog().debug("Image " + image + " found in ctr, skip pulling");
 			return true;
 		}
@@ -149,13 +153,13 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	private boolean docker(String image) throws MojoExecutionException {
+	private boolean docker(Map<String, Map<String, ?>> existingImages, String image) throws MojoExecutionException {
 
 		// pull image
 
-		var imagePresent = getDocker().getImage(image).isPresent();
-		if (dockerPullAlways || !imagePresent) {
-			if (imagePresent) {
+		var digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
+		if (dockerPullAlways || digest == null) {
+			if (digest != null) {
 				getLog().debug("Image " + image + " found in docker, pull always ...");
 			} else {
 				getLog().debug("Image " + image + " not found in docker, pulling ...");
@@ -166,8 +170,23 @@ public class ImageMojo extends K3sMojo {
 				getLog().error("Failed to pull docker image " + image, e);
 				return false;
 			}
+			digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
 		} else {
 			getLog().debug("Image " + image + " found in docker");
+		}
+
+		// skip if image is already present in ctr
+
+		var normalizedImage = getDocker().normalizeImage(image);
+		var label = "k3s-maven-digest";
+		var oldDigest = existingImages.getOrDefault(normalizedImage, Map.of()).get(label);
+		if (oldDigest == null) {
+			getLog().debug("Image " + image + " does not exists in ctr.");
+		} else if (oldDigest.equals(digest)) {
+			getLog().debug("Image " + image + " present in ctr with digest " + digest + ", skip.");
+			return true;
+		} else {
+			getLog().info("Image " + image + " present in ctr with digest " + oldDigest + ", new digest is: " + digest);
 		}
 
 		// move from docker to ctr
@@ -179,6 +198,7 @@ public class ImageMojo extends K3sMojo {
 			getDocker().saveImage(image, source);
 			getDocker().copyToContainer(source, destination);
 			getDocker().exec("ctr", "image", "import", destination.toString());
+			getDocker().exec("ctr", "image", "label", normalizedImage, label + "=" + digest);
 		} catch (MojoExecutionException e) {
 			getLog().error("Failed to import tar " + source, e);
 			return false;
@@ -186,6 +206,30 @@ public class ImageMojo extends K3sMojo {
 
 		getLog().info("Image " + image + " copied from docker deamon");
 		return true;
+	}
+
+	/**
+	 * Read image from <code>ctr image list</code>.
+	 *
+	 * @param row Row from ctr output.
+	 * @return Image name with labels.
+	 */
+	private Map<String, Map<String, ?>> getCtrImages() throws MojoExecutionException {
+		return getDocker().exec("ctr", "image", "list").stream().map(String::strip)
+				.filter(row -> !row.startsWith("REF") && !row.startsWith("sha256:"))
+				.map(row -> row.split("(\\s)+"))
+				.filter(parts -> {
+					var matches = parts.length == 7;
+					if (!matches) {
+						getLog().warn("Unexpected output of `ctr image list`: " + List.of(parts));
+					}
+					return matches;
+				})
+				.map(parts -> Map.entry(parts[0], Stream.of(parts[6].split(",")).map(s -> s.split("="))
+						.filter(s -> !"io.cri-containerd.image".equals(s[0]))
+						.collect(Collectors.toMap(s -> s[0], s -> s[1]))))
+				.peek(entry -> getLog().debug("Found ctr image: " + entry))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
 	// setter

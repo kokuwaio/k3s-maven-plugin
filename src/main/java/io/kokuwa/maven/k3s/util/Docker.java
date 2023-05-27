@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -143,11 +144,10 @@ public class Docker {
 	}
 
 	public Optional<ContainerImage> getImage(String image) throws MojoExecutionException {
-		return Task.of(log, "docker", "image", "ls", "--filter=reference=" + image, "--format={{json .}}")
-				.run().stream()
-				.map(output -> readValue(ContainerImage.class, output))
-				.filter(i -> normalizeImage(image).equals(normalizeImage(i.repository + ":" + i.tag)))
-				.findAny();
+		var task = Task.of(log, "docker", "image", "inspect", image, "--format={{json .}}").start().waitFor();
+		return task.exitCode() == 0
+				? task.output().stream().map(output -> readValue(ContainerImage.class, output)).findAny()
+				: Optional.empty();
 	}
 
 	public void pullImage(String image, Duration timeout) throws MojoExecutionException {
@@ -232,19 +232,41 @@ public class Docker {
 	}
 
 	/**
-	 * Response of <code>docker image ls --format=json</code>.
+	 * Response of <code>docker image inspect --format=json</code>.
 	 *
-	 * @see <a href="https://docs.docker.com/engine/reference/commandline/image_ls/">docker image ls</a>
+	 * @see <a href="https://docs.docker.com/engine/reference/commandline/image_inspect/">docker image inspect</a>
 	 */
 	public static class ContainerImage {
 
-		public final String repository;
-		public final String tag;
+		public final String id;
+		public final String created;
+		public final Long size;
+		public final List<String> repoDigests;
+		public final Map<String, Object> rootFs;
+		public final Map<String, Object> metadata;
 
 		@JsonCreator
-		public ContainerImage(@JsonProperty("Repository") String repository, @JsonProperty("Tag") String tag) {
-			this.repository = repository;
-			this.tag = tag;
+		public ContainerImage(
+				@JsonProperty("Id") String id,
+				@JsonProperty("Created") String created,
+				@JsonProperty("Size") Long size,
+				@JsonProperty("RepoDigests") List<String> repoDigests,
+				@JsonProperty("RootFS") Map<String, Object> rootFs,
+				@JsonProperty("Metadata") Map<String, Object> metadata) {
+			this.id = id;
+			this.created = created;
+			this.size = size;
+			this.repoDigests = repoDigests;
+			this.rootFs = rootFs;
+			this.metadata = metadata;
+		}
+
+		public String getDigest() {
+			return repoDigests.stream()
+					.filter(i -> i.contains("@sha256"))
+					.map(i -> i.substring(i.indexOf("@sha256:") + 8))
+					.findFirst()
+					.orElse(id + "_" + size + "_" + created + "_" + rootFs.hashCode() + "_" + metadata.hashCode());
 		}
 	}
 }
