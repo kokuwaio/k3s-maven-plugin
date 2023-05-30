@@ -1,7 +1,6 @@
 package io.kokuwa.maven.k3s;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -24,38 +23,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 public class LifecycleTest extends AbstractTest {
 
 	@Test
-	void withAgentCacheNone(
-			CreateMojo createMojo,
-			StartMojo startMojo,
-			ImageMojo imageMojo,
-			KubectlMojo kubectlMojo,
-			RemoveMojo removeMojo) {
-		lifecycle(createMojo.setAgentCache(AgentCacheMode.NONE), startMojo, imageMojo, kubectlMojo, removeMojo);
-	}
-
-	@Test
-	void withAgentCacheVolume(
-			CreateMojo createMojo,
-			StartMojo startMojo,
-			ImageMojo imageMojo,
-			KubectlMojo kubectlMojo,
-			RemoveMojo removeMojo) {
-		lifecycle(createMojo.setAgentCache(AgentCacheMode.VOLUME), startMojo, imageMojo, kubectlMojo, removeMojo);
-		assertTrue(docker.isVolumePresent());
-		docker.removeVolume();
-	}
-
-	@Test
-	void withAgentCacheHost(
-			CreateMojo createMojo,
-			StartMojo startMojo,
-			ImageMojo imageMojo,
-			KubectlMojo kubectlMojo,
-			RemoveMojo removeMojo) {
-		lifecycle(createMojo.setAgentCache(AgentCacheMode.HOST), startMojo, imageMojo, kubectlMojo, removeMojo);
-	}
-
-	private void lifecycle(
+	void lifecycle(
 			CreateMojo createMojo,
 			StartMojo startMojo,
 			ImageMojo imageMojo,

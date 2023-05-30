@@ -5,13 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import io.kokuwa.maven.k3s.AgentCacheMode;
 import io.kokuwa.maven.k3s.test.AbstractTest;
 
 /**
@@ -61,26 +59,5 @@ public class CreateMojoTest extends AbstractTest {
 		assertDoesNotThrow(createMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertEquals(containerBefore.getId(), containerAfter.getId(), "container shouldn't be replaced");
-	}
-
-	@DisplayName("with agent cache NONE")
-	@Test
-	void withCacheNone(CreateMojo createMojo) {
-		assertDoesNotThrow(() -> createMojo.setAgentCache(AgentCacheMode.NONE).execute());
-	}
-
-	@DisplayName("with agent cache VOLUME")
-	@Test
-	void withCacheVolume(CreateMojo createMojo) {
-		assertDoesNotThrow(() -> createMojo.setAgentCache(AgentCacheMode.VOLUME).execute());
-		assertTrue(docker.isVolumePresent());
-		docker.getContainer().ifPresent(docker::removeContainer);
-		docker.removeVolume();
-	}
-
-	@DisplayName("with agent cache HOST")
-	@Test
-	void withCacheHost(CreateMojo createMojo) {
-		assertDoesNotThrow(() -> createMojo.setAgentCache(AgentCacheMode.HOST).execute());
 	}
 }
