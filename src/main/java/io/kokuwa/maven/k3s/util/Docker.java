@@ -39,16 +39,19 @@ import io.kokuwa.maven.k3s.AgentCacheMode;
 
 public class Docker {
 
-	public static final String K3S_NAME = "k3s-maven-plugin";
 	public static final String K3S_LABEL = "io.kokuwa.maven.k3s";
 
+	private final String containerName;
+	private final String volumeName;
 	private final Log log;
 	private final DockerClient client;
 
-	public Docker(Log log) {
+	public Docker(String containerName, String volumeName, Log log) {
 		var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
 		var httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
 		this.client = DockerClientImpl.getInstance(config, httpClient);
+		this.containerName = containerName;
+		this.volumeName = volumeName;
 		this.log = log;
 	}
 
@@ -138,7 +141,7 @@ public class Docker {
 			createVolume();
 			mounts.add(new Mount()
 					.withType(MountType.VOLUME)
-					.withSource(K3S_NAME)
+					.withSource(volumeName)
 					.withTarget("/var/lib/rancher/k3s/agent"));
 		}
 
@@ -158,7 +161,7 @@ public class Docker {
 
 		var container = client
 				.createContainerCmd(dockerImage)
-				.withName(Docker.K3S_NAME)
+				.withName(containerName)
 				.withCmd(command)
 				.withLabels(Map.of(Docker.K3S_LABEL, Boolean.TRUE.toString()))
 				.withExposedPorts(List.copyOf(hostConfig.getPortBindings().getBindings().keySet()))
@@ -234,7 +237,7 @@ public class Docker {
 
 	public boolean isVolumePresent() {
 		try {
-			return client.inspectVolumeCmd(K3S_NAME).exec() != null;
+			return client.inspectVolumeCmd(volumeName).exec() != null;
 		} catch (NotFoundException e) {
 			return false;
 		}
@@ -242,7 +245,7 @@ public class Docker {
 
 	public void createVolume() {
 		if (isVolumePresent()) {
-			client.createVolumeCmd().withName(K3S_NAME).exec();
+			client.createVolumeCmd().withName(volumeName).exec();
 			log.debug("Cache volume created");
 		} else {
 			log.debug("Reuse existing cache volume");
@@ -251,7 +254,7 @@ public class Docker {
 
 	public void removeVolume() {
 		if (isVolumePresent()) {
-			client.removeVolumeCmd(K3S_NAME).exec();
+			client.removeVolumeCmd(volumeName).exec();
 			log.debug("Cache volume removed");
 		} else {
 			log.debug("Cache volume not found, skip removing");

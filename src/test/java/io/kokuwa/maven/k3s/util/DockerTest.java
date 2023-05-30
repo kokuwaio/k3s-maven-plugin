@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.function.BiConsumer;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ public class DockerTest extends AbstractTest {
 
 	@DisplayName("image handling")
 	@Test
-	void image() throws MojoExecutionException {
+	void image(Log log) throws MojoExecutionException {
 
 		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found before testing");
 		docker.removeImage(helloWorld());

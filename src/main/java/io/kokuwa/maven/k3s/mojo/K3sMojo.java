@@ -37,7 +37,20 @@ public abstract class K3sMojo extends AbstractMojo {
 	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip = false;
 
-	boolean isSkip(boolean skipMojo) {
+	/** Name for the create docker container. */
+	@Setter @Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
+	private String containerName;
+
+	/** Name for the create volume container. */
+	@Setter @Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
+	private String volumeName;
+
+	// generic methods
+
+	private Log log;
+	private Docker docker;
+
+	public boolean isSkip(boolean skipMojo) {
 		return skip || skipMojo;
 	}
 
@@ -55,11 +68,11 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	@Override
 	public Log getLog() {
-		return new DebugLog(super.getLog(), debug);
+		return log == null ? log = new DebugLog(super.getLog(), debug) : log;
 	}
 
 	public Docker getDocker() {
-		return new Docker(getLog());
+		return docker == null ? docker = new Docker(containerName, volumeName, getLog()) : docker;
 	}
 
 	// directories

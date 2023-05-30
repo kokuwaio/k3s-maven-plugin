@@ -10,8 +10,6 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -32,15 +30,15 @@ import io.kokuwa.maven.k3s.util.Docker;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public abstract class AbstractTest {
 
-	protected final Log log = new SystemStreamLog();
-	protected final Docker docker = new Docker(log);
+	public Docker docker;
 
 	@BeforeEach
 	@AfterEach
-	void reset() {
-		docker.getContainer().ifPresent(docker::removeContainer);
-		docker.removeVolume();
-		docker.removeImage(helloWorld());
+	void reset(Docker newDocker) {
+		this.docker = newDocker;
+		this.docker.getContainer().ifPresent(docker::removeContainer);
+		this.docker.removeVolume();
+		this.docker.removeImage(helloWorld());
 	}
 
 	public static String helloWorld() {
