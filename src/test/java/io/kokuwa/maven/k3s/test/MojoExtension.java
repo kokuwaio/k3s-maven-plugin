@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
+import io.kokuwa.maven.k3s.mojo.K3sMojo;
+
 /**
  * JUnit extension to provide prepared mojos as test parameter.
  *
@@ -31,7 +33,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	private static Log log = new SystemStreamLog();
 	private static PluginDescriptor plugin;
-	private static Map<Class<Mojo>, MojoDescriptor> mojoDescriptors = new HashMap<>();
+	private static Map<String, MojoDescriptor> mojoDescriptors = new HashMap<>();
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
@@ -46,28 +48,27 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			log.debug("Found plugin: " + plugin.getId());
 			for (var mojo : plugin.getMojos()) {
 				log.debug("Found mojo: " + mojo.getId());
-				mojoDescriptors.put((Class<Mojo>) Class.forName(mojo.getImplementation()), mojo);
+				mojoDescriptors.put(mojo.getImplementation(), mojo);
 			}
 		}
 	}
 
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
-		return mojoDescriptors.containsKey(parameterContext.getParameter().getType());
+		return mojoDescriptors.containsKey(parameterContext.getParameter().getType().getName());
 	}
 
 	@Override
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
 
-		var mojoType = (Class<Mojo>) parameterContext.getParameter().getType();
-		var mojoDescriptor = mojoDescriptors.get(parameterContext.getParameter().getType());
+		var mojoType = parameterContext.getParameter().getType();
+		var mojoDescriptor = mojoDescriptors.get(mojoType.getName());
 		var mojoId = mojoDescriptor.getId();
 
 		try {
 
 			log.debug(mojoId + " - create mojo");
-			var mojo = mojoType.getDeclaredConstructor().newInstance();
-			mojo.setLog(log);
+			var mojo = (K3sMojo) mojoType.getDeclaredConstructor().newInstance();
 
 			for (var parameter : mojoDescriptor.getParameters()) {
 
@@ -86,12 +87,14 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 				}
 			}
 
+			mojo.setLog(log);
 			return mojo;
 		} catch (ReflectiveOperationException e) {
 			throw new ParameterResolutionException("Failed to setup mojo " + mojoId + ".", e);
 		}
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void setMojoParameterValue(Mojo mojo, String field, String value) throws ReflectiveOperationException {
 
 		var setter = Stream.of(mojo.getClass().getMethods())
