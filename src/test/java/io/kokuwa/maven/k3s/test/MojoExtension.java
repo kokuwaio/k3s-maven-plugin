@@ -23,6 +23,8 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
+import io.kokuwa.maven.k3s.util.DebugLog;
+import io.kokuwa.maven.k3s.util.Docker;
 
 /**
  * JUnit extension to provide prepared mojos as test parameter.
@@ -31,9 +33,12 @@ import io.kokuwa.maven.k3s.mojo.K3sMojo;
  */
 public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
-	private static Log log = new SystemStreamLog();
+	private static final String containerName = "k3s-maven-plugin";
+	private static final String volumeName = "k3s-maven-plugin-junit";
+	private static final Log log = new DebugLog(new SystemStreamLog(), false);
+	private static final Docker docker = new Docker(containerName, volumeName, log);
+	private static final Map<String, MojoDescriptor> mojoDescriptors = new HashMap<>();
 	private static PluginDescriptor plugin;
-	private static Map<String, MojoDescriptor> mojoDescriptors = new HashMap<>();
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
@@ -55,11 +60,20 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
-		return mojoDescriptors.containsKey(parameterContext.getParameter().getType().getName());
+		var type = parameterContext.getParameter().getType();
+		return mojoDescriptors.containsKey(type.getName()) || type.equals(Log.class) || type.equals(Docker.class);
 	}
 
 	@Override
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
+
+		var type = parameterContext.getParameter().getType();
+		if (type.equals(Log.class)) {
+			return log;
+		}
+		if (type.equals(Docker.class)) {
+			return docker;
+		}
 
 		var mojoType = parameterContext.getParameter().getType();
 		var mojoDescriptor = mojoDescriptors.get(mojoType.getName());
@@ -88,6 +102,8 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			}
 
 			mojo.setLog(log);
+			mojo.setContainerName(containerName);
+			mojo.setVolumeName(volumeName);
 			return mojo;
 		} catch (ReflectiveOperationException e) {
 			throw new ParameterResolutionException("Failed to setup mojo " + mojoId + ".", e);
