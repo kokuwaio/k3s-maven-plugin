@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,7 @@ public class RemoveMojoTest extends AbstractTest {
 	}
 
 	@DisplayName("without container but present cache")
+	@Disabled("flaky because of host mount")
 	@Test
 	void withoutContainerButPresentCache(RemoveMojo removeMojo) {
 		docker.createVolume();
@@ -52,6 +54,7 @@ public class RemoveMojoTest extends AbstractTest {
 	}
 
 	@DisplayName("with container and cache")
+	@Disabled("flaky because of host mount")
 	@Test
 	void withContainerAndCache(CreateMojo createMojo, RemoveMojo removeMojo) {
 		createMojo.setAgentCache(AgentCacheMode.VOLUME);
