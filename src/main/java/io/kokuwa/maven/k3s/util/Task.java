@@ -93,6 +93,7 @@ public class Task {
 		} catch (InterruptedException e) {
 			throw new MojoExecutionException("Command failed: " + this, e);
 		} finally {
+			Await.await(log, "threads finished").until(() -> threads.stream().noneMatch(Thread::isAlive));
 			close();
 		}
 		return this;
