@@ -26,9 +26,19 @@ public class ImageMojoTest extends AbstractTest {
 	@Test
 	void withSkip(ImageMojo imageMojo) throws MojoExecutionException {
 		imageMojo.setDockerImages(List.of(helloWorld()));
-		assertDoesNotThrow(() -> imageMojo.setSkipImage(false).setSkip(true).execute());
-		assertDoesNotThrow(() -> imageMojo.setSkipImage(true).setSkip(false).execute());
-		assertDoesNotThrow(() -> imageMojo.setSkipImage(true).setSkip(true).execute());
+
+		imageMojo.setSkipImage(false);
+		imageMojo.setSkip(true);
+		assertDoesNotThrow(imageMojo::execute);
+
+		imageMojo.setSkipImage(true);
+		imageMojo.setSkip(false);
+		assertDoesNotThrow(imageMojo::execute);
+
+		imageMojo.setSkipImage(true);
+		imageMojo.setSkip(true);
+		assertDoesNotThrow(imageMojo::execute);
+
 		assertFalse(hasDockerImage(helloWorld()));
 	}
 
@@ -60,7 +70,9 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertCtrPull(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of(helloWorld())).setTarFiles(List.of()).setDockerImages(List.of());
+		mojo.setCtrImages(List.of(helloWorld()));
+		mojo.setTarFiles(List.of());
+		mojo.setDockerImages(List.of());
 
 		assertFalse(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), false);
@@ -72,8 +84,9 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertTagFiles(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of()).setTarFiles(List.of("src/test/resources/hello-world.tar"))
-				.setDockerImages(List.of());
+		mojo.setCtrImages(List.of());
+		mojo.setTarFiles(List.of("src/test/resources/hello-world.tar"));
+		mojo.setDockerImages(List.of());
 
 		assertFalse(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), false);
@@ -85,7 +98,9 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertDockerWithCachedImage(ImageMojo mojo) throws MojoExecutionException {
 
 		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of()).setTarFiles(List.of()).setDockerImages(List.of(helloWorld()));
+		mojo.setCtrImages(List.of());
+		mojo.setTarFiles(List.of());
+		mojo.setDockerImages(List.of(helloWorld()));
 
 		assertTrue(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), false);
@@ -101,7 +116,9 @@ public class ImageMojoTest extends AbstractTest {
 
 		docker.removeImage(helloWorld());
 		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of()).setTarFiles(List.of()).setDockerImages(List.of(helloWorld()));
+		mojo.setCtrImages(List.of());
+		mojo.setTarFiles(List.of());
+		mojo.setDockerImages(List.of(helloWorld()));
 
 		assertFalse(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), false);

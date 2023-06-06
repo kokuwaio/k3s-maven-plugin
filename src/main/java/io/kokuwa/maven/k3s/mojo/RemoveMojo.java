@@ -5,8 +5,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import lombok.Setter;
-
 /**
  * Mojo to remove k3s container.
  *
@@ -20,7 +18,7 @@ public class RemoveMojo extends K3sMojo {
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.includeCache", defaultValue = "false")
+	@Parameter(property = "k3s.includeCache", defaultValue = "false")
 	private boolean includeCache;
 
 	/**
@@ -28,7 +26,7 @@ public class RemoveMojo extends K3sMojo {
 	 *
 	 * @since 0.1.0
 	 */
-	@Setter @Parameter(property = "k3s.skipRm", defaultValue = "false")
+	@Parameter(property = "k3s.skipRm", defaultValue = "false")
 	private boolean skipRm;
 
 	@Override
@@ -42,5 +40,15 @@ public class RemoveMojo extends K3sMojo {
 		if (includeCache) {
 			getDocker().removeVolume();
 		}
+	}
+
+	// setter
+
+	public void setIncludeCache(boolean includeCache) {
+		this.includeCache = includeCache;
+	}
+
+	public void setSkipRm(boolean skipRm) {
+		this.skipRm = skipRm;
 	}
 }
