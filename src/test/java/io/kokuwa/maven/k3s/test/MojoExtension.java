@@ -46,7 +46,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			assertNotNull(inputStream, "Plugin descriptor for not found, run 'mvn plugin:descriptor'.");
 			new PluginDescriptorBuilder()
 					.build(new InterpolationFilterReader(new XmlStreamReader(inputStream),
-							Map.of("user.home", System.getProperty("user.home"), "project.basedir", ".")))
+							Map.of("project.build.directory", "target", "project.basedir", ".")))
 					.getMojos()
 					.forEach(mojos::add);
 		}

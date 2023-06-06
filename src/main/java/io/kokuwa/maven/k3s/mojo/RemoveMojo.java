@@ -1,9 +1,5 @@
 package io.kokuwa.maven.k3s.mojo;
 
-import java.io.IOException;
-import java.nio.file.Files;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -42,23 +38,9 @@ public class RemoveMojo extends K3sMojo {
 			return;
 		}
 
-		// remove containers & volumes
-
-		getDocker().getContainer().ifPresent(getDocker()::removeContainer);
+		getDocker().removeContainer();
 		if (includeCache) {
 			getDocker().removeVolume();
-		}
-
-		// remove obsolete config mounted to container
-
-		var directory = includeCache ? getCacheDir() : getMountDir();
-		getLog().debug("Remove directory: " + directory);
-		try {
-			if (Files.exists(directory)) {
-				FileUtils.forceDelete(directory.toFile());
-			}
-		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to delete directory at " + directory, e);
 		}
 	}
 }

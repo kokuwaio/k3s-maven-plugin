@@ -1,8 +1,6 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -10,15 +8,13 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.util.Await;
-import io.kokuwa.maven.k3s.util.DockerLogCallback;
-import io.kokuwa.maven.k3s.util.ExecResult;
+import io.kokuwa.maven.k3s.util.Task;
 
 /**
  * Mojo for kubectl apply.
@@ -74,55 +70,34 @@ public class ApplyMojo extends K3sMojo {
 			throw new MojoExecutionException("No k3s container found");
 		}
 
-		// copy manifests to mounted directory (docker mode only)
-
-		try {
-			if (Files.exists(manifests)) {
-				if (Files.exists(getManifestsDir())) {
-					FileUtils.forceDelete(getManifestsDir().toFile());
-				}
-				if (Files.isDirectory(manifests)) {
-					FileUtils.copyDirectory(manifests.toFile(), getManifestsDir().toFile());
-				} else {
-					Files.createDirectories(getManifestsDir());
-					Files.copy(manifests, getManifestsDir().resolve(manifests.getFileName()));
-				}
-			}
-		} catch (IOException e) {
-			throw new MojoExecutionException("Failed to copy manifests", e);
-		}
-
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
-		Await.await(getLog(), "k3s service account ready").until(getKubernetesClient()::isServiceAccountReady);
+		var kubernetes = getKubernetes();
+		Await.await(getLog(), "k3s service account ready").until(kubernetes::isServiceAccountReady);
 
 		// execute command
 
 		var result = apply();
-		if (result.getExitCode() != 0) {
+		if (result.exitCode() != 0) {
 			var crdPattern = Pattern.compile("customresourcedefinition\\.apiextensions\\.k8s\\.io/.* created");
-			if (result.getMessages().stream().map(crdPattern::matcher).anyMatch(Matcher::matches)) {
+			if (result.output().stream().map(crdPattern::matcher).anyMatch(Matcher::matches)) {
 				getLog().info("Found CRDs created, but kubectl failed. Try again ...");
 				result = apply();
 			}
 		}
-		if (result.getExitCode() != 0) {
-			result.getMessages().forEach(getLog()::warn);
-			throw new MojoExecutionException("Failed to execute manifests, exit code: " + result.getExitCode());
-		}
+		result.verify();
 
 		// wait for stuff to be ready
 
-		var kubernetes = getKubernetesClient();
 		Await.await(getLog(), "k3s pods ready").timeout(timeout).until(
 				() -> kubernetes.isDeploymentsReady()
 						&& kubernetes.isStatefulSetsReady()
 						&& kubernetes.isPodsReady());
 	}
 
-	private ExecResult apply() throws MojoExecutionException {
+	private Task apply() throws MojoExecutionException {
 
-		var path = Paths.get("/k3s/manifests");
+		var path = Paths.get("/tmp/manifests");
 		var command = new ArrayList<String>();
 		command.add("kubectl");
 		command.add("apply");
@@ -133,9 +108,8 @@ public class ApplyMojo extends K3sMojo {
 			command.add("--recursive");
 		}
 
-		var callback = new DockerLogCallback(getLog());
-		return getDocker().exec(command.toString(), getDocker().getContainer().get(), cmd -> cmd
-				.withCmd(command.toArray(new String[command.size()])), callback, timeout);
+		getDocker().copyToContainer(manifests, path);
+		return getDocker().execWithoutVerify(command);
 	}
 
 	// setter

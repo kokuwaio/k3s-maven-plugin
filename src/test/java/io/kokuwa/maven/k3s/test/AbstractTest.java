@@ -10,6 +10,7 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -34,9 +35,9 @@ public abstract class AbstractTest {
 
 	@BeforeEach
 	@AfterEach
-	void reset(Docker newDocker) {
+	void reset(Docker newDocker) throws MojoExecutionException {
 		this.docker = newDocker;
-		this.docker.getContainer().ifPresent(docker::removeContainer);
+		this.docker.removeContainer();
 		this.docker.removeVolume();
 		this.docker.removeImage(helloWorld());
 	}

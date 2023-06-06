@@ -4,7 +4,6 @@ Start and run k3s container.
 
 | Name | User Property | Description | Default |
 | -----| ------------- | ----------- | ------- |
-| `cacheDir` | `k3s.cacheDir` | Cache directory where to store node informations (mounted to `/var/lib/rancher/k3s/agent`). | `~/.kube/k3s-maven-plugin` |
 | `imageRegistry` | `k3s.imageRegistry` | k3s image registry | |
 | `imageRepository` | `k3s.imageRepository` | k3s image repository | docker.io/rancher/k3s |
 | `imageTag` | `k3s.imageTag` | k3s image tag | latest |
@@ -20,5 +19,6 @@ Start and run k3s container.
 | `failIfExists` | `k3s.failIfExists` | Fail if docker container from previous run exists. E.g. with `mvn k3s:rm` | true |
 | `replaceIfExists` | `k3s.replaceIfExists` | Replace existing docker container from previous run. | false |
 | `nodeTimeout` | `k3s.nodeTimeout` | Timeout in seconds to wait for nodes getting ready. | 30 |
+| `kubeconfig` | `k3s.kubeconfig` | Path where to place kubectl config for external usage. | ${project.build.directory}/k3s.yaml |
 | `skipRun` | `skipRun` | Skip running of k3s. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
