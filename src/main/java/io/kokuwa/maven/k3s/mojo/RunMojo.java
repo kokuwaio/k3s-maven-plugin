@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -13,21 +14,26 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Frame;
+
 import io.kokuwa.maven.k3s.util.Await;
+import io.kokuwa.maven.k3s.util.DockerLogCallback;
 import lombok.Setter;
 
 /**
- * Mojo for create k3s docker container.
+ * Mojo for start k3s container.
  *
- * @since 0.3.0
+ * @author stephan.schnabel@posteo.de
+ * @since 1.0.0
  */
-@Mojo(name = "create", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
-public class CreateMojo extends K3sMojo {
+@Mojo(name = "run", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
+public class RunMojo extends K3sMojo {
 
 	/**
 	 * k3s image registry.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
@@ -35,15 +41,15 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * k3s image repository.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "rancher/k3s")
-	private String imageRepository = "rancher/k3s";
+	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "docker.io/rancher/k3s")
+	private String imageRepository;
 
 	/**
 	 * k3s image tag.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag;
@@ -51,7 +57,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable servicelb.
 	 *
-	 * @since 0.4.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableServicelb", defaultValue = "false")
 	private boolean disableServicelb;
@@ -59,7 +65,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable helm controller.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableHelmController", defaultValue = "true")
 	private boolean disableHelmController;
@@ -67,7 +73,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable local storage.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableLocalStorage", defaultValue = "true")
 	private boolean disableLocalStorage;
@@ -75,7 +81,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable metrics-server.
 	 *
-	 * @since 0.4.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableMetricsServer", defaultValue = "true")
 	private boolean disableMetricsServer;
@@ -83,7 +89,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable traefik.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableTraefik", defaultValue = "true")
 	private boolean disableTraefik;
@@ -91,7 +97,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable cloud-controller.
 	 *
-	 * @since 0.4.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableCloudController", defaultValue = "true")
 	private boolean disableCloudController;
@@ -99,7 +105,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Disable network-policy.
 	 *
-	 * @since 0.4.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
 	private boolean disableNetworkPolicy;
@@ -107,7 +113,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Additional port bindings e.g. 8080:8080.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
@@ -115,7 +121,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * KubeApi port to expose to host.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private int portKubeApi;
@@ -123,7 +129,7 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Fail if docker container from previous run exists.
 	 *
-	 * @since 0.8.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.failIfExists", defaultValue = "true")
 	private boolean failIfExists;
@@ -131,38 +137,78 @@ public class CreateMojo extends K3sMojo {
 	/**
 	 * Replace existing docker container from previous run.
 	 *
-	 * @since 0.8.0
+	 * @since 1.0.0
 	 */
 	@Setter @Parameter(property = "k3s.replaceIfExists", defaultValue = "false")
 	private boolean replaceIfExists;
 
 	/**
-	 * Skip creation of k3s container.
+	 * Timeout in seconds to wait for nodes getting ready.
 	 *
-	 * @since 0.3.0
+	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.skipCreate", defaultValue = "false")
-	private boolean skipCreate;
+	@Parameter(property = "k3s.nodeTimeout", defaultValue = "30")
+	private Duration nodeTimeout;
+
+	/**
+	 * Skip running of k3s.
+	 *
+	 * @since 1.0.0
+	 */
+	@Setter @Parameter(property = "k3s.skipRun", defaultValue = "false")
+	private boolean skipRun;
 
 	@Override
 	public void execute() throws MojoExecutionException {
 
-		if (isSkip(skipCreate)) {
+		if (isSkip(skipRun)) {
 			return;
 		}
 
-		var container = getDocker().getContainer();
-		if (container.isPresent()) {
-			var containerId = container.get().getId();
+		var container = createK3sContainer();
+
+		// start k3s
+
+		if (!getDocker().isRunning(container)) {
+			getDocker().startContainer(container);
+		}
+
+		// logs to console and wait for startup
+
+		var k3sStarted = new AtomicBoolean();
+		var callback = new DockerLogCallback(getLog()) {
+			@Override
+			public void onNext(Frame frame) {
+				super.onNext(frame);
+				if (new String(frame.getPayload()).contains("k3s is up and running")) {
+					k3sStarted.set(true);
+				}
+			}
+		};
+		getDocker().logContainer(container, callback);
+		Await.await(getLog(), "k3s is up and running")
+				.timeout(nodeTimeout)
+				.onTimeout(callback::replayOnWarn)
+				.until(k3sStarted::get);
+		getLog().info("k3s api available: KUBECONFIG=" + getKubeConfig() + " kubectl get all --all-namespaces");
+
+		copyKubeConfigToMountedWorkingDirectory(container);
+	}
+
+	private Container createK3sContainer() throws MojoExecutionException {
+
+		var container = getDocker().getContainer().orElse(null);
+		if (container != null) {
+			var containerId = container.getId();
 			if (failIfExists) {
 				throw new MojoExecutionException("Container with id '" + containerId
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
 				getLog().info("Container with id '" + containerId + "' found, replacing");
-				getDocker().removeContainer(container.get());
+				getDocker().removeContainer(container);
 			} else {
 				getLog().warn("Container with id '" + containerId + "' found, skip creating");
-				return;
+				return container;
 			}
 		}
 
@@ -230,6 +276,24 @@ public class CreateMojo extends K3sMojo {
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
 		getDocker().createVolume();
-		getDocker().createContainer(image, getMountDir(), ports, command);
+		return getDocker().createContainer(image, getMountDir(), ports, command);
+	}
+
+	private void copyKubeConfigToMountedWorkingDirectory(Container container) throws MojoExecutionException {
+		var command = "install -m 666 /etc/rancher/k3s/k3s.yaml /k3s/kubeconfig.yaml";
+		var callback = new DockerLogCallback(getLog());
+		var timeout = Duration.ofSeconds(30);
+		var result = getDocker().exec("install", container, cmd -> cmd.withCmd("/bin/sh", "-c", command), callback,
+				timeout);
+		if (result.getExitCode() != 0) {
+			callback.replayOnWarn();
+			throw new MojoExecutionException("install returned exit code " + result.getExitCode());
+		}
+	}
+
+	// setter
+
+	public void setNodeTimeout(int nodeTimeout) {
+		this.nodeTimeout = Duration.ofSeconds(nodeTimeout);
 	}
 }

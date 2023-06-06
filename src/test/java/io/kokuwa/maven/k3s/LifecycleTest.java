@@ -7,11 +7,10 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import io.kokuwa.maven.k3s.mojo.CreateMojo;
 import io.kokuwa.maven.k3s.mojo.ImageMojo;
 import io.kokuwa.maven.k3s.mojo.KubectlMojo;
 import io.kokuwa.maven.k3s.mojo.RemoveMojo;
-import io.kokuwa.maven.k3s.mojo.StartMojo;
+import io.kokuwa.maven.k3s.mojo.RunMojo;
 import io.kokuwa.maven.k3s.test.AbstractTest;
 
 /**
@@ -23,14 +22,8 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 public class LifecycleTest extends AbstractTest {
 
 	@Test
-	void lifecycle(
-			CreateMojo createMojo,
-			StartMojo startMojo,
-			ImageMojo imageMojo,
-			KubectlMojo kubectlMojo,
-			RemoveMojo removeMojo) {
-		assertDoesNotThrow(() -> createMojo.setPortBindings(List.of("8080:8080")).execute());
-		assertDoesNotThrow(() -> startMojo.execute());
+	void lifecycle(RunMojo runMojo, ImageMojo imageMojo, KubectlMojo kubectlMojo, RemoveMojo removeMojo) {
+		assertDoesNotThrow(() -> runMojo.setPortBindings(List.of("8080:8080")).execute());
 		assertDoesNotThrow(() -> imageMojo.setCtrImages(List.of("jmalloc/echo-server:0.3.1")).execute());
 		assertDoesNotThrow(() -> kubectlMojo.setCommand("kubectl apply -f pod.yaml").execute());
 		assertPodRunning();
