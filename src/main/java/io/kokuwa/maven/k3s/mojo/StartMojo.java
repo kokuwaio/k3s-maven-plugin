@@ -25,16 +25,6 @@ import lombok.Setter;
 public class StartMojo extends K3sMojo {
 
 	/**
-	 * Stream logs of k3s to maven logger.
-	 *
-	 * @since 0.1.0
-	 * @deprecated Removed with 1.0.0
-	 */
-	@Deprecated(since = "0.11.0", forRemoval = true)
-	@Parameter(property = "k3s.streamLogs", defaultValue = "false")
-	private boolean streamLogs;
-
-	/**
 	 * Timeout in seconds to wait for nodes getting ready.
 	 *
 	 * @since 0.1.0
@@ -145,16 +135,6 @@ public class StartMojo extends K3sMojo {
 		if (result.getExitCode() != 0) {
 			callback.replayOnWarn();
 			throw new MojoExecutionException("install returned exit code " + result.getExitCode());
-		}
-	}
-
-	// setter
-
-	public void setStreamLogs(boolean streamLogs) {
-		this.streamLogs = streamLogs;
-		if (streamLogs == true) {
-			getLog().warn("Used deprecated confuguration `streamLogs`, use `debug` instead");
-			this.setDebug(true);
 		}
 	}
 }
