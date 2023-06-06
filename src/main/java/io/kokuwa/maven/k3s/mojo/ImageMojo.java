@@ -1,5 +1,6 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -7,12 +8,16 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.Adler32;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -101,7 +106,7 @@ public class ImageMojo extends K3sMojo {
 		var existingImages = getCtrImages();
 		var tasks = new HashSet<Callable<Boolean>>();
 		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(existingImages, requestedImage)));
-		tarFiles.forEach(tarFile -> tasks.add(() -> tar(tarFile)));
+		tarFiles.forEach(tarFile -> tasks.add(() -> tar(existingImages, tarFile)));
 		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(existingImages, requestedImage)));
 
 		// execute callables
@@ -119,18 +124,53 @@ public class ImageMojo extends K3sMojo {
 		}
 	}
 
-	private boolean tar(Path tarFile) {
+	private boolean tar(Map<String, Map<String, ?>> existingImages, Path tarFile) {
 
 		if (!Files.isRegularFile(tarFile)) {
 			getLog().error("Tar not found: " + tarFile);
 			return false;
 		}
 
-		var destination = Paths.get("/tmp").resolve(tarFile.getFileName() + "_" + System.nanoTime());
 		try {
+
+			// skip if image is already present in ctr
+
+			var labelPath = "k3s-maven-tar-path";
+			var labelChecksum = "k3s-maven-tar-checksum";
+			var checksum = new Adler32();
+			checksum.update(Files.readAllBytes(tarFile));
+			var newChecksum = String.valueOf(checksum.getValue());
+			var oldChecksum = existingImages.values().stream()
+					.filter(l -> Optional.ofNullable(l.get(labelPath)).map(tarFile.toString()::equals).orElse(false))
+					.map(l -> l.get(labelChecksum)).filter(Objects::nonNull)
+					.findAny().orElse(null);
+			if (oldChecksum == null) {
+				getLog().debug("Tar " + tarFile + " does not exists in ctr.");
+			} else if (oldChecksum.equals(newChecksum)) {
+				getLog().debug("Tar " + tarFile + " present in ctr with checksum " + newChecksum + ", skip.");
+				return true;
+			} else {
+				getLog().info("Tar " + tarFile + " present in ctr with checksum " + oldChecksum + ", new is: "
+						+ newChecksum);
+			}
+
+			// import tar into ctr
+
+			var destination = Paths.get("/tmp").resolve(tarFile.getFileName() + "_" + System.nanoTime());
+			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
+
 			getDocker().copyToContainer(tarFile, destination);
-			getDocker().exec("ctr", "image", "import", destination.toString());
-		} catch (MojoExecutionException e) {
+			for (var output : getDocker().exec("ctr", "image", "import", destination.toString())) {
+				var matcher = outputPattern.matcher(output);
+				if (matcher.matches()) {
+					getDocker().exec("ctr", "image", "label", matcher.group("image"), labelPath + "=" + tarFile);
+					getDocker().exec("ctr", "image", "label", matcher.group("image"),
+							labelChecksum + "=" + newChecksum);
+				} else {
+					getLog().warn("Tar " + tarFile + " import output cannot be parsed: " + output);
+				}
+			}
+		} catch (MojoExecutionException | IOException e) {
 			getLog().error("Failed to import tar: " + tarFile, e);
 			return false;
 		}

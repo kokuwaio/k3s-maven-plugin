@@ -6,6 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -55,12 +59,18 @@ public class ImageMojoTest extends AbstractTest {
 		assertDoesNotThrow(imageMojo::execute);
 	}
 
-	@DisplayName("with images")
+	@DisplayName("with crtImages")
 	@Test
-	void withImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
+	void ctrImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
+
+		imageMojo.setCtrImages(List.of(helloWorld()));
 		assertDoesNotThrow(runMojo::execute);
-		assertCtrPull(imageMojo);
-		assertTagFiles(imageMojo);
+
+		// pull image
+
+		assertCtrImage(helloWorld(), false);
+		assertDoesNotThrow(imageMojo::execute);
+		assertCtrImage(helloWorld(), true);
 	}
 
 	@DisplayName("with dockerImages")
@@ -93,34 +103,29 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), true);
 	}
 
-	// test
+	@DisplayName("with tarFiles")
+	@Test
+	void tarFiles(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException, IOException {
 
-	private void assertCtrPull(ImageMojo mojo) throws MojoExecutionException {
+		var tarFile = Paths.get("target/test-classes/tarFile.tar");
+		imageMojo.setTarFiles(List.of(tarFile.toString()));
+		assertDoesNotThrow(runMojo::execute);
 
-		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of(helloWorld()));
-		mojo.setTarFiles(List.of());
-		mojo.setDockerImages(List.of());
+		// import image
 
-		assertFalse(hasDockerImage(helloWorld()));
 		assertCtrImage(helloWorld(), false);
-		assertDoesNotThrow(mojo::execute);
-		assertFalse(hasDockerImage(helloWorld()));
+		Files.copy(Paths.get("src/test/resources/hello-world.tar"), tarFile, StandardCopyOption.REPLACE_EXISTING);
+		assertDoesNotThrow(imageMojo::execute);
 		assertCtrImage(helloWorld(), true);
-	}
 
-	private void assertTagFiles(ImageMojo mojo) throws MojoExecutionException {
+		// skip import because file did not change
 
-		removeCtrImage(helloWorld());
-		mojo.setCtrImages(List.of());
-		mojo.setTarFiles(List.of("src/test/resources/hello-world.tar"));
-		mojo.setDockerImages(List.of());
+		assertDoesNotThrow(imageMojo::execute);
 
-		assertFalse(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), false);
-		assertDoesNotThrow(mojo::execute);
-		assertFalse(hasDockerImage(helloWorld()));
-		assertCtrImage(helloWorld(), true);
+		// reimport because file changed
+
+		Files.copy(Paths.get("src/test/resources/hello-world.tar.old"), tarFile, StandardCopyOption.REPLACE_EXISTING);
+		assertDoesNotThrow(imageMojo::execute);
 	}
 
 	// internal
@@ -134,9 +139,5 @@ public class ImageMojoTest extends AbstractTest {
 
 	private boolean hasDockerImage(String image) throws MojoExecutionException {
 		return docker.getImage(image).isPresent();
-	}
-
-	private void removeCtrImage(String image) throws MojoExecutionException {
-		docker.exec("ctr", "image", "remove", docker.normalizeImage(image));
 	}
 }
