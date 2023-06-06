@@ -3,7 +3,6 @@ name: Build
 on:
   push:
     branches: [main, "*.x"]
-  schedule: [cron: 0 0 * * 1]
 
 jobs:
 

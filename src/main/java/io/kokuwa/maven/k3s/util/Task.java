@@ -28,7 +28,6 @@ public class Task {
 
 	private Process process;
 	private final List<String> output = new ArrayList<>();
-	private final List<Thread> threads = new ArrayList<>();
 
 	private Task(Log log, List<String> command) {
 		this.log = log;
@@ -118,11 +117,10 @@ public class Task {
 
 	public void close() {
 		process.destroyForcibly();
-		threads.forEach(Thread::interrupt);
 	}
 
 	private void collectLogs(String stream, InputStream inputStream) {
-		var thread = new Thread(() -> {
+		new Thread(() -> {
 			try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
@@ -132,8 +130,6 @@ public class Task {
 			} catch (IOException e) {
 				log.debug("Stream " + stream + " closed unexpected: " + e.getMessage());
 			}
-		});
-		thread.start();
-		threads.add(thread);
+		}).start();
 	}
 }
