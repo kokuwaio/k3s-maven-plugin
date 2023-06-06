@@ -11,25 +11,35 @@ import org.junit.jupiter.api.Test;
 import io.kokuwa.maven.k3s.test.AbstractTest;
 
 /**
- * Test for {@link KubectlMojo}.
+ * Test for {@link ApplyMojo}.
  *
  * @author stephan.schnabel@posteo.de
  */
-@DisplayName("mojo: kubectl")
-public class KubectlMojoTest extends AbstractTest {
+@DisplayName("mojo: apply")
+public class ApplyMojoTest extends AbstractTest {
 
 	@DisplayName("with skip")
 	@Test
-	void withSkip(KubectlMojo kubectlMojo) {
+	void withSkip(ApplyMojo applyMojo) {
+
 		assertFalse(docker.getContainer().isPresent());
-		assertDoesNotThrow(() -> kubectlMojo.setSkipKubectl(false).setSkip(true).execute());
-		assertDoesNotThrow(() -> kubectlMojo.setSkipKubectl(true).setSkip(false).execute());
-		assertDoesNotThrow(() -> kubectlMojo.setSkipKubectl(true).setSkip(true).execute());
+
+		applyMojo.setSkipApply(false);
+		applyMojo.setSkip(true);
+		assertDoesNotThrow(applyMojo::execute);
+
+		applyMojo.setSkipApply(true);
+		applyMojo.setSkip(false);
+		assertDoesNotThrow(applyMojo::execute);
+
+		applyMojo.setSkipApply(true);
+		applyMojo.setSkip(true);
+		assertDoesNotThrow(applyMojo::execute);
 	}
 
 	@DisplayName("without container")
 	@Test
-	void withoutContainer(KubectlMojo kubectlMojo) {
+	void withoutContainer(ApplyMojo kubectlMojo) {
 		assertThrowsExactly(MojoExecutionException.class, kubectlMojo::execute, () -> "No k3s container found");
 	}
 }

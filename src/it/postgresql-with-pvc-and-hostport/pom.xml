@@ -27,13 +27,13 @@
 					<execution>
 						<goals>
 							<goal>run</goal>
-							<goal>kubectl</goal>
+							<goal>apply</goal>
 							<goal>rm</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<command>kubectl apply -k .</command>
+					<kustomize>true</kustomize>
 					<portBindings>
 						<portBinding>5432:5432</portBinding>
 					</portBindings>
