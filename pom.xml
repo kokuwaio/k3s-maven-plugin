@@ -6,11 +6,11 @@
 		<groupId>io.kokuwa.maven</groupId>
 		<artifactId>maven-parent</artifactId>
 		<version>0.6.3</version>
-		<relativePath/>
+		<relativePath />
 	</parent>
 
 	<artifactId>k3s-maven-plugin</artifactId>
-	<version>0.11.2-SNAPSHOT</version>
+	<version>0.11.2</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>k3s Maven Plugin</name>
@@ -52,7 +52,7 @@
 		<url>https://github.com/kokuwaio/k3s-maven-plugin</url>
 		<connection>scm:git:https://github.com/kokuwaio/k3s-maven-plugin.git</connection>
 		<developerConnection>scm:git:https://github.com/kokuwaio/k3s-maven-plugin.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>0.11.2</tag>
 	</scm>
 	<issueManagement>
 		<system>github</system>
