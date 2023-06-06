@@ -88,7 +88,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void setMojoParameterValue(Mojo mojo, String field, String value) throws ReflectiveOperationException {
 
 		var setter = Stream.of(mojo.getClass().getMethods())
@@ -98,8 +97,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 		if (String.class.equals(type)) {
 			setter.invoke(mojo, value);
-		} else if (Enum.class.isAssignableFrom(type)) {
-			setter.invoke(mojo, Enum.valueOf((Class<Enum>) type, value));
 		} else if (File.class.equals(type)) {
 			setter.invoke(mojo, new File(value));
 		} else if (boolean.class.equals(type)) {

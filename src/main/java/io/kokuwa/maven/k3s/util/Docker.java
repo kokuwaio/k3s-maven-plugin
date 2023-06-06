@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +33,6 @@ import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-
-import io.kokuwa.maven.k3s.AgentCacheMode;
 
 public class Docker {
 
@@ -128,33 +125,19 @@ public class Docker {
 
 	public Container createContainer(
 			String dockerImage,
-			AgentCacheMode agentCache,
 			Path mountDir,
-			Path agentDir,
 			List<String> portBindings,
 			List<String> command) {
 
 		// host config
 
-		var mounts = new ArrayList<Mount>();
-		if (agentCache == AgentCacheMode.VOLUME) {
-			createVolume();
-			mounts.add(new Mount()
-					.withType(MountType.VOLUME)
-					.withSource(volumeName)
-					.withTarget("/var/lib/rancher/k3s/agent"));
-		}
-
-		var binds = new ArrayList<Bind>();
-		binds.add(new Bind(mountDir.toString(), new Volume("/k3s")));
-		if (agentCache == AgentCacheMode.HOST) {
-			binds.add(new Bind(agentDir.toString(), new Volume("/var/lib/rancher/k3s/agent")));
-		}
-
 		var hostConfig = new HostConfig()
 				.withPrivileged(true)
-				.withMounts(mounts)
-				.withBinds(binds)
+				.withBinds(List.of(new Bind(mountDir.toString(), new Volume("/k3s"))))
+				.withMounts(List.of(new Mount()
+						.withType(MountType.VOLUME)
+						.withSource(volumeName)
+						.withTarget("/var/lib/rancher/k3s/agent")))
 				.withPortBindings(portBindings.stream().map(PortBinding::parse).collect(Collectors.toList()));
 
 		// container
