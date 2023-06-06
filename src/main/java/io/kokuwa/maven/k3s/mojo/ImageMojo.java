@@ -1,14 +1,16 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -29,7 +31,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.ctrImages")
-	private List<String> ctrImages = new ArrayList<>();
+	private Set<String> ctrImages = new HashSet<>();
 
 	/**
 	 * Import given tar files as images via "ctr image import" inside k3s container.
@@ -37,7 +39,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.tarFiles")
-	private List<String> tarFiles = new ArrayList<>();
+	private Set<Path> tarFiles = new HashSet<>();
 
 	/**
 	 * Copy given images from docker deamon via "ctr image import" inside k3s container.
@@ -45,7 +47,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.dockerImages")
-	private List<String> dockerImages = new ArrayList<>();
+	private Set<String> dockerImages = new HashSet<>();
 
 	/**
 	 * Always pull docker images or only if not present.
@@ -92,7 +94,7 @@ public class ImageMojo extends K3sMojo {
 
 		// get callables that handle images
 
-		var existingImages = getCtrImages();
+		var existingImages = getDocker().exec("ctr", "image", "list", "--quiet");
 		var tasks = new HashSet<Callable<Boolean>>();
 		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(requestedImage)));
 		tarFiles.forEach(tarFile -> tasks.add(() -> tar(tarFile)));
@@ -113,37 +115,35 @@ public class ImageMojo extends K3sMojo {
 		}
 	}
 
-	private boolean tar(String tar) {
+	private boolean tar(Path tarFile) {
 
-		var source = Paths.get(tar).toAbsolutePath();
-		if (!Files.isRegularFile(source)) {
-			getLog().error("Tar not found: " + source);
+		if (!Files.isRegularFile(tarFile)) {
+			getLog().error("Tar not found: " + tarFile);
 			return false;
 		}
 
-		var destination = Paths.get("/tmp").resolve(source.getFileName());
+		var destination = Paths.get("/tmp").resolve(tarFile.getFileName() + "_" + System.nanoTime());
 		try {
-			getDocker().copyToContainer(source, destination);
-			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
+			getDocker().copyToContainer(tarFile, destination);
+			getDocker().exec("ctr", "image", "import", destination.toString());
 		} catch (MojoExecutionException e) {
-			getLog().error("Failed to import tar: " + source, e);
+			getLog().error("Failed to import tar: " + tarFile, e);
 			return false;
 		}
 
-		getLog().info("Imported tar from " + source);
+		getLog().info("Imported tar from " + tarFile);
 		return true;
 	}
 
 	private boolean ctr(List<String> existingImages, String image) throws MojoExecutionException {
 
-		var normalizedImage = getDocker().normalizeImage(image);
-		if (existingImages.contains(normalizedImage)) {
+		if (existingImages.contains(image)) {
 			getLog().debug("Image " + image + " found in ctr, skip pulling");
 			return true;
 		}
 
 		getLog().info("Image " + image + " not found, start pulling");
-		getDocker().exec(pullTimeout, "ctr", "image", "pull", normalizedImage);
+		getDocker().exec(pullTimeout, "ctr", "image", "pull", image);
 		getLog().info("Image " + image + " pulled");
 
 		return true;
@@ -188,24 +188,18 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	private List<String> getCtrImages() throws MojoExecutionException {
-		var images = getDocker().exec("ctr", "image", "list", "--quiet");
-		images.forEach(image -> getLog().debug("Found ctr image: " + image));
-		return images;
-	}
-
 	// setter
 
 	public void setCtrImages(List<String> ctrImages) {
-		this.ctrImages = ctrImages;
+		this.ctrImages = ctrImages.stream().map(getDocker()::normalizeImage).collect(Collectors.toSet());
 	}
 
 	public void setDockerImages(List<String> dockerImages) {
-		this.dockerImages = dockerImages;
+		this.dockerImages = dockerImages.stream().collect(Collectors.toSet());
 	}
 
 	public void setTarFiles(List<String> tarFiles) {
-		this.tarFiles = tarFiles;
+		this.tarFiles = tarFiles.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toSet());
 	}
 
 	public void setDockerPullAlways(boolean dockerPullAlways) {
