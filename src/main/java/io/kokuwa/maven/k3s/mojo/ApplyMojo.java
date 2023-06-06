@@ -7,8 +7,14 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -89,10 +95,24 @@ public class ApplyMojo extends K3sMojo {
 
 		// wait for stuff to be ready
 
-		waitFor("statefulset", List.of("kubectl", "rollout", "status"));
-		waitFor("deployment", List.of("kubectl", "rollout", "status"));
-		waitFor("job", List.of("kubectl", "wait", "--for=condition=complete"));
-		waitFor("pod", List.of("kubectl", "wait", "--for=condition=ready"));
+		var tasks = Map
+				.of(
+						"statefulset", List.of("kubectl", "rollout", "status"),
+						"deployment", List.of("kubectl", "rollout", "status"),
+						"job", List.of("kubectl", "wait", "--for=condition=complete"),
+						"pod", List.of("kubectl", "wait", "--for=condition=ready"))
+				.entrySet().stream().parallel().flatMap(this::waitFor).collect(Collectors.toSet());
+		try {
+			var success = true;
+			for (var future : Executors.newWorkStealingPool().invokeAll(tasks)) {
+				success &= future.get();
+			}
+			if (!success) {
+				throw new MojoExecutionException("Failed to wait for resources, see previous log");
+			}
+		} catch (InterruptedException | ExecutionException e) {
+			throw new MojoExecutionException("Failed to wait for resources", e);
+		}
 	}
 
 	private Task apply() throws MojoExecutionException {
@@ -119,36 +139,45 @@ public class ApplyMojo extends K3sMojo {
 		return getDocker().execWithoutVerify(timeout, command);
 	}
 
-	private void waitFor(String kind, List<String> command) throws MojoExecutionException {
+	private Stream<Callable<Boolean>> waitFor(Entry<String, List<String>> entry) {
+		try {
 
-		var resources = getDocker()
-				.exec("kubectl", "get", kind,
-						"--all-namespaces",
-						"--no-headers",
-						"--output=custom-columns=:.metadata.namespace,:.metadata.name")
-				.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toList());
+			var kind = entry.getKey();
+			var resources = getDocker()
+					.exec("kubectl", "get", kind,
+							"--all-namespaces",
+							"--no-headers",
+							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
+					.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toList());
 
-		if ("pod".equals(kind)) { // remove managed pods from deployments/statefulsets
-			resources.removeIf(r -> Pattern.matches(".*-[0-9]+", r[1]));
-			resources.removeIf(r -> Pattern.matches(".*(-[a-z0-9]{8,10})?-[a-z0-9]{5}", r[1]));
-		}
-
-		for (var resource : resources) {
-			var namespace = resource[0];
-			var name = resource[1];
-			var tmp = new ArrayList<>(command);
-			tmp.add(kind);
-			tmp.add(name);
-			tmp.add("--namespace=" + namespace);
-			tmp.add("--timeout=" + timeout.getSeconds() + "s");
-			try {
-				getLog().debug(kind + " " + namespace + "/" + name + " ... waiting");
-				getDocker().exec(timeout.plusSeconds(10), tmp);
-				getLog().info(kind + " " + namespace + "/" + name + " ... ready");
-			} catch (MojoExecutionException e) {
-				getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
-				throw e;
+			if ("pod".equals(kind)) { // remove managed pods from deployments/statefulsets
+				resources.removeIf(r -> Pattern.matches(".*-[0-9]+", r[1]));
+				resources.removeIf(r -> Pattern.matches(".*(-[a-z0-9]{8,10})?-[a-z0-9]{5}", r[1]));
 			}
+
+			return resources.stream().map(resource -> {
+				var namespace = resource[0];
+				var name = resource[1];
+				var tmp = new ArrayList<>(entry.getValue());
+				tmp.add(kind);
+				tmp.add(name);
+				tmp.add("--namespace=" + namespace);
+				tmp.add("--timeout=" + timeout.getSeconds() + "s");
+				return (Callable<Boolean>) () -> {
+					try {
+						getLog().debug(kind + " " + namespace + "/" + name + " ... waiting");
+						getDocker().exec(timeout.plusSeconds(10), tmp);
+						getLog().info(kind + " " + namespace + "/" + name + " ... ready");
+						return true;
+					} catch (MojoExecutionException e) {
+						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
+						return false;
+					}
+				};
+			});
+
+		} catch (MojoExecutionException e) {
+			return Stream.of(() -> false);
 		}
 	}
 
