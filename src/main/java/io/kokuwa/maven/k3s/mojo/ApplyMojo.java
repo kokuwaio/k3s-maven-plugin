@@ -1,6 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -41,14 +42,6 @@ public class ApplyMojo extends K3sMojo {
 	 */
 	@Parameter(property = "k3s.subdir")
 	private String subdir;
-
-	/**
-	 * Use kustomize while applying manifest files.
-	 *
-	 * @since 1.0.0
-	 */
-	@Parameter(property = "k3s.kustomize", defaultValue = "false")
-	private boolean kustomize;
 
 	/**
 	 * Timeout in seconds to wait for resources getting ready.
@@ -107,6 +100,10 @@ public class ApplyMojo extends K3sMojo {
 		var path = Paths.get("/tmp/manifests");
 		var subPath = subdir == null ? path : path.resolve(subdir);
 
+		var kustomizePath = subdir == null ? manifests : manifests.resolve(subdir);
+		var kustomize = Files.isRegularFile(kustomizePath.resolve("kustomization.yml"))
+				|| Files.isRegularFile(kustomizePath.resolve("kustomization.yaml"));
+
 		var command = new ArrayList<String>();
 		command.add("kubectl");
 		command.add("apply");
@@ -118,6 +115,7 @@ public class ApplyMojo extends K3sMojo {
 		}
 
 		getDocker().copyToContainer(manifests, path);
+		getLog().info(command.stream().collect(Collectors.joining(" ")));
 		return getDocker().execWithoutVerify(timeout, command);
 	}
 
@@ -162,10 +160,6 @@ public class ApplyMojo extends K3sMojo {
 
 	public void setSubdir(String subdir) {
 		this.subdir = subdir;
-	}
-
-	public void setKustomize(boolean kustomize) {
-		this.kustomize = kustomize;
 	}
 
 	public void setTimeout(int timeout) {

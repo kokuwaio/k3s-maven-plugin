@@ -33,7 +33,6 @@
 					</execution>
 				</executions>
 				<configuration>
-					<kustomize>true</kustomize>
 					<portBindings>
 						<portBinding>5432:5432</portBinding>
 					</portBindings>

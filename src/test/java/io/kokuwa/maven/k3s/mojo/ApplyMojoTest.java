@@ -47,7 +47,6 @@ public class ApplyMojoTest extends AbstractTest {
 	@Test
 	void withCrd(RunMojo runMojo, ApplyMojo applyMojo) {
 		applyMojo.setSubdir("crd");
-		applyMojo.setKustomize(true);
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(applyMojo::execute);
 	}
