@@ -69,7 +69,7 @@
 						<goals>
 							<goal>run</goal>
 							<goal>image</goal>
-							<goal>kubectl</goal>
+							<goal>apply</goal>
 							<goal>rm</goal>
 						</goals>
 						<configuration>
