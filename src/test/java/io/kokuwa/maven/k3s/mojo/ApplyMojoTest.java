@@ -42,4 +42,13 @@ public class ApplyMojoTest extends AbstractTest {
 	void withoutContainer(ApplyMojo kubectlMojo) {
 		assertThrowsExactly(MojoExecutionException.class, kubectlMojo::execute, () -> "No k3s container found");
 	}
+
+	@DisplayName("with crd from subdir")
+	@Test
+	void withCrd(RunMojo runMojo, ApplyMojo applyMojo) {
+		applyMojo.setSubdir("crd");
+		applyMojo.setKustomize(true);
+		assertDoesNotThrow(runMojo::execute);
+		assertDoesNotThrow(applyMojo::execute);
+	}
 }

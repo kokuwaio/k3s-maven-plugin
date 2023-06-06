@@ -83,7 +83,6 @@
 
 		<version.org.junit.jupiter>5.9.3</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.28</version.org.projectlombok>
-		<version.io.kubernetes.client>18.0.0</version.io.kubernetes.client>
 		<version.com.fasterxml.jackson>2.15.1</version.com.fasterxml.jackson>
 
 	</properties>
@@ -103,11 +102,6 @@
 		</dependency>
 
 		<!-- libraries -->
-		<dependency>
-			<groupId>io.kubernetes</groupId>
-			<artifactId>client-java</artifactId>
-			<version>${version.io.kubernetes.client}</version>
-		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

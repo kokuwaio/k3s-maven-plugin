@@ -76,11 +76,15 @@ public class Docker {
 	}
 
 	public List<String> exec(String... commands) throws MojoExecutionException {
-		return execWithoutVerify(List.of(commands)).verify().output();
+		return exec(null, commands);
 	}
 
 	public List<String> exec(Duration timeout, String... commands) throws MojoExecutionException {
-		return execWithoutVerify(timeout, List.of(commands)).verify().output();
+		return exec(timeout, List.of(commands));
+	}
+
+	public List<String> exec(Duration timeout, List<String> commands) throws MojoExecutionException {
+		return execWithoutVerify(timeout, commands).verify().output();
 	}
 
 	public Task execWithoutVerify(List<String> commands) throws MojoExecutionException {
