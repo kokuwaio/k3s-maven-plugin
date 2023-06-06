@@ -1,5 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -136,6 +138,14 @@ public class RunMojo extends K3sMojo {
 	private boolean replaceIfExists;
 
 	/**
+	 * Path where kubeconfig.yaml should be placed on host.
+	 *
+	 * @since 1.0.0
+	 */
+	@Parameter(property = "k3s.kubeconfig", defaultValue = "${project.build.directory}/k3s.yaml")
+	private Path kubeconfig;
+
+	/**
 	 * Timeout in seconds to wait for nodes getting ready.
 	 *
 	 * @since 1.0.0
@@ -230,6 +240,10 @@ public class RunMojo extends K3sMojo {
 	}
 
 	// setter
+
+	public void setKubeconfig(File kubeconfig) {
+		this.kubeconfig = kubeconfig.toPath().toAbsolutePath();
+	}
 
 	public void setNodeTimeout(int nodeTimeout) {
 		this.nodeTimeout = Duration.ofSeconds(nodeTimeout);

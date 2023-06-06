@@ -87,7 +87,9 @@ public class Task {
 
 	public Task waitFor() throws MojoExecutionException {
 		try {
-			process.waitFor(timeout.getSeconds(), TimeUnit.SECONDS);
+			if (!process.waitFor(timeout.getSeconds(), TimeUnit.SECONDS)) {
+				throw new MojoExecutionException("Timeout failed: " + this);
+			}
 		} catch (InterruptedException e) {
 			throw new MojoExecutionException("Command failed: " + this, e);
 		} finally {
