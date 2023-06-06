@@ -14,7 +14,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.util.Await;
-import lombok.Setter;
 
 /**
  * Mojo for start k3s container.
@@ -30,7 +29,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.imageRegistry")
+	@Parameter(property = "k3s.imageRegistry")
 	private String imageRegistry;
 
 	/**
@@ -38,7 +37,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.imageRepository", defaultValue = "docker.io/rancher/k3s")
+	@Parameter(property = "k3s.imageRepository", defaultValue = "docker.io/rancher/k3s")
 	private String imageRepository;
 
 	/**
@@ -46,7 +45,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.imageTag", defaultValue = "latest")
+	@Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag;
 
 	/**
@@ -54,7 +53,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableServicelb", defaultValue = "false")
+	@Parameter(property = "k3s.disableServicelb", defaultValue = "false")
 	private boolean disableServicelb;
 
 	/**
@@ -62,7 +61,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableHelmController", defaultValue = "true")
+	@Parameter(property = "k3s.disableHelmController", defaultValue = "true")
 	private boolean disableHelmController;
 
 	/**
@@ -70,7 +69,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableLocalStorage", defaultValue = "true")
+	@Parameter(property = "k3s.disableLocalStorage", defaultValue = "true")
 	private boolean disableLocalStorage;
 
 	/**
@@ -78,7 +77,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableMetricsServer", defaultValue = "true")
+	@Parameter(property = "k3s.disableMetricsServer", defaultValue = "true")
 	private boolean disableMetricsServer;
 
 	/**
@@ -86,7 +85,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableTraefik", defaultValue = "true")
+	@Parameter(property = "k3s.disableTraefik", defaultValue = "true")
 	private boolean disableTraefik;
 
 	/**
@@ -94,7 +93,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableCloudController", defaultValue = "true")
+	@Parameter(property = "k3s.disableCloudController", defaultValue = "true")
 	private boolean disableCloudController;
 
 	/**
@@ -102,7 +101,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
+	@Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
 	private boolean disableNetworkPolicy;
 
 	/**
@@ -110,7 +109,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.portBindings")
+	@Parameter(property = "k3s.portBindings")
 	private List<String> portBindings = new ArrayList<>();
 
 	/**
@@ -118,7 +117,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
+	@Parameter(property = "k3s.portKubeApi", defaultValue = "6443")
 	private int portKubeApi;
 
 	/**
@@ -126,7 +125,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.failIfExists", defaultValue = "true")
+	@Parameter(property = "k3s.failIfExists", defaultValue = "true")
 	private boolean failIfExists;
 
 	/**
@@ -134,7 +133,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.replaceIfExists", defaultValue = "false")
+	@Parameter(property = "k3s.replaceIfExists", defaultValue = "false")
 	private boolean replaceIfExists;
 
 	/**
@@ -158,7 +157,7 @@ public class RunMojo extends K3sMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.skipRun", defaultValue = "false")
+	@Parameter(property = "k3s.skipRun", defaultValue = "false")
 	private boolean skipRun;
 
 	@Override
@@ -247,5 +246,65 @@ public class RunMojo extends K3sMojo {
 
 	public void setNodeTimeout(int nodeTimeout) {
 		this.nodeTimeout = Duration.ofSeconds(nodeTimeout);
+	}
+
+	public void setImageRegistry(String imageRegistry) {
+		this.imageRegistry = imageRegistry;
+	}
+
+	public void setImageRepository(String imageRepository) {
+		this.imageRepository = imageRepository;
+	}
+
+	public void setImageTag(String imageTag) {
+		this.imageTag = imageTag;
+	}
+
+	public void setDisableServicelb(boolean disableServicelb) {
+		this.disableServicelb = disableServicelb;
+	}
+
+	public void setDisableHelmController(boolean disableHelmController) {
+		this.disableHelmController = disableHelmController;
+	}
+
+	public void setDisableLocalStorage(boolean disableLocalStorage) {
+		this.disableLocalStorage = disableLocalStorage;
+	}
+
+	public void setDisableMetricsServer(boolean disableMetricsServer) {
+		this.disableMetricsServer = disableMetricsServer;
+	}
+
+	public void setDisableTraefik(boolean disableTraefik) {
+		this.disableTraefik = disableTraefik;
+	}
+
+	public void setDisableCloudController(boolean disableCloudController) {
+		this.disableCloudController = disableCloudController;
+	}
+
+	public void setDisableNetworkPolicy(boolean disableNetworkPolicy) {
+		this.disableNetworkPolicy = disableNetworkPolicy;
+	}
+
+	public void setPortBindings(List<String> portBindings) {
+		this.portBindings = portBindings;
+	}
+
+	public void setPortKubeApi(int portKubeApi) {
+		this.portKubeApi = portKubeApi;
+	}
+
+	public void setFailIfExists(boolean failIfExists) {
+		this.failIfExists = failIfExists;
+	}
+
+	public void setReplaceIfExists(boolean replaceIfExists) {
+		this.replaceIfExists = replaceIfExists;
+	}
+
+	public void setSkipRun(boolean skipRun) {
+		this.skipRun = skipRun;
 	}
 }

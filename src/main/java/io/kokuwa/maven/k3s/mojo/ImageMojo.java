@@ -15,8 +15,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import lombok.Setter;
-
 /**
  * Import images into k3s containerd.
  *
@@ -30,7 +28,7 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.ctrImages")
+	@Parameter(property = "k3s.ctrImages")
 	private List<String> ctrImages = new ArrayList<>();
 
 	/**
@@ -38,7 +36,7 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.tarFiles")
+	@Parameter(property = "k3s.tarFiles")
 	private List<String> tarFiles = new ArrayList<>();
 
 	/**
@@ -46,7 +44,7 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.dockerImages")
+	@Parameter(property = "k3s.dockerImages")
 	private List<String> dockerImages = new ArrayList<>();
 
 	/**
@@ -54,7 +52,7 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @since 0.10.0
 	 */
-	@Setter @Parameter(property = "k3s.dockerPullAlways", defaultValue = "false")
+	@Parameter(property = "k3s.dockerPullAlways", defaultValue = "false")
 	private boolean dockerPullAlways;
 
 	/**
@@ -62,15 +60,15 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @since 0.4.0
 	 */
-	@Setter @Parameter(property = "k3s.pullTimeout", defaultValue = "1200")
-	private int pullTimeout;
+	@Parameter(property = "k3s.pullTimeout", defaultValue = "1200")
+	private Duration pullTimeout;
 
 	/**
 	 * Skip starting of k3s container.
 	 *
 	 * @since 0.3.0
 	 */
-	@Setter @Parameter(property = "k3s.skipImage", defaultValue = "false")
+	@Parameter(property = "k3s.skipImage", defaultValue = "false")
 	private boolean skipImage;
 
 	@Override
@@ -126,7 +124,7 @@ public class ImageMojo extends K3sMojo {
 		var destination = Paths.get("/tmp").resolve(source.getFileName());
 		try {
 			getDocker().copyToContainer(source, destination);
-			getDocker().exec(Duration.ofSeconds(pullTimeout), "ctr", "image", "import", destination.toString());
+			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
 		} catch (MojoExecutionException e) {
 			getLog().error("Failed to import tar: " + source, e);
 			return false;
@@ -145,7 +143,7 @@ public class ImageMojo extends K3sMojo {
 		}
 
 		getLog().info("Image " + image + " not found, start pulling");
-		getDocker().exec(Duration.ofSeconds(pullTimeout), "ctr", "image", "pull", normalizedImage);
+		getDocker().exec(pullTimeout, "ctr", "image", "pull", normalizedImage);
 		getLog().info("Image " + image + " pulled");
 
 		return true;
@@ -163,7 +161,7 @@ public class ImageMojo extends K3sMojo {
 				getLog().debug("Image " + image + " not found in docker, pulling ...");
 			}
 			try {
-				getDocker().pullImage(image, Duration.ofSeconds(pullTimeout));
+				getDocker().pullImage(image, pullTimeout);
 			} catch (MojoExecutionException e) {
 				getLog().error("Failed to pull docker image " + image, e);
 				return false;
@@ -194,5 +192,31 @@ public class ImageMojo extends K3sMojo {
 		var images = getDocker().exec("ctr", "image", "list", "--quiet");
 		images.forEach(image -> getLog().debug("Found ctr image: " + image));
 		return images;
+	}
+
+	// setter
+
+	public void setCtrImages(List<String> ctrImages) {
+		this.ctrImages = ctrImages;
+	}
+
+	public void setDockerImages(List<String> dockerImages) {
+		this.dockerImages = dockerImages;
+	}
+
+	public void setTarFiles(List<String> tarFiles) {
+		this.tarFiles = tarFiles;
+	}
+
+	public void setDockerPullAlways(boolean dockerPullAlways) {
+		this.dockerPullAlways = dockerPullAlways;
+	}
+
+	public void setPullTimeout(int pullTimeout) {
+		this.pullTimeout = Duration.ofSeconds(pullTimeout);
+	}
+
+	public void setSkipImage(boolean skipImage) {
+		this.skipImage = skipImage;
 	}
 }

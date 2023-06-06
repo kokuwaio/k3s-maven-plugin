@@ -23,9 +23,19 @@ public class RunMojoTest extends AbstractTest {
 	@DisplayName("with skip")
 	@Test
 	void withSkip(RunMojo runMojo) throws MojoExecutionException {
-		assertDoesNotThrow(() -> runMojo.setSkipRun(false).setSkip(true).execute());
-		assertDoesNotThrow(() -> runMojo.setSkipRun(true).setSkip(false).execute());
-		assertDoesNotThrow(() -> runMojo.setSkipRun(true).setSkip(true).execute());
+
+		runMojo.setSkipRun(false);
+		runMojo.setSkip(true);
+		assertDoesNotThrow(runMojo::execute);
+
+		runMojo.setSkipRun(true);
+		runMojo.setSkip(false);
+		assertDoesNotThrow(runMojo::execute);
+
+		runMojo.setSkipRun(true);
+		runMojo.setSkip(true);
+		assertDoesNotThrow(runMojo::execute);
+
 		assertFalse(docker.getContainer().isPresent());
 	}
 
@@ -42,7 +52,8 @@ public class RunMojoTest extends AbstractTest {
 	@DisplayName("with replace on existing container")
 	@Test
 	void withReplaceIfExists(RunMojo runMojo) throws MojoExecutionException {
-		runMojo.setFailIfExists(false).setReplaceIfExists(true);
+		runMojo.setFailIfExists(false);
+		runMojo.setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
@@ -53,7 +64,8 @@ public class RunMojoTest extends AbstractTest {
 	@DisplayName("without fail on existing container")
 	@Test
 	void withoutFailIfExists(RunMojo runMojo) throws MojoExecutionException {
-		runMojo.setFailIfExists(false).setReplaceIfExists(false);
+		runMojo.setFailIfExists(false);
+		runMojo.setReplaceIfExists(false);
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);

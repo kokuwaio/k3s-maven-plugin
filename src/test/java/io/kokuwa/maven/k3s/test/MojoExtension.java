@@ -7,14 +7,13 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.codehaus.plexus.util.InterpolationFilterReader;
+import org.codehaus.plexus.util.ReflectionUtils;
 import org.codehaus.plexus.util.xml.XmlStreamReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -76,7 +75,19 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			var mojo = (K3sMojo) type.getDeclaredConstructor().newInstance();
 			for (var parameter : descriptor.getParameters()) {
 				if (parameter.getDefaultValue() != null) {
-					setMojoParameterValue(mojo, parameter.getName(), parameter.getDefaultValue());
+					var setter = ReflectionUtils.getSetter(parameter.getName(), mojo.getClass());
+					var parameterType = ReflectionUtils.getSetterType(setter);
+					if (String.class.equals(parameterType)) {
+						setter.invoke(mojo, parameter.getDefaultValue());
+					} else if (File.class.equals(parameterType)) {
+						setter.invoke(mojo, new File(parameter.getDefaultValue()));
+					} else if (boolean.class.equals(parameterType)) {
+						setter.invoke(mojo, Boolean.valueOf(parameter.getDefaultValue()));
+					} else if (int.class.equals(parameterType)) {
+						setter.invoke(mojo, Integer.valueOf(parameter.getDefaultValue()));
+					} else {
+						fail(parameter.getName() + " has unknown type: " + type);
+					}
 				}
 			}
 			mojo.setLog(log);
@@ -85,26 +96,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			return mojo;
 		} catch (ReflectiveOperationException e) {
 			throw new ParameterResolutionException("Failed to setup mojo " + descriptor + ".", e);
-		}
-	}
-
-	private void setMojoParameterValue(Mojo mojo, String field, String value) throws ReflectiveOperationException {
-
-		var setter = Stream.of(mojo.getClass().getMethods())
-				.filter(m -> m.getName().equalsIgnoreCase("set" + field))
-				.findAny().orElseThrow(() -> new ParameterResolutionException(mojo + " missing field " + field));
-		var type = setter.getParameterTypes()[0];
-
-		if (String.class.equals(type)) {
-			setter.invoke(mojo, value);
-		} else if (File.class.equals(type)) {
-			setter.invoke(mojo, new File(value));
-		} else if (boolean.class.equals(type)) {
-			setter.invoke(mojo, Boolean.valueOf(value));
-		} else if (int.class.equals(type)) {
-			setter.invoke(mojo, Integer.valueOf(value));
-		} else {
-			fail(field + " has unknown type: " + type);
 		}
 	}
 }

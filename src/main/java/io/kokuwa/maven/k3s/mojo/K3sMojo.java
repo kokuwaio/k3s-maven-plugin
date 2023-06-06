@@ -6,7 +6,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.util.DebugLog;
 import io.kokuwa.maven.k3s.util.Docker;
-import lombok.Setter;
 
 /**
  * Base class for all mojos of this plugin.
@@ -21,7 +20,7 @@ public abstract class K3sMojo extends AbstractMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Setter @Parameter(property = "k3s.debug", defaultValue = "false")
+	@Parameter(property = "k3s.debug", defaultValue = "false")
 	private boolean debug;
 
 	/**
@@ -29,15 +28,15 @@ public abstract class K3sMojo extends AbstractMojo {
 	 *
 	 * @since 0.1.0
 	 */
-	@Setter @Parameter(property = "k3s.skip", defaultValue = "false")
+	@Parameter(property = "k3s.skip", defaultValue = "false")
 	private boolean skip;
 
 	/** Name for the create docker container. */
-	@Setter @Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
+	@Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
 	private String containerName;
 
 	/** Name for the create volume container. */
-	@Setter @Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
+	@Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
 	private String volumeName;
 
 	// generic methods
@@ -56,5 +55,23 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public Docker getDocker() {
 		return docker == null ? docker = new Docker(containerName, volumeName, getLog()) : docker;
+	}
+
+	// setter
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
+
+	public void setSkip(boolean skip) {
+		this.skip = skip;
+	}
+
+	public void setContainerName(String containerName) {
+		this.containerName = containerName;
+	}
+
+	public void setVolumeName(String volumeName) {
+		this.volumeName = volumeName;
 	}
 }

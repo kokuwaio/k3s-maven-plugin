@@ -21,9 +21,18 @@ public class RemoveMojoTest extends AbstractTest {
 	@DisplayName("with skip")
 	@Test
 	void withSkip(RemoveMojo removeMojo) {
-		assertDoesNotThrow(() -> removeMojo.setSkipRm(false).setSkip(true).execute());
-		assertDoesNotThrow(() -> removeMojo.setSkipRm(true).setSkip(false).execute());
-		assertDoesNotThrow(() -> removeMojo.setSkipRm(true).setSkip(true).execute());
+
+		removeMojo.setSkipRm(false);
+		removeMojo.setSkip(true);
+		assertDoesNotThrow(removeMojo::execute);
+
+		removeMojo.setSkipRm(true);
+		removeMojo.setSkip(false);
+		assertDoesNotThrow(removeMojo::execute);
+
+		removeMojo.setSkipRm(true);
+		removeMojo.setSkip(true);
+		assertDoesNotThrow(removeMojo::execute);
 	}
 
 	@DisplayName("without container")
