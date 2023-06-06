@@ -36,7 +36,6 @@ If you don't like to use this plugin you can:
 | [`k3s:start`](docs/goal/start.md)          | Start k3s container             | pre-integration-test    |
 | [`k3s:image`](docs/goal/image.md)          | Prepare images for containerd   | pre-integration-test    |
 | [`k3s:kubectl`](docs/goal/kubectl.md)      | Run kubectl                     | pre-integration-test    |
-| [`k3s:stop`](docs/goal/stop.md)            | Stop k3s container              | post-integration-test   |
 | [`k3s:rm`](docs/goal/rm.md)                | Stop and remove k3s containers  | post-integration-test   |
 
 ## Examples
