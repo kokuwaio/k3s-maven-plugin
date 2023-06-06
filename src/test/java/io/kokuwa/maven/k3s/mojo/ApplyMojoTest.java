@@ -20,7 +20,7 @@ public class ApplyMojoTest extends AbstractTest {
 
 	@DisplayName("with skip")
 	@Test
-	void withSkip(ApplyMojo applyMojo) {
+	void withSkip(ApplyMojo applyMojo) throws MojoExecutionException {
 
 		assertFalse(docker.getContainer().isPresent());
 

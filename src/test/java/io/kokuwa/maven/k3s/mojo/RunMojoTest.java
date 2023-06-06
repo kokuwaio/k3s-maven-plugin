@@ -22,7 +22,7 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("with skip")
 	@Test
-	void withSkip(RunMojo runMojo) {
+	void withSkip(RunMojo runMojo) throws MojoExecutionException {
 		assertDoesNotThrow(() -> runMojo.setSkipRun(false).setSkip(true).execute());
 		assertDoesNotThrow(() -> runMojo.setSkipRun(true).setSkip(false).execute());
 		assertDoesNotThrow(() -> runMojo.setSkipRun(true).setSkip(true).execute());
@@ -31,33 +31,33 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("with fail on existing container")
 	@Test
-	void withFailIfExists(RunMojo runMojo) {
+	void withFailIfExists(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
-		var message = "Container with id '" + docker.getContainer().orElseThrow().getId()
+		var message = "Container with id '" + docker.getContainer().get().id
 				+ "' found. Please remove that container or set 'k3s.failIfExists' to false.";
 		assertThrowsExactly(MojoExecutionException.class, runMojo::execute, () -> message);
 	}
 
 	@DisplayName("with replace on existing container")
 	@Test
-	void withReplaceIfExists(RunMojo runMojo) {
+	void withReplaceIfExists(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(false).setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
-		assertNotEquals(containerBefore.getId(), containerAfter.getId(), "container was not replaced");
+		assertNotEquals(containerBefore.id, containerAfter.id, "container was not replaced");
 	}
 
 	@DisplayName("without fail on existing container")
 	@Test
-	void withoutFailIfExists(RunMojo runMojo) {
+	void withoutFailIfExists(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(false).setReplaceIfExists(false);
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
-		assertEquals(containerBefore.getId(), containerAfter.getId(), "container shouldn't be replaced");
+		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
 	}
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
+import io.kokuwa.maven.k3s.util.Docker.Container;
 
 /**
  * Test for {@link Docker}.
@@ -22,29 +24,57 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 @DisplayName("util: docker")
 public class DockerTest extends AbstractTest {
 
+	@DisplayName("volume handling")
+	@Test
+	void volume() throws MojoExecutionException {
+
+		assertFalse(docker.getVolume().isPresent(), "volume found before testing");
+		docker.removeVolume();
+
+		docker.createVolume();
+		assertTrue(docker.getVolume().isPresent(), "volume missing after creating");
+
+		docker.removeVolume();
+		assertFalse(docker.getVolume().isPresent(), "volume found after removing");
+	}
+
+	@DisplayName("container handling")
+	@Test
+	void container(Log log) throws MojoExecutionException {
+
+		assertFalse(docker.getContainer().isPresent(), "container found before testing");
+		docker.removeContainer();
+
+		var ports = List.of("9001:9001", "9002:9002");
+		docker.createVolume();
+		docker.createContainer("rancher/k3s", ports, List.of("server"));
+		assertTrue(docker.getContainer().isPresent(), "container not found after creating");
+		assertTrue(docker.getContainer().map(Container::isRunnding).orElse(null));
+		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")));
+
+		docker.removeContainer();
+		assertFalse(docker.getContainer().isPresent(), "container found after removing");
+	}
+
 	@DisplayName("image handling")
 	@Test
-	void image(Log log) throws MojoExecutionException {
+	void image() throws MojoExecutionException {
 
-		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found before testing");
+		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found before testing");
 		docker.removeImage(helloWorld());
 
-		var callback = docker.pullImage(helloWorld());
-		Await.await(log, "pull images").timeout(Duration.ofSeconds(300)).until(callback::isCompleted);
-		if (!callback.isSuccess()) {
-			throw new MojoExecutionException("Failed to pull image " + helloWorld());
-		}
-		assertTrue(docker.findImage(helloWorld()).isPresent(), "image missing after pulling");
+		docker.pullImage(helloWorld(), Duration.ofSeconds(30));
+		assertTrue(docker.getImage(helloWorld()).isPresent(), "image missing after pulling");
 
 		docker.removeImage(helloWorld());
-		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found after removing");
+		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found after removing");
 	}
 
 	@DisplayName("normalizeImage()")
 	@Test
 	void normalizeImage() {
 
-		BiConsumer<String, String> assertImage = (e, i) -> assertEquals(e, docker.normalizeDockerImage(i), i);
+		BiConsumer<String, String> assertImage = (e, i) -> assertEquals(e, docker.normalizeImage(i), i);
 
 		assertImage.accept("docker.io/library/hello:latest", "hello");
 		assertImage.accept("docker.io/library/hello:latest", "hello:latest");

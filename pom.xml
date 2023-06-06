@@ -84,7 +84,7 @@
 		<version.org.junit.jupiter>5.9.3</version.org.junit.jupiter>
 		<version.org.projectlombok>1.18.28</version.org.projectlombok>
 		<version.io.kubernetes.client>18.0.0</version.io.kubernetes.client>
-		<version.com.github.docker.java>3.3.1</version.com.github.docker.java>
+		<version.com.fasterxml.jackson>2.15.1</version.com.fasterxml.jackson>
 
 	</properties>
 
@@ -104,25 +104,14 @@
 
 		<!-- libraries -->
 		<dependency>
-			<groupId>com.github.docker-java</groupId>
-			<artifactId>docker-java-core</artifactId>
-			<version>${version.com.github.docker.java}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.bouncycastle</groupId>
-					<artifactId>bcpkix-jdk15on</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.github.docker-java</groupId>
-			<artifactId>docker-java-transport-zerodep</artifactId>
-			<version>${version.com.github.docker.java}</version>
-		</dependency>
-		<dependency>
 			<groupId>io.kubernetes</groupId>
 			<artifactId>client-java</artifactId>
 			<version>${version.io.kubernetes.client}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${version.com.fasterxml.jackson}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>

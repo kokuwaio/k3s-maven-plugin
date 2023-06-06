@@ -1,9 +1,9 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,12 +18,19 @@ import lombok.Setter;
 
 /**
  * Base class for all mojos of this plugin.
+ *
+ * @author stephan.schnabel@posteo.de
+ * @since 0.1.0
  */
 public abstract class K3sMojo extends AbstractMojo {
 
-	/** Cachedir mounted to `/var/lib/rancher/k3s/agent`. */
-	@Setter @Parameter(property = "k3s.cacheDir", defaultValue = "${user.home}/.kube/k3s-maven-plugin")
-	private String cacheDir;
+	/**
+	 * Path where kubeconfig.yaml should be placed on host.
+	 *
+	 * @since 1.0.0
+	 */
+	@Parameter(property = "k3s.kubeconfig", defaultValue = "${project.build.directory}/k3s.yaml")
+	protected Path kubeconfig;
 
 	/**
 	 * Enable debuging of docker and k3s logs.
@@ -58,9 +65,8 @@ public abstract class K3sMojo extends AbstractMojo {
 		return skip || skipMojo;
 	}
 
-	Kubernetes getKubernetesClient() throws MojoExecutionException {
-		var kubeconfig = getKubeConfig();
-		if (!Files.exists(kubeconfig)) {
+	public Kubernetes getKubernetes() throws MojoExecutionException {
+		if (!Files.isReadable(kubeconfig)) {
 			throw new MojoExecutionException("Kube config not found at " + kubeconfig);
 		}
 		try {
@@ -79,21 +85,9 @@ public abstract class K3sMojo extends AbstractMojo {
 		return docker == null ? docker = new Docker(containerName, volumeName, getLog()) : docker;
 	}
 
-	// directories
+	// setter
 
-	Path getCacheDir() {
-		return Paths.get(cacheDir);
-	}
-
-	Path getMountDir() {
-		return getCacheDir().resolve("mount");
-	}
-
-	Path getManifestsDir() {
-		return getMountDir().resolve("manifests");
-	}
-
-	Path getKubeConfig() {
-		return getMountDir().resolve("kubeconfig.yaml");
+	public void setKubeconfig(File kubeconfig) {
+		this.kubeconfig = kubeconfig.toPath().toAbsolutePath();
 	}
 }

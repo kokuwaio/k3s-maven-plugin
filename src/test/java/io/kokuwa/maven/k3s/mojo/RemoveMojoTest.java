@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Disabled;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,32 +33,30 @@ public class RemoveMojoTest extends AbstractTest {
 	}
 
 	@DisplayName("without container but present cache")
-	@Disabled("flaky because of host mount")
 	@Test
-	void withoutContainerButPresentCache(RemoveMojo removeMojo) {
+	void withoutContainerButPresentCache(RemoveMojo removeMojo) throws MojoExecutionException {
 		docker.createVolume();
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(removeMojo::execute);
-		assertFalse(docker.isVolumePresent());
+		assertFalse(docker.getVolume().isPresent());
 	}
 
 	@DisplayName("with container")
 	@Test
-	void withContainer(RunMojo runMojo, RemoveMojo removeMojo) {
+	void withContainer(RunMojo runMojo, RemoveMojo removeMojo) throws MojoExecutionException {
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
-		assertTrue(docker.isVolumePresent());
+		assertTrue(docker.getVolume().isPresent());
 	}
 
 	@DisplayName("with container and cache")
-	@Disabled("flaky because of host mount")
 	@Test
-	void withContainerAndCache(RunMojo runMojo, RemoveMojo removeMojo) {
+	void withContainerAndCache(RunMojo runMojo, RemoveMojo removeMojo) throws MojoExecutionException {
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
-		assertFalse(docker.isVolumePresent());
+		assertFalse(docker.getVolume().isPresent());
 	}
 }

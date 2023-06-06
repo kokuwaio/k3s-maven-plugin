@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
@@ -26,11 +24,12 @@ public class ImageMojoTest extends AbstractTest {
 
 	@DisplayName("with skip")
 	@Test
-	void withSkip(ImageMojo imageMojo) {
-		imageMojo.setCtrImages(List.of(helloWorld()));
+	void withSkip(ImageMojo imageMojo) throws MojoExecutionException {
+		imageMojo.setDockerImages(List.of(helloWorld()));
 		assertDoesNotThrow(() -> imageMojo.setSkipImage(false).setSkip(true).execute());
 		assertDoesNotThrow(() -> imageMojo.setSkipImage(true).setSkip(false).execute());
 		assertDoesNotThrow(() -> imageMojo.setSkipImage(true).setSkip(true).execute());
+		assertFalse(hasDockerImage(helloWorld()));
 	}
 
 	@DisplayName("without container")
@@ -114,23 +113,17 @@ public class ImageMojoTest extends AbstractTest {
 	// internal
 
 	private void assertCtrImage(String image, boolean exists) throws MojoExecutionException {
-		var container = docker.getContainer().get();
-		var result = docker.execThrows(container, "ctr image list --quiet", Duration.ofSeconds(30));
-		var output = result.getMessages().stream().collect(Collectors.joining("\n"));
-		var images = List.of(output.split("\n"));
-		var normalizedImage = docker.normalizeDockerImage(image);
+		var images = docker.exec("ctr", "image", "list", "--quiet");
+		var normalizedImage = docker.normalizeImage(image);
 		assertEquals(exists, images.contains(normalizedImage),
-				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + output);
+				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + images);
 	}
 
-	private boolean hasDockerImage(String image) {
-		return docker.findImage(image).isPresent();
+	private boolean hasDockerImage(String image) throws MojoExecutionException {
+		return docker.getImage(image).isPresent();
 	}
 
 	private void removeCtrImage(String image) throws MojoExecutionException {
-		docker.execThrows(
-				docker.getContainer().get(),
-				"ctr image remove " + docker.normalizeDockerImage(image),
-				Duration.ofMinutes(1));
+		docker.exec("ctr", "image", "remove", docker.normalizeImage(image));
 	}
 }
