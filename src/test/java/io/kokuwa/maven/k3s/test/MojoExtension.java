@@ -1,23 +1,23 @@
 package io.kokuwa.maven.k3s.test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.codehaus.plexus.util.xml.XmlStreamReader;
+import org.codehaus.plexus.util.InterpolationFilterReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ExtensionContextException;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
@@ -37,31 +37,27 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	private static final String volumeName = "k3s-maven-plugin-junit";
 	private static final Log log = new DebugLog(new SystemStreamLog(), false);
 	private static final Docker docker = new Docker(containerName, volumeName, log);
-	private static final Map<String, MojoDescriptor> mojoDescriptors = new HashMap<>();
-	private static PluginDescriptor plugin;
+	private static final Set<MojoDescriptor> mojos = new HashSet<>();
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
-		if (plugin == null) {
-
-			var inputStream = MojoExtension.class.getResourceAsStream("/META-INF/maven/plugin.xml");
-			if (inputStream == null) {
-				throw new ExtensionContextException("Plugin descriptor not found.");
-			}
-
-			plugin = new PluginDescriptorBuilder().build(new BufferedReader(new XmlStreamReader(inputStream)));
-			log.debug("Found plugin: " + plugin.getId());
-			for (var mojo : plugin.getMojos()) {
-				log.debug("Found mojo: " + mojo.getId());
-				mojoDescriptors.put(mojo.getImplementation(), mojo);
-			}
+		if (mojos.isEmpty()) {
+			var inputStream = K3sMojo.class.getResourceAsStream("/META-INF/maven/plugin.xml");
+			assertNotNull(inputStream, "Plugin descriptor for not found, run 'mvn plugin:descriptor'.");
+			new PluginDescriptorBuilder()
+					.build(new InterpolationFilterReader(new XmlStreamReader(inputStream),
+							Map.of("user.home", System.getProperty("user.home"))))
+					.getMojos()
+					.forEach(mojos::add);
 		}
 	}
 
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
 		var type = parameterContext.getParameter().getType();
-		return mojoDescriptors.containsKey(type.getName()) || type.equals(Log.class) || type.equals(Docker.class);
+		return mojos.stream().map(MojoDescriptor::getImplementation).anyMatch(type.getName()::equals)
+				|| type.equals(Log.class)
+				|| type.equals(Docker.class);
 	}
 
 	@Override
@@ -75,38 +71,20 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			return docker;
 		}
 
-		var mojoType = parameterContext.getParameter().getType();
-		var mojoDescriptor = mojoDescriptors.get(mojoType.getName());
-		var mojoId = mojoDescriptor.getId();
-
+		var descriptor = mojos.stream().filter(m -> m.getImplementation().equals(type.getName())).findAny().get();
 		try {
-
-			log.debug(mojoId + " - create mojo");
-			var mojo = (K3sMojo) mojoType.getDeclaredConstructor().newInstance();
-
-			for (var parameter : mojoDescriptor.getParameters()) {
-
-				var name = parameter.getName();
-				var defaultValue = parameter.getDefaultValue();
-
-				if (defaultValue != null) {
-					var replacedDefaultValue = defaultValue.replace("${user.home}", System.getProperty("user.home"));
-					log.debug(mojoId + "#" + name + " - set default value: " + replacedDefaultValue);
-					setMojoParameterValue(mojo, name, replacedDefaultValue);
-				} else if (parameter.isRequired()) {
-					throw new ParameterResolutionException(
-							"Failed to setup mojo " + mojoId + ". Parameter " + name + " is required.");
-				} else {
-					log.debug(mojoId + "#" + name + " - no value set");
+			var mojo = (K3sMojo) type.getDeclaredConstructor().newInstance();
+			for (var parameter : descriptor.getParameters()) {
+				if (parameter.getDefaultValue() != null) {
+					setMojoParameterValue(mojo, parameter.getName(), parameter.getDefaultValue());
 				}
 			}
-
 			mojo.setLog(log);
 			mojo.setContainerName(containerName);
 			mojo.setVolumeName(volumeName);
 			return mojo;
 		} catch (ReflectiveOperationException e) {
-			throw new ParameterResolutionException("Failed to setup mojo " + mojoId + ".", e);
+			throw new ParameterResolutionException("Failed to setup mojo " + descriptor + ".", e);
 		}
 	}
 
