@@ -71,11 +71,6 @@
 
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<maven.compiler.failOnWarning>false</maven.compiler.failOnWarning>
-
-		<maven.release.preparationGoals>clean verify -DskipTests -Dinvoker.skip</maven.release.preparationGoals>
-
-		<surefire.skipAfterFailureCount>1</surefire.skipAfterFailureCount>
 
 		<!-- ===================================================================== -->
 		<!-- ============================= Versions ============================== -->
