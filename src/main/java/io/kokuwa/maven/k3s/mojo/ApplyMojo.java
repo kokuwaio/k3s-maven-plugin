@@ -150,7 +150,10 @@ public class ApplyMojo extends K3sMojo {
 							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
 					.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toList());
 
-			if ("pod".equals(kind)) { // remove managed pods from deployments/statefulsets
+			if ("pod".equals(kind)) {
+				// remove pods from local storage provider
+				resources.removeIf(r -> "kube-system".equals(r[0]) && r[1].startsWith("helper-pod-create-pvc-"));
+				// remove managed pods from deployments/statefulsets
 				resources.removeIf(r -> Pattern.matches(".*-[0-9]+", r[1]));
 				resources.removeIf(r -> Pattern.matches(".*(-[a-z0-9]{8,10})?-[a-z0-9]{5}", r[1]));
 			}
