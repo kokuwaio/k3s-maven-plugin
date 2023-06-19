@@ -85,13 +85,9 @@ public class ImageMojo extends K3sMojo {
 	@Override
 	public void execute() throws MojoExecutionException {
 
-		if (isSkip(skipImage)) {
-			return;
-		}
-
 		// skip if no image is request
 
-		if (ctrImages.isEmpty() && tarFiles.isEmpty() && dockerImages.isEmpty()) {
+		if (isSkip(skipImage) || ctrImages.isEmpty() && tarFiles.isEmpty() && dockerImages.isEmpty()) {
 			return;
 		}
 
@@ -139,7 +135,7 @@ public class ImageMojo extends K3sMojo {
 			var labelChecksum = "k3s-maven-tar-checksum";
 			var checksum = new Adler32();
 			checksum.update(Files.readAllBytes(tarFile));
-			var newChecksum = String.valueOf(checksum.getValue());
+			var newChecksum = "adler32:" + checksum.getValue();
 			var oldChecksum = existingImages.values().stream()
 					.filter(l -> Optional.ofNullable(l.get(labelPath)).map(tarFile.toString()::equals).orElse(false))
 					.map(l -> l.get(labelChecksum)).filter(Objects::nonNull)
@@ -147,10 +143,10 @@ public class ImageMojo extends K3sMojo {
 			if (oldChecksum == null) {
 				getLog().debug("Tar " + tarFile + " does not exists in ctr.");
 			} else if (oldChecksum.equals(newChecksum)) {
-				getLog().debug("Tar " + tarFile + " present in ctr with checksum " + newChecksum + ", skip.");
+				getLog().info("Tar " + tarFile + " present in ctr with checksum " + newChecksum + ", skip.");
 				return true;
 			} else {
-				getLog().info("Tar " + tarFile + " present in ctr with checksum " + oldChecksum + ", new is: "
+				getLog().debug("Tar " + tarFile + " present in ctr with checksum " + oldChecksum + ", new is: "
 						+ newChecksum);
 			}
 
@@ -223,10 +219,11 @@ public class ImageMojo extends K3sMojo {
 		if (oldDigest == null) {
 			getLog().debug("Image " + image + " does not exists in ctr.");
 		} else if (oldDigest.equals(digest)) {
-			getLog().debug("Image " + image + " present in ctr with digest " + digest + ", skip.");
+			getLog().info("Image " + image + " present in ctr with digest " + digest + ", skip.");
 			return true;
 		} else {
-			getLog().info("Image " + image + " present in ctr with digest " + oldDigest + ", new digest is: " + digest);
+			getLog().debug(
+					"Image " + image + " present in ctr with digest " + oldDigest + ", new digest is: " + digest);
 		}
 
 		// move from docker to ctr
