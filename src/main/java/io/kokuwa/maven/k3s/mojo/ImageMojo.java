@@ -156,7 +156,7 @@ public class ImageMojo extends K3sMojo {
 			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
 
 			getDocker().copyToContainer(tarFile, destination);
-			for (var output : getDocker().exec("ctr", "image", "import", destination.toString())) {
+			for (var output : getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString())) {
 				var matcher = outputPattern.matcher(output);
 				if (matcher.matches()) {
 					getDocker().exec("ctr", "image", "label", matcher.group("image"), labelPath + "=" + tarFile);
@@ -234,7 +234,7 @@ public class ImageMojo extends K3sMojo {
 		try {
 			getDocker().saveImage(image, source);
 			getDocker().copyToContainer(source, destination);
-			getDocker().exec("ctr", "image", "import", destination.toString());
+			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
 			getDocker().exec("ctr", "image", "label", normalizedImage, label + "=" + digest);
 		} catch (MojoExecutionException e) {
 			getLog().error("Failed to import tar " + source, e);
