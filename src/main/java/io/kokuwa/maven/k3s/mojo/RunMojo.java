@@ -190,14 +190,14 @@ public class RunMojo extends K3sMojo {
 
 			// get image name
 
-			if (imageTag.equals("latest")) {
+			if ("latest".equals(imageTag)) {
 				getLog().warn("Using image tag 'latest' is unstable.");
 			}
 			var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 
 			// k3s command
 
-			var command = new ArrayList<>(List.of("server", "--https-listen-port=" + portKubeApi));
+			var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
 			if (disableCloudController) {
 				command.add("--disable-cloud-controller");
 			}

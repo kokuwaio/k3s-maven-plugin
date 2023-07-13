@@ -38,7 +38,7 @@ public abstract class AbstractTest {
 	@BeforeEach
 	@AfterEach
 	void reset(TestInfo test, Log log, Docker newDocker) throws MojoExecutionException {
-		log.info("Reset test: " + test.getTestClass() + "#" + test.getTestMethod());
+		log.info("Reset test: " + test.getTestMethod().orElse(null));
 		this.docker = newDocker;
 		this.docker.removeContainer();
 		this.docker.removeVolume();

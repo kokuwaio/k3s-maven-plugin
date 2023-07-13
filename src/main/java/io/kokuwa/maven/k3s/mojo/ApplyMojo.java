@@ -84,6 +84,10 @@ public class ApplyMojo extends K3sMojo {
 				.exec("kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name")
 				.isEmpty());
 
+		// wait for node getting ready
+
+		getDocker().exec("kubectl", "wait", "--for=condition=Ready", "node", "k3s");
+
 		// execute command
 
 		var result = apply();

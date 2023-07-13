@@ -104,7 +104,7 @@ public class Task {
 		if (exitCode != 0) {
 			log.error(">>> " + this);
 			output.forEach(line -> log.error("<<< " + line));
-			throw new MojoExecutionException("Command failed wit exit code " + exitCode + ": " + this);
+			throw new MojoExecutionException("Command failed with exit code " + exitCode + ": " + this);
 		}
 		return this;
 	}

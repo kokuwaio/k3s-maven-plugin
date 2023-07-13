@@ -1,9 +1,8 @@
 # k3s Maven Plugin
 
-[![License](https://img.shields.io/github/license/kokuwaio/k3s-maven-plugin.svg?label=License)](https://github.com/kokuwaio/k3s-maven-plugin/blob/main/LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin.svg?label=Maven%20Central)](https://central.sonatype.com/namespace/io.kokuwa.maven)
-[![Build](https://img.shields.io/github/actions/workflow/status/kokuwaio/k3s-maven-plugin/build.yaml?branch=main&label=1.x)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/build.yaml?query=branch%3Amain)
-[![Build](https://img.shields.io/github/actions/workflow/status/kokuwaio/k3s-maven-plugin/build.yaml?branch=0.x&label=0.x)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/build.yaml?query=branch%3A0.x)
+[![Apache License 2.0](https://img.shields.io/github/license/kokuwaio/helm-maven-plugin)](https://github.com/kokuwaio/helm-maven-plugin/blob/main/LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin)](https://central.sonatype.com/namespace/io.kokuwa.maven)
+[![Build](https://img.shields.io/github/actions/workflow/status/kokuwaio/k3s-maven-plugin/build.yaml?branch=main)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/build.yaml?query=branch%3Amain)
 
 This is a plugin to manage k3s for integration tests.
 
