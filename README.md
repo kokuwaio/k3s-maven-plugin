@@ -1,6 +1,6 @@
 # k3s Maven Plugin
 
-[![Apache License 2.0](https://img.shields.io/github/license/kokuwaio/helm-maven-plugin)](https://github.com/kokuwaio/helm-maven-plugin/blob/main/LICENSE)
+[![Apache License 2.0](https://img.shields.io/github/license/kokuwaio/helm-maven-plugin)](https://github.com/kokuwaio/k3s-maven-plugin/blob/main/LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kokuwa.maven/k3s-maven-plugin)](https://central.sonatype.com/namespace/io.kokuwa.maven)
 [![Build](https://img.shields.io/github/actions/workflow/status/kokuwaio/k3s-maven-plugin/build.yaml?branch=main)](https://github.com/kokuwaio/k3s-maven-plugin/actions/workflows/build.yaml?query=branch%3Amain)
 

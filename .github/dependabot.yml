@@ -3,8 +3,7 @@ updates:
   - package-ecosystem: maven
     directory: /
     schedule:
-      interval: monthly
-      day: monday
+      interval: daily
   - package-ecosystem: github-actions
     directory: /
     schedule:
