@@ -12,6 +12,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,9 +82,14 @@ public class ApplyMojo extends K3sMojo {
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
-		Await.await(getLog(), "k3s service account ready").until(() -> !getDocker()
-				.exec("kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name")
-				.isEmpty());
+		var serviceAccount = new String[] { "kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name" };
+		if (getDocker().exec(serviceAccount).isEmpty()) {
+			getLog().info("");
+			getLog().info("No service account found, waiting for sa ...");
+			Await.await(getLog(), "k3s service account ready").until(() -> !getDocker().exec(serviceAccount).isEmpty());
+			getLog().info("Service account found, continue ...");
+			getLog().info("");
+		}
 
 		// wait for node getting ready
 
@@ -108,8 +115,27 @@ public class ApplyMojo extends K3sMojo {
 				.entrySet().stream().parallel().flatMap(this::waitFor).collect(Collectors.toSet());
 		try {
 			var success = true;
-			for (var future : Executors.newWorkStealingPool().invokeAll(tasks)) {
-				success &= future.get();
+			var pool = Executors.newWorkStealingPool();
+			var futures = tasks.stream().collect(Collectors.toMap(Entry::getKey, e -> pool.submit(e.getValue())));
+			var missing = new AtomicReference<>(futures.keySet().stream().sorted().collect(Collectors.toList()));
+			pool.submit(() -> {
+				while (!futures.values().stream().allMatch(Future::isDone)) {
+					Thread.sleep(10000);
+					var newMissing = futures.entrySet().stream()
+							.filter(f -> !f.getValue().isDone())
+							.map(Entry::getKey).sorted().collect(Collectors.toList());
+					var oldMissing = missing.getAndSet(newMissing);
+					if (oldMissing.equals(newMissing)) {
+						getLog().debug("Still waiting for: " + missing);
+					} else {
+						getLog().info("Still waiting for: " + missing);
+					}
+				}
+				return null;
+			});
+
+			for (var future : futures.entrySet()) {
+				success &= future.getValue().get();
 			}
 			if (!success) {
 				throw new MojoExecutionException("Failed to wait for resources, see previous log");
@@ -143,7 +169,7 @@ public class ApplyMojo extends K3sMojo {
 		return getDocker().execWithoutVerify(timeout, command);
 	}
 
-	private Stream<Callable<Boolean>> waitFor(Entry<String, List<String>> entry) {
+	private Stream<Entry<String, Callable<Boolean>>> waitFor(Entry<String, List<String>> entry) {
 		try {
 
 			var kind = entry.getKey();
@@ -170,21 +196,22 @@ public class ApplyMojo extends K3sMojo {
 				tmp.add(name);
 				tmp.add("--namespace=" + namespace);
 				tmp.add("--timeout=" + timeout.getSeconds() + "s");
-				return (Callable<Boolean>) () -> {
+				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
+				return Map.entry(representation, (Callable<Boolean>) () -> {
 					try {
-						getLog().debug(kind + " " + namespace + "/" + name + " ... waiting");
+						getLog().debug(kind + " " + representation + " ... waiting");
 						getDocker().exec(timeout.plusSeconds(10), tmp);
-						getLog().info(kind + " " + namespace + "/" + name + " ... ready");
+						getLog().info(kind + " " + representation + " ... ready");
 						return true;
 					} catch (MojoExecutionException e) {
 						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
 						return false;
 					}
-				};
+				});
 			});
 
 		} catch (MojoExecutionException e) {
-			return Stream.of(() -> false);
+			return Stream.of(Map.entry("exception", () -> false));
 		}
 	}
 
