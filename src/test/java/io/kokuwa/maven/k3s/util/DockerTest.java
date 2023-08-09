@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -95,5 +99,45 @@ public class DockerTest extends AbstractTest {
 		assertImage.accept("quay.io/hello/world:latest", "quay.io/hello/world:latest");
 		assertImage.accept("quay.io/hello/world:0.1.23", "quay.io/hello/world:0.1.23");
 		assertImage.accept("quay.io/hello/world@sha256:XYZ", "quay.io/hello/world@sha256:XYZ");
+	}
+
+	@DisplayName("copy()")
+	@Test
+	void copy() throws MojoExecutionException, IOException {
+
+		// start container
+
+		docker.createVolume();
+		docker.createContainer("rancher/k3s", List.of(), List.of("server"));
+
+		// define test data
+
+		var containerDir = Paths.get("/k3s-data");
+		var sourceDir = Paths.get("target", "docker-copy", "source");
+		var sourceFile = sourceDir.resolve("test.txt");
+		var returnDir = Paths.get("target", "docker-copy", "return");
+		var returnFile = sourceDir.resolve("test.txt");
+		Files.createDirectories(sourceDir);
+		Files.createDirectories(returnDir);
+
+		// write initial file and copy to container
+
+		var initialContent = UUID.randomUUID().toString();
+		Files.deleteIfExists(sourceFile);
+		Files.deleteIfExists(returnFile);
+		Files.write(sourceFile, initialContent.toString().getBytes());
+		docker.copyToContainer(sourceDir, containerDir);
+		docker.copyFromContainer(containerDir, returnDir);
+		assertEquals(initialContent, Files.readString(returnFile));
+
+		// write changed file and copy to container
+
+		var changedContent = UUID.randomUUID().toString();
+		Files.deleteIfExists(sourceFile);
+		Files.deleteIfExists(returnFile);
+		Files.write(sourceFile, changedContent.toString().getBytes());
+		docker.copyToContainer(sourceDir, containerDir);
+		docker.copyFromContainer(containerDir, returnDir);
+		assertEquals(changedContent, Files.readString(returnFile));
 	}
 }

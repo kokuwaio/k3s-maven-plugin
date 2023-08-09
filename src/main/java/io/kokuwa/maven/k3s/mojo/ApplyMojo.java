@@ -42,12 +42,20 @@ public class ApplyMojo extends K3sMojo {
 	private Path manifests;
 
 	/**
-	 * Subdir of {@link #manifests} to execute
+	 * Path for {@link #manifests} inside the k3s container.
+	 *
+	 * @since 1.0.0
+	 */
+	@Parameter(readonly = true, defaultValue = "/tmp/manifests")
+	private Path path;
+
+	/**
+	 * Subdir of {@link #manifests} to execute inside the k3s container.
 	 *
 	 * @since 1.0.0
 	 */
 	@Parameter(property = "k3s.subdir")
-	private String subdir;
+	private Path subdir;
 
 	/**
 	 * Timeout in seconds to wait for resources getting ready.
@@ -72,11 +80,12 @@ public class ApplyMojo extends K3sMojo {
 			return;
 		}
 
-		// verify container
+		// verify container and copy manifests
 
 		if (getDocker().getContainer().isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
+		getDocker().copyToContainer(manifests, path);
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
@@ -121,9 +130,7 @@ public class ApplyMojo extends K3sMojo {
 
 	private Task apply() throws MojoExecutionException {
 
-		var path = Paths.get("/tmp/manifests");
 		var subPath = subdir == null ? path : path.resolve(subdir);
-
 		var kustomizePath = subdir == null ? manifests : manifests.resolve(subdir);
 		var kustomize = Files.isRegularFile(kustomizePath.resolve("kustomization.yml"))
 				|| Files.isRegularFile(kustomizePath.resolve("kustomization.yaml"));
@@ -138,7 +145,6 @@ public class ApplyMojo extends K3sMojo {
 			command.add("--recursive");
 		}
 
-		getDocker().copyToContainer(manifests, path);
 		getLog().info(command.stream().collect(Collectors.joining(" ")));
 		return getDocker().execWithoutVerify(timeout, command);
 	}
@@ -194,8 +200,12 @@ public class ApplyMojo extends K3sMojo {
 		this.manifests = manifests.toPath().toAbsolutePath();
 	}
 
+	public void setPath(String path) {
+		this.path = Paths.get(path);
+	}
+
 	public void setSubdir(String subdir) {
-		this.subdir = subdir;
+		this.subdir = subdir == null ? null : Paths.get(subdir);
 	}
 
 	public void setTimeout(int timeout) {
