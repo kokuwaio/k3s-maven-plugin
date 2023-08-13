@@ -20,5 +20,6 @@ Start and run k3s container.
 | `replaceIfExists` | `k3s.replaceIfExists` | Replace existing docker container from previous run. | false |
 | `nodeTimeout` | `k3s.nodeTimeout` | Timeout in seconds to wait for nodes getting ready. | 30 |
 | `kubeconfig` | `k3s.kubeconfig` | Path where to place kubectl config for external usage. | ${project.build.directory}/k3s.yaml |
+| `registries` | `k3s.registries` | Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml". | `null` |
 | `skipRun` | `skipRun` | Skip running of k3s. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
