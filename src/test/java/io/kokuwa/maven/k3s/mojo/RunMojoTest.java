@@ -4,13 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
+import java.io.File;
+
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
+import io.kokuwa.maven.k3s.util.Await;
 
 /**
  * Test for {@link RunMojo}.
@@ -44,9 +49,10 @@ public class RunMojoTest extends AbstractTest {
 	void withFailIfExists(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
-		var message = "Container with id '" + docker.getContainer().get().id
+		var expectedMessage = "Container with id '" + docker.getContainer().get().id
 				+ "' found. Please remove that container or set 'k3s.failIfExists' to false.";
-		assertThrowsExactly(MojoExecutionException.class, runMojo::execute, () -> message);
+		var actualMessage = assertThrows(MojoExecutionException.class, runMojo::execute).getMessage();
+		assertEquals(expectedMessage, actualMessage, "exception message");
 	}
 
 	@DisplayName("with replace on existing container")
@@ -71,5 +77,23 @@ public class RunMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
+	}
+
+	@DisplayName("with custom registries.yaml")
+	@Test
+	void withRegistries(RunMojo runMojo, Log log) throws MojoExecutionException {
+		runMojo.setRegistries(new File("src/test/resources/registries.yaml"));
+		assertDoesNotThrow(runMojo::execute);
+		docker.waitForLog(Await.await(log, "registries.yaml used"), logs -> logs.stream()
+				.anyMatch(l -> l.contains("Using private registry config file at /etc/rancher/k3s/registries.yaml")));
+	}
+
+	@DisplayName("with custom registries.yaml (missing)")
+	@Test
+	void withRegistriesMissing(RunMojo runMojo) {
+		var file = new File("src/test/resources/nope.yaml");
+		runMojo.setRegistries(file);
+		var actualMessage = assertThrowsExactly(MojoExecutionException.class, runMojo::execute).getMessage();
+		assertEquals("Registries file '" + file.getAbsolutePath() + "' not found.", actualMessage, "exception message");
 	}
 }

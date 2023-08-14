@@ -44,7 +44,8 @@ public class Docker {
 				.findAny();
 	}
 
-	public void createContainer(String image, List<String> ports, List<String> k3s) throws MojoExecutionException {
+	public void createContainer(String image, List<String> ports, List<String> k3s, Path registries)
+			throws MojoExecutionException {
 		var command = new ArrayList<String>();
 		command.add("docker");
 		command.add("run");
@@ -52,6 +53,9 @@ public class Docker {
 		command.add("--privileged");
 		command.add("--detach");
 		command.add("--volume=" + volumeName + ":/var/lib/rancher/k3s/agent");
+		if (registries != null) {
+			command.add("--volume=" + registries + ":/etc/rancher/k3s/registries.yaml");
+		}
 		ports.stream().map(port -> "--publish=" + port).forEach(command::add);
 		command.add(image);
 		command.addAll(k3s);

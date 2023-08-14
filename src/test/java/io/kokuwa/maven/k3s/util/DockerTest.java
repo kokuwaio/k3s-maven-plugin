@@ -51,7 +51,7 @@ public class DockerTest extends AbstractTest {
 
 		var ports = List.of("9001:9001", "9002:9002");
 		docker.createVolume();
-		docker.createContainer("rancher/k3s", ports, List.of("server"));
+		docker.createContainer("rancher/k3s", ports, List.of("server"), null);
 		assertTrue(docker.getContainer().isPresent(), "container not found after creating");
 		assertTrue(docker.getContainer().map(Container::isRunnding).orElse(null));
 		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")));
@@ -108,7 +108,7 @@ public class DockerTest extends AbstractTest {
 		// start container
 
 		docker.createVolume();
-		docker.createContainer("rancher/k3s", List.of(), List.of("server"));
+		docker.createContainer("rancher/k3s", List.of(), List.of("server"), null);
 
 		// define test data
 

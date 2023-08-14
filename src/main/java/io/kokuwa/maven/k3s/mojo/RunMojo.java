@@ -1,6 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -145,6 +146,14 @@ public class RunMojo extends K3sMojo {
 	private Path kubeconfig;
 
 	/**
+	 * Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml".
+	 *
+	 * @since 1.1.0
+	 */
+	@Parameter(property = "k3s.registries")
+	private Path registries;
+
+	/**
 	 * Timeout in seconds to wait for nodes getting ready.
 	 *
 	 * @since 1.0.0
@@ -223,9 +232,12 @@ public class RunMojo extends K3sMojo {
 
 			// create container
 
+			if (registries != null && !Files.isRegularFile(registries)) {
+				throw new MojoExecutionException("Registries file '" + registries + "' not found.");
+			}
 			var ports = new ArrayList<>(portBindings);
 			ports.add(portKubeApi + ":" + portKubeApi);
-			getDocker().createContainer(image, ports, command);
+			getDocker().createContainer(image, ports, command, registries);
 			getDocker().createVolume();
 
 			// wait for k3s api to be ready
@@ -306,5 +318,9 @@ public class RunMojo extends K3sMojo {
 
 	public void setSkipRun(boolean skipRun) {
 		this.skipRun = skipRun;
+	}
+
+	public void setRegistries(File registries) {
+		this.registries = registries == null ? null : registries.toPath().toAbsolutePath();
 	}
 }
