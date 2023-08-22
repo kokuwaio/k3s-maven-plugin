@@ -183,7 +183,9 @@ public class ImageMojo extends K3sMojo {
 		}
 
 		getLog().info("Image " + image + " not found, start pulling");
-		getDocker().exec(pullTimeout, "ctr", "image", "pull", image);
+		// use crictl instead of cri, because crictl honors custom registry.yaml
+		// see https://github.com/k3s-io/k3s/issues/5277
+		getDocker().exec(pullTimeout, "crictl", "pull", image);
 		getLog().info("Image " + image + " pulled");
 
 		return true;
