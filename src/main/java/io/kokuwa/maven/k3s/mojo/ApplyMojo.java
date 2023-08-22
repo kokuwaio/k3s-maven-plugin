@@ -129,15 +129,17 @@ public class ApplyMojo extends K3sMojo {
 			var missing = new AtomicReference<>(futures.keySet().stream().sorted().collect(Collectors.toList()));
 			pool.submit(() -> {
 				while (!futures.values().stream().allMatch(Future::isDone)) {
-					Thread.sleep(10000);
+					Thread.sleep(15000);
 					var newMissing = futures.entrySet().stream()
 							.filter(f -> !f.getValue().isDone())
 							.map(Entry::getKey).sorted().collect(Collectors.toList());
 					var oldMissing = missing.getAndSet(newMissing);
-					if (oldMissing.equals(newMissing)) {
-						getLog().debug("Still waiting for: " + missing);
-					} else {
-						getLog().info("Still waiting for: " + missing);
+					if (!newMissing.isEmpty()) {
+						if (oldMissing.equals(newMissing)) {
+							getLog().debug("Still waiting for: " + missing);
+						} else {
+							getLog().info("Still waiting for: " + missing);
+						}
 					}
 				}
 				return null;
