@@ -9,6 +9,10 @@ Start and run k3s container.
 | `imageTag` | `k3s.imageTag` | k3s image tag | latest |
 | `portBindings` | `k3s.portBindings` | Skip starting k3s container. | [] |
 | `portKubeApi` | `k3s.portKubeApi` | KubeApi port to expose to host. | 6443 |
+| `k3s.clusterDomain` | `k3s.clusterDomain` | Cluster Domain. | |
+| `k3s.clusterDns` | `k3s.clusterDns` |  IPv4 Cluster IP for coredns service. | |
+| `k3s.clusterCidr` | `k3s.clusterCidr` | IPv4/IPv6 network CIDRs to use for pod IPs. | |
+| `k3s.serviceCidr` | `k3s.serviceCidr` | IPv4/IPv6 network CIDRs to use for service IPs.| |
 | `disableServicelb` | `k3s.disableServicelb` | Disable service load balancer. | false |
 | `disableHelmController` | `k3s.disableZHelmController` | Disable helm controller. | true |
 | `disableLocalStorage` | `k3s.disableLocalStorage` | Disable local storage. | true |

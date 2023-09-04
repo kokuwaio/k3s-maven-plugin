@@ -122,6 +122,42 @@ public class RunMojo extends K3sMojo {
 	private int portKubeApi;
 
 	/**
+	 * Cluster Domain.
+	 *
+	 * @see "https://docs.k3s.io/cli/server#networking"
+	 * @since 1.2.0
+	 */
+	@Parameter(property = "k3s.clusterDomain")
+	private String clusterDomain;
+
+	/**
+	 * IPv4 Cluster IP for coredns service.
+	 *
+	 * @see "https://docs.k3s.io/cli/server#networking"
+	 * @since 1.2.0
+	 */
+	@Parameter(property = "k3s.clusterDns")
+	private String clusterDns;
+
+	/**
+	 * IPv4/IPv6 network CIDRs to use for pod IPs.
+	 *
+	 * @see "https://docs.k3s.io/cli/server#networking"
+	 * @since 1.2.0
+	 */
+	@Parameter(property = "k3s.clusterCidr")
+	private String clusterCidr;
+
+	/**
+	 * IPv4/IPv6 network CIDRs to use for service IPs.
+	 *
+	 * @see "https://docs.k3s.io/cli/server#networking"
+	 * @since 1.2.0
+	 */
+	@Parameter(property = "k3s.serviceCidr")
+	private String serviceCidr;
+
+	/**
 	 * Fail if docker container from previous run exists.
 	 *
 	 * @since 1.0.0
@@ -207,6 +243,18 @@ public class RunMojo extends K3sMojo {
 			// k3s command
 
 			var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
+			if (clusterDomain != null) {
+				command.add("--cluster-domain=" + clusterDomain);
+			}
+			if (clusterDns != null) {
+				command.add("--cluster-dns=" + clusterDns);
+			}
+			if (clusterCidr != null) {
+				command.add("--cluster-cidr=" + clusterCidr);
+			}
+			if (serviceCidr != null) {
+				command.add("--service-cidr=" + serviceCidr);
+			}
 			if (disableCloudController) {
 				command.add("--disable-cloud-controller");
 			}
@@ -322,5 +370,21 @@ public class RunMojo extends K3sMojo {
 
 	public void setRegistries(File registries) {
 		this.registries = registries == null ? null : registries.toPath().toAbsolutePath();
+	}
+
+	public void setClusterDns(String clusterDns) {
+		this.clusterDns = clusterDns;
+	}
+
+	public void setClusterDomain(String clusterDomain) {
+		this.clusterDomain = clusterDomain;
+	}
+
+	public void setClusterCidr(String clusterCidr) {
+		this.clusterCidr = clusterCidr;
+	}
+
+	public void setServiceCidr(String serviceCidr) {
+		this.serviceCidr = serviceCidr;
 	}
 }
