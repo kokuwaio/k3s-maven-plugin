@@ -1,5 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.nio.file.Path;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -55,6 +57,11 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public Docker getDocker() {
 		return docker == null ? docker = new Docker(containerName, volumeName, getLog()) : docker;
+	}
+
+	public String toLinuxPath(Path path) {
+		// ugly hack for windows - docker path inside k3s needs to be a kinux path
+		return path.toString().replace("\\", "/");
 	}
 
 	// setter

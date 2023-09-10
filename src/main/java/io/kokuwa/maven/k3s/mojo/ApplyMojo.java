@@ -87,7 +87,7 @@ public class ApplyMojo extends K3sMojo {
 		if (getDocker().getContainer().isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
-		getDocker().copyToContainer(manifests, path);
+		getDocker().copyToContainer(manifests, toLinuxPath(path));
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 

@@ -126,8 +126,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, initialContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir);
-		docker.copyFromContainer(containerDir, returnDir);
+		docker.copyToContainer(sourceDir, containerDir.toString());
+		docker.copyFromContainer(containerDir.toString(), returnDir);
 		assertEquals(initialContent, Files.readString(returnFile));
 
 		// write changed file and copy to container
@@ -136,8 +136,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, changedContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir);
-		docker.copyFromContainer(containerDir, returnDir);
+		docker.copyToContainer(sourceDir, containerDir.toString());
+		docker.copyFromContainer(containerDir.toString(), returnDir);
 		assertEquals(changedContent, Files.readString(returnFile));
 	}
 }
