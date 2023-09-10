@@ -67,11 +67,11 @@ public class Docker {
 	}
 
 	public void copyFromContainer(Path source, Path destination) throws MojoExecutionException {
-		Task.of(log, "docker", "cp", containerName + ":" + source, destination.toString()).run();
+		Task.of(log, "docker", "cp", containerName + ":" + toLinuxPath(source), destination.toString()).run();
 	}
 
 	public void copyToContainer(Path source, Path destination) throws MojoExecutionException {
-		Task.of(log, "docker", "cp", source.toString(), containerName + ":" + destination).run();
+		Task.of(log, "docker", "cp", source.toString(), containerName + ":" + toLinuxPath(destination)).run();
 	}
 
 	public void waitForLog(Await await, Function<List<String>, Boolean> checker) throws MojoExecutionException {
@@ -167,6 +167,11 @@ public class Docker {
 	}
 
 	// internal
+
+	private String toLinuxPath(Path path) {
+		// ugly hack for windows - docker path inside k3s needs to be a kinux path
+		return path.toString().replace("\\", "/");
+	}
 
 	private <T> T readValue(Class<T> type, String output) {
 		try {
