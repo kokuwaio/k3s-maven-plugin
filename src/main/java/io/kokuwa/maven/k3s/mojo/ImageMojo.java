@@ -152,7 +152,7 @@ public class ImageMojo extends K3sMojo {
 
 			// import tar into ctr
 
-			var destination = Paths.get("/tmp").resolve(tarFile.getFileName() + "_" + System.nanoTime());
+			var destination = "/tmp/" + tarFile.getFileName() + "_" + System.nanoTime();
 			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
 
 			getDocker().copyToContainer(tarFile, destination);
@@ -232,7 +232,7 @@ public class ImageMojo extends K3sMojo {
 
 		var filename = Paths.get(image.hashCode() + ".tar");
 		var source = Paths.get(System.getProperty("java.io.tmpdir")).resolve(filename);
-		var destination = Paths.get("/tmp").resolve(filename);
+		var destination = "/tmp/" + filename;
 		try {
 			getDocker().saveImage(image, source);
 			getDocker().copyToContainer(source, destination);

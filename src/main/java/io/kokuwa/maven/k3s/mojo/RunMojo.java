@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.mojo;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -294,7 +293,7 @@ public class RunMojo extends K3sMojo {
 			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
 		}
 
-		getDocker().copyFromContainer(Paths.get("/etc/rancher/k3s/k3s.yaml"), kubeconfig);
+		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
 		getLog().info("k3s ready: KUBECONFIG=" + kubeconfig + " kubectl get all --all-namespaces");
 	}
 
