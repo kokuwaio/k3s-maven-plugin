@@ -1,5 +1,7 @@
 package io.kokuwa.maven.k3s.util;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -71,7 +73,9 @@ public class Docker {
 	}
 
 	public void copyToContainer(Path source, String destination) throws MojoExecutionException {
-		Task.of(log, "docker", "cp", source.toString(), containerName + ":" + destination).run();
+		// suffix directories with '/.', see https://docs.docker.com/engine/reference/commandline/cp/#description
+		var sourceString = Files.isDirectory(source) ? source + File.separator + "." : source.toString();
+		Task.of(log, "docker", "cp", sourceString, containerName + ":" + destination).run();
 	}
 
 	public void waitForLog(Await await, Function<List<String>, Boolean> checker) throws MojoExecutionException {
