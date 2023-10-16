@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
 import io.kokuwa.maven.k3s.util.Await;
+import io.kokuwa.maven.k3s.util.Task;
 
 /**
  * Test for {@link RunMojo}.
@@ -55,6 +56,18 @@ public class RunMojoTest extends AbstractTest {
 		assertEquals(expectedMessage, actualMessage, "exception message");
 	}
 
+	@DisplayName("with fail on existing container that is stopped")
+	@Test
+	void withFailIfExistsStopped(RunMojo runMojo, Log log) throws MojoExecutionException {
+		runMojo.setFailIfExists(true);
+		assertDoesNotThrow(runMojo::execute);
+		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
+		var expectedMessage = "Container with id '" + docker.getContainer().get().id
+				+ "' found. Please remove that container or set 'k3s.failIfExists' to false.";
+		var actualMessage = assertThrows(MojoExecutionException.class, runMojo::execute).getMessage();
+		assertEquals(expectedMessage, actualMessage, "exception message");
+	}
+
 	@DisplayName("with replace on existing container")
 	@Test
 	void withReplaceIfExists(RunMojo runMojo) throws MojoExecutionException {
@@ -62,6 +75,19 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
+		assertDoesNotThrow(runMojo::execute);
+		var containerAfter = docker.getContainer().orElseThrow();
+		assertNotEquals(containerBefore.id, containerAfter.id, "container was not replaced");
+	}
+
+	@DisplayName("with replace on existing container that is stopped")
+	@Test
+	void withReplaceIfExistsStopped(RunMojo runMojo, Log log) throws MojoExecutionException {
+		runMojo.setFailIfExists(false);
+		runMojo.setReplaceIfExists(true);
+		assertDoesNotThrow(runMojo::execute);
+		var containerBefore = docker.getContainer().orElseThrow();
+		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertNotEquals(containerBefore.id, containerAfter.id, "container was not replaced");
@@ -75,6 +101,20 @@ public class RunMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
+		var containerAfter = docker.getContainer().orElseThrow();
+		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
+	}
+
+	@DisplayName("without fail on existing container that is stopped")
+	@Test
+	void withoutFailIfExistsStopped(RunMojo runMojo, Log log, ApplyMojo applyMojo) throws MojoExecutionException {
+		runMojo.setFailIfExists(false);
+		runMojo.setReplaceIfExists(false);
+		assertDoesNotThrow(runMojo::execute);
+		var containerBefore = docker.getContainer().orElseThrow();
+		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
+		assertDoesNotThrow(runMojo::execute);
+		assertDoesNotThrow(applyMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
 	}

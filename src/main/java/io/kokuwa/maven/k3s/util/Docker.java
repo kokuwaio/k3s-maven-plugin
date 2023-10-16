@@ -39,7 +39,8 @@ public class Docker {
 	}
 
 	public Optional<Container> getContainer() throws MojoExecutionException {
-		return Task.of(log, "docker", "container", "ls", "--filter=name=" + containerName, "--format={{json .}}")
+		return Task
+				.of(log, "docker", "container", "ls", "--all", "--filter=name=" + containerName, "--format={{json .}}")
 				.run().stream()
 				.map(output -> readValue(Container.class, output))
 				.filter(container -> containerName.equals(container.name))
@@ -62,6 +63,10 @@ public class Docker {
 		command.add(image);
 		command.addAll(k3s);
 		Task.of(log, command).run();
+	}
+
+	public void startContainer() throws MojoExecutionException {
+		Task.of(log, "docker", "start", containerName).run();
 	}
 
 	public void removeContainer() throws MojoExecutionException {
@@ -192,16 +197,21 @@ public class Docker {
 		public final String id;
 		public final String name;
 		public final ContainerStatus state;
+		public final String status;
 
 		@JsonCreator
-		public Container(@JsonProperty("ID") String id, @JsonProperty("Names") String name,
-				@JsonProperty("State") ContainerStatus state) {
+		public Container(
+				@JsonProperty("ID") String id,
+				@JsonProperty("Names") String name,
+				@JsonProperty("State") ContainerStatus state,
+				@JsonProperty("Status") String status) {
 			this.id = id;
 			this.name = name;
 			this.state = state;
+			this.status = status;
 		}
 
-		public boolean isRunnding() {
+		public boolean isRunning() {
 			return state == ContainerStatus.running || state == ContainerStatus.restarting;
 		}
 	}
