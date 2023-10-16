@@ -214,6 +214,7 @@ public class RunMojo extends K3sMojo {
 		// check container
 
 		var create = true;
+		var restart = false;
 		var container = getDocker().getContainer().orElse(null);
 		if (container != null) {
 			if (failIfExists) {
@@ -222,6 +223,10 @@ public class RunMojo extends K3sMojo {
 			} else if (replaceIfExists) {
 				getLog().info("Container with id '" + container.id + "' found, replacing");
 				getDocker().removeContainer();
+			} else if (!container.isRunning()) {
+				getLog().warn("Container with id '" + container.id + "' found in stopped state, restart container");
+				create = false;
+				restart = true;
 			} else {
 				getLog().warn("Container with id '" + container.id + "' found, skip creating");
 				create = false;
@@ -230,62 +235,12 @@ public class RunMojo extends K3sMojo {
 
 		// create container
 
-		if (create) {
-
-			// get image name
-
-			if ("latest".equals(imageTag)) {
-				getLog().warn("Using image tag 'latest' is unstable.");
+		if (create || restart) {
+			if (create) {
+				createAndStartK3sContainer();
+			} else if (restart) {
+				getDocker().startContainer();
 			}
-			var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
-
-			// k3s command
-
-			var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
-			if (clusterDomain != null) {
-				command.add("--cluster-domain=" + clusterDomain);
-			}
-			if (clusterDns != null) {
-				command.add("--cluster-dns=" + clusterDns);
-			}
-			if (clusterCidr != null) {
-				command.add("--cluster-cidr=" + clusterCidr);
-			}
-			if (serviceCidr != null) {
-				command.add("--service-cidr=" + serviceCidr);
-			}
-			if (disableCloudController) {
-				command.add("--disable-cloud-controller");
-			}
-			if (disableNetworkPolicy) {
-				command.add("--disable-network-policy");
-			}
-			if (disableMetricsServer) {
-				command.add("--disable=metrics-server");
-			}
-			if (disableServicelb) {
-				command.add("--disable=servicelb");
-			}
-			if (disableHelmController) {
-				command.add("--disable-helm-controller");
-			}
-			if (disableLocalStorage) {
-				command.add("--disable=local-storage");
-			}
-			if (disableTraefik) {
-				command.add("--disable=traefik");
-			}
-			getLog().info("k3s " + command.stream().collect(Collectors.joining(" ")));
-
-			// create container
-
-			if (registries != null && !Files.isRegularFile(registries)) {
-				throw new MojoExecutionException("Registries file '" + registries + "' not found.");
-			}
-			var ports = new ArrayList<>(portBindings);
-			ports.add(portKubeApi + ":" + portKubeApi);
-			getDocker().createContainer(image, ports, command, registries);
-			getDocker().createVolume();
 
 			// wait for k3s api to be ready
 
@@ -295,6 +250,64 @@ public class RunMojo extends K3sMojo {
 
 		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
 		getLog().info("k3s ready: KUBECONFIG=" + kubeconfig + " kubectl get all --all-namespaces");
+	}
+
+	private void createAndStartK3sContainer() throws MojoExecutionException {
+
+		// get image name
+
+		if ("latest".equals(imageTag)) {
+			getLog().warn("Using image tag 'latest' is unstable.");
+		}
+		var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
+
+		// k3s command
+
+		var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
+		if (clusterDomain != null) {
+			command.add("--cluster-domain=" + clusterDomain);
+		}
+		if (clusterDns != null) {
+			command.add("--cluster-dns=" + clusterDns);
+		}
+		if (clusterCidr != null) {
+			command.add("--cluster-cidr=" + clusterCidr);
+		}
+		if (serviceCidr != null) {
+			command.add("--service-cidr=" + serviceCidr);
+		}
+		if (disableCloudController) {
+			command.add("--disable-cloud-controller");
+		}
+		if (disableNetworkPolicy) {
+			command.add("--disable-network-policy");
+		}
+		if (disableMetricsServer) {
+			command.add("--disable=metrics-server");
+		}
+		if (disableServicelb) {
+			command.add("--disable=servicelb");
+		}
+		if (disableHelmController) {
+			command.add("--disable-helm-controller");
+		}
+		if (disableLocalStorage) {
+			command.add("--disable=local-storage");
+		}
+		if (disableTraefik) {
+			command.add("--disable=traefik");
+		}
+		getLog().info("k3s " + command.stream().collect(Collectors.joining(" ")));
+
+		// create container
+
+		if (registries != null && !Files.isRegularFile(registries)) {
+			throw new MojoExecutionException("Registries file '" + registries + "' not found.");
+		}
+		var ports = new ArrayList<>(portBindings);
+		ports.add(portKubeApi + ":" + portKubeApi);
+		getDocker().createContainer(image, ports, command, registries);
+		getDocker().createVolume();
 	}
 
 	// setter

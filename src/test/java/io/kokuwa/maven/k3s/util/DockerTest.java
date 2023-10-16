@@ -53,7 +53,7 @@ public class DockerTest extends AbstractTest {
 		docker.createVolume();
 		docker.createContainer("rancher/k3s", ports, List.of("server"), null);
 		assertTrue(docker.getContainer().isPresent(), "container not found after creating");
-		assertTrue(docker.getContainer().map(Container::isRunnding).orElse(null));
+		assertTrue(docker.getContainer().map(Container::isRunning).orElse(null));
 		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")));
 
 		docker.removeContainer();
