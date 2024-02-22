@@ -67,6 +67,12 @@ public class RestartMojo extends K3sMojo {
 			return;
 		}
 
+		// check marker, if marker is found skip restart
+
+		if (getMarker().consumeStarted()) {
+			return;
+		}
+
 		// skip if no resources configured
 
 		if (resources.isEmpty()) {

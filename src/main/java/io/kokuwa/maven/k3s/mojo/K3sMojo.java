@@ -1,5 +1,6 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.io.File;
 import java.nio.file.Path;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -8,6 +9,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import io.kokuwa.maven.k3s.util.DebugLog;
 import io.kokuwa.maven.k3s.util.Docker;
+import io.kokuwa.maven.k3s.util.Marker;
 
 /**
  * Base class for all mojos of this plugin.
@@ -41,6 +43,10 @@ public abstract class K3sMojo extends AbstractMojo {
 	@Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
 	private String volumeName;
 
+	/** Marker for maven status stuff. */
+	@Parameter(defaultValue = "${project.build.directory}/maven-status/k3s-maven-plugin", readonly = true)
+	private Marker marker;
+
 	// generic methods
 
 	private Log log;
@@ -48,6 +54,10 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public boolean isSkip(boolean skipMojo) {
 		return skip || skipMojo;
+	}
+
+	public Marker getMarker() {
+		return marker;
 	}
 
 	@Override
@@ -65,6 +75,10 @@ public abstract class K3sMojo extends AbstractMojo {
 	}
 
 	// setter
+
+	public void setMarker(File directory) {
+		this.marker = new Marker(directory);
+	}
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
