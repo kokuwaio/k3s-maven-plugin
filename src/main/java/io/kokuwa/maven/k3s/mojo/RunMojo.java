@@ -236,6 +236,7 @@ public class RunMojo extends K3sMojo {
 		// create container
 
 		if (create || restart) {
+
 			if (create) {
 				createAndStartK3sContainer();
 			} else if (restart) {
@@ -246,6 +247,10 @@ public class RunMojo extends K3sMojo {
 
 			var await = Await.await(getLog(), "k3s api available").timeout(nodeTimeout);
 			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
+
+			// write file that k3s started
+
+			getMarker().writeStarted();
 		}
 
 		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);

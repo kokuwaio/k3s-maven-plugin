@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 
@@ -50,10 +51,12 @@ public class RunMojoTest extends AbstractTest {
 	void withFailIfExists(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var expectedMessage = "Container with id '" + docker.getContainer().get().id
 				+ "' found. Please remove that container or set 'k3s.failIfExists' to false.";
 		var actualMessage = assertThrows(MojoExecutionException.class, runMojo::execute).getMessage();
 		assertEquals(expectedMessage, actualMessage, "exception message");
+		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
 	}
 
 	@DisplayName("with fail on existing container that is stopped")
@@ -61,11 +64,13 @@ public class RunMojoTest extends AbstractTest {
 	void withFailIfExistsStopped(RunMojo runMojo, Log log) throws MojoExecutionException {
 		runMojo.setFailIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
 		var expectedMessage = "Container with id '" + docker.getContainer().get().id
 				+ "' found. Please remove that container or set 'k3s.failIfExists' to false.";
 		var actualMessage = assertThrows(MojoExecutionException.class, runMojo::execute).getMessage();
 		assertEquals(expectedMessage, actualMessage, "exception message");
+		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
 	}
 
 	@DisplayName("with replace on existing container")
@@ -74,8 +79,10 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertNotEquals(containerBefore.id, containerAfter.id, "container was not replaced");
 	}
@@ -86,11 +93,13 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerBefore = docker.getContainer().orElseThrow();
 		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertNotEquals(containerBefore.id, containerAfter.id, "container was not replaced");
+		assertTrue(runMojo.getMarker().consumeStarted());
 	}
 
 	@DisplayName("without fail on existing container")
@@ -99,10 +108,12 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(false);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerBefore = docker.getContainer().orElseThrow();
 		assertDoesNotThrow(runMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
+		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
 	}
 
 	@DisplayName("without fail on existing container that is stopped")
@@ -111,9 +122,11 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(false);
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerBefore = docker.getContainer().orElseThrow();
 		Task.of(log, "docker", "stop", "k3s-maven-plugin").run();
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		assertDoesNotThrow(applyMojo::execute);
 		var containerAfter = docker.getContainer().orElseThrow();
 		assertEquals(containerBefore.id, containerAfter.id, "container shouldn't be replaced");
@@ -124,16 +137,18 @@ public class RunMojoTest extends AbstractTest {
 	void withRegistries(RunMojo runMojo, Log log) throws MojoExecutionException {
 		runMojo.setRegistries(new File("src/test/resources/registries.yaml"));
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		docker.waitForLog(Await.await(log, "registries.yaml used"), logs -> logs.stream()
 				.anyMatch(l -> l.contains("Using private registry config file at /etc/rancher/k3s/registries.yaml")));
 	}
 
 	@DisplayName("with custom registries.yaml (missing)")
 	@Test
-	void withRegistriesMissing(RunMojo runMojo) {
+	void withRegistriesMissing(RunMojo runMojo) throws MojoExecutionException {
 		var file = new File("src/test/resources/nope.yaml");
 		runMojo.setRegistries(file);
 		var actualMessage = assertThrowsExactly(MojoExecutionException.class, runMojo::execute).getMessage();
 		assertEquals("Registries file '" + file.getAbsolutePath() + "' not found.", actualMessage, "exception message");
+		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
 	}
 }
