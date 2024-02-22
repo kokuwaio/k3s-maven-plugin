@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>k3s-maven-plugin</artifactId>
-	<version>1.3.0</version>
+	<version>1.3.1-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>k3s Maven Plugin</name>
