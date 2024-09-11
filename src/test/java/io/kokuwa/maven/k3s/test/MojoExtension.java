@@ -4,21 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
 import org.apache.maven.plugin.logging.Log;
-import org.codehaus.plexus.util.InterpolationFilterReader;
-import org.codehaus.plexus.util.ReflectionUtils;
-import org.codehaus.plexus.util.xml.XmlStreamReader;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.opentest4j.AssertionFailedError;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
 import io.kokuwa.maven.k3s.util.Docker;
@@ -39,13 +38,14 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
 		if (mojos.isEmpty()) {
-			var inputStream = K3sMojo.class.getResourceAsStream("/META-INF/maven/plugin.xml");
-			assertNotNull(inputStream, "Plugin descriptor for not found, run 'mvn plugin:descriptor'.");
-			new PluginDescriptorBuilder()
-					.build(new InterpolationFilterReader(new XmlStreamReader(inputStream),
-							Map.of("project.build.directory", "target", "project.basedir", ".")))
-					.getMojos()
-					.forEach(mojos::add);
+			try (var inputStream = K3sMojo.class.getResourceAsStream("/META-INF/maven/plugin.xml");) {
+				assertNotNull(inputStream, "Plugin descriptor for not found, run 'mvn plugin:descriptor'.");
+				new PluginDescriptorBuilder()
+						.build(new StringReader( new String(inputStream.readAllBytes())
+								.replaceAll("\\$\\{project.build.directory}", "target")
+								.replaceAll("\\$\\{project.basedir}", ".")))
+						.getMojos().forEach(mojos::add);
+			}
 		}
 	}
 
@@ -74,8 +74,11 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			var mojo = (K3sMojo) type.getDeclaredConstructor().newInstance();
 			for (var parameter : descriptor.getParameters()) {
 				if (parameter.getDefaultValue() != null) {
-					var setter = ReflectionUtils.getSetter(parameter.getName(), mojo.getClass());
-					var parameterType = ReflectionUtils.getSetterType(setter);
+					var setter = Stream.of(type.getMethods())
+							.filter(m -> m.getName().toLowerCase().equals("set" + parameter.getName().toLowerCase()))
+							.findFirst()
+							.orElseThrow(() -> new AssertionFailedError("Setter not found: set" + parameter.getName()));
+					var parameterType = setter.getParameters()[0].getType();
 					if (String.class.equals(parameterType)) {
 						setter.invoke(mojo, parameter.getDefaultValue());
 					} else if (File.class.equals(parameterType)) {
