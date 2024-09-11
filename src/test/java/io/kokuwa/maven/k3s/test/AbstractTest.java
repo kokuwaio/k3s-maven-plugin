@@ -11,7 +11,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -37,12 +36,13 @@ public abstract class AbstractTest {
 
 	@BeforeEach
 	@AfterEach
-	void reset(TestInfo test, Log log, Docker newDocker) throws MojoExecutionException {
+	void reset(TestInfo test, TestLog log, Docker newDocker) throws MojoExecutionException {
 		log.info("Reset test: " + test.getTestMethod().orElse(null));
 		this.docker = newDocker;
 		this.docker.removeContainer();
 		this.docker.removeVolume();
 		this.docker.removeImage(helloWorld());
+		log.clear();
 	}
 
 	public static String helloWorld() {
