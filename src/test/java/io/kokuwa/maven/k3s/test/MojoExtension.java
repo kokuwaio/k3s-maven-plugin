@@ -11,7 +11,6 @@ import java.util.Set;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.codehaus.plexus.util.InterpolationFilterReader;
 import org.codehaus.plexus.util.ReflectionUtils;
 import org.codehaus.plexus.util.xml.XmlStreamReader;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
-import io.kokuwa.maven.k3s.util.DebugLog;
 import io.kokuwa.maven.k3s.util.Docker;
 
 /**
@@ -34,7 +32,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	private static final String containerName = "k3s-maven-plugin";
 	private static final String volumeName = "k3s-maven-plugin-junit";
-	private static final Log log = new DebugLog(new SystemStreamLog(), false);
+	private static final TestLog log = new TestLog(false);
 	private static final Docker docker = new Docker(containerName, volumeName, log);
 	private static final Set<MojoDescriptor> mojos = new HashSet<>();
 
@@ -56,6 +54,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 		var type = parameterContext.getParameter().getType();
 		return mojos.stream().map(MojoDescriptor::getImplementation).anyMatch(type.getName()::equals)
 				|| type.equals(Log.class)
+				|| type.equals(TestLog.class)
 				|| type.equals(Docker.class);
 	}
 
@@ -63,7 +62,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
 
 		var type = parameterContext.getParameter().getType();
-		if (type.equals(Log.class)) {
+		if (type.equals(Log.class) || type.equals(TestLog.class)) {
 			return log;
 		}
 		if (type.equals(Docker.class)) {

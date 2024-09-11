@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.lang.System.Logger.Level;
+import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
+import io.kokuwa.maven.k3s.test.TestLog;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.Task;
 
@@ -150,5 +153,37 @@ public class RunMojoTest extends AbstractTest {
 		var actualMessage = assertThrowsExactly(MojoExecutionException.class, runMojo::execute).getMessage();
 		assertEquals("Registries file '" + file.getAbsolutePath() + "' not found.", actualMessage, "exception message");
 		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
+	}
+
+	@DisplayName("dns: skipped")
+	@Test
+	void checkDnsSkipped(RunMojo runMojo, TestLog log) {
+		runMojo.setSkip(true);
+		runMojo.setDnsResolverCheck(false);
+		assertDoesNotThrow(runMojo::execute);
+		assertTrue(log.getMessages(Level.DEBUG).isEmpty());
+		assertTrue(log.getMessages(Level.WARNING).isEmpty());
+	}
+
+	@DisplayName("dns: success")
+	@Test
+	void checkDnsSuccess(RunMojo runMojo, TestLog log) {
+		runMojo.setSkip(true);
+		assertDoesNotThrow(runMojo::execute);
+		assertEquals(List.of("DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
+				log.getMessages(Level.DEBUG));
+		assertTrue(log.getMessages(Level.WARNING).isEmpty());
+	}
+
+	@DisplayName("dns: failure")
+	@Test
+	void checkDnsFailure(RunMojo runMojo, TestLog log) {
+		runMojo.setSkip(true);
+		runMojo.setDnsResolverDomain("nope.example.org");
+		assertDoesNotThrow(runMojo::execute);
+		assertTrue(log.getMessages(Level.DEBUG).isEmpty());
+		assertEquals(
+				List.of("DNS was unable to resolve nope.example.org. Custom domains may not work!"),
+				log.getMessages(Level.WARNING));
 	}
 }

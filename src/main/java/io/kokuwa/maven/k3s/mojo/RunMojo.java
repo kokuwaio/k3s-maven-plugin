@@ -1,6 +1,8 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -204,8 +206,35 @@ public class RunMojo extends K3sMojo {
 	@Parameter(property = "k3s.skipRun", defaultValue = "false")
 	private boolean skipRun;
 
+	/**
+	 * Check if dns resolves custom domains.
+	 *
+	 * @since 1.4.0
+	 */
+	@Parameter(property = "k3s.dnsResolverCheck", defaultValue = "true")
+	private boolean dnsResolverCheck;
+
+	/**
+	 * Custom domain to resolve.
+	 *
+	 * @since 1.4.0
+	 */
+	@Parameter(property = "k3s.dnsResolverDomain", defaultValue = "k3s-maven-plugin.127.0.0.1.nip.io")
+	private String dnsResolverDomain;
+
 	@Override
 	public void execute() throws MojoExecutionException {
+
+		// check dns
+		
+		if (dnsResolverCheck) {
+			try {
+				var address = InetAddress.getByName(dnsResolverDomain).getHostAddress();
+				getLog().debug("DNS resolved " + dnsResolverDomain + " to " + address + ".");
+			} catch (UnknownHostException e) {
+				getLog().warn("DNS was unable to resolve " + dnsResolverDomain + ". Custom domains may not work!");
+			}
+		}
 
 		if (isSkip(skipRun)) {
 			return;
@@ -403,5 +432,13 @@ public class RunMojo extends K3sMojo {
 
 	public void setServiceCidr(String serviceCidr) {
 		this.serviceCidr = serviceCidr;
+	}
+
+	public void setDnsResolverCheck(boolean dnsResolverCheck) {
+		this.dnsResolverCheck = dnsResolverCheck;
+	}
+
+	public void setDnsResolverDomain(String dnsResolverDomain) {
+		this.dnsResolverDomain = dnsResolverDomain;
 	}
 }
