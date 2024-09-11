@@ -250,7 +250,6 @@ public class ImageMojo extends K3sMojo {
 	/**
 	 * Read image from <code>ctr image list</code>.
 	 *
-	 * @param row Row from ctr output.
 	 * @return Image name with labels.
 	 */
 	private Map<String, Map<String, ?>> getCtrImages() throws MojoExecutionException {
