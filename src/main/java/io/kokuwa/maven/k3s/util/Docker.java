@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
+import org.slf4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,9 +30,9 @@ public class Docker {
 	private final ObjectMapper mapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 	private final String containerName;
 	private final String volumeName;
-	private final Log log;
+	private final Logger log;
 
-	public Docker(String containerName, String volumeName, Log log) {
+	public Docker(String containerName, String volumeName, Logger log) {
 		this.containerName = containerName;
 		this.volumeName = volumeName;
 		this.log = log;

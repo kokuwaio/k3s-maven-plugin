@@ -9,16 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.lang.System.Logger.Level;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
-import io.kokuwa.maven.k3s.test.TestLog;
+import io.kokuwa.maven.k3s.test.LoggerCapturer;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.Task;
 
@@ -64,7 +63,7 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("with fail on existing container that is stopped")
 	@Test
-	void withFailIfExistsStopped(RunMojo runMojo, Log log) throws MojoExecutionException {
+	void withFailIfExistsStopped(RunMojo runMojo, Logger log) throws MojoExecutionException {
 		runMojo.setFailIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
 		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
@@ -92,7 +91,7 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("with replace on existing container that is stopped")
 	@Test
-	void withReplaceIfExistsStopped(RunMojo runMojo, Log log) throws MojoExecutionException {
+	void withReplaceIfExistsStopped(RunMojo runMojo, Logger log) throws MojoExecutionException {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(true);
 		assertDoesNotThrow(runMojo::execute);
@@ -121,7 +120,7 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("without fail on existing container that is stopped")
 	@Test
-	void withoutFailIfExistsStopped(RunMojo runMojo, Log log, ApplyMojo applyMojo) throws MojoExecutionException {
+	void withoutFailIfExistsStopped(RunMojo runMojo, Logger log, ApplyMojo applyMojo) throws MojoExecutionException {
 		runMojo.setFailIfExists(false);
 		runMojo.setReplaceIfExists(false);
 		assertDoesNotThrow(runMojo::execute);
@@ -137,7 +136,7 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("with custom registries.yaml")
 	@Test
-	void withRegistries(RunMojo runMojo, Log log) throws MojoExecutionException {
+	void withRegistries(RunMojo runMojo, Logger log) throws MojoExecutionException {
 		runMojo.setRegistries(new File("src/test/resources/registries.yaml"));
 		assertDoesNotThrow(runMojo::execute);
 		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
@@ -157,33 +156,31 @@ public class RunMojoTest extends AbstractTest {
 
 	@DisplayName("dns: skipped")
 	@Test
-	void checkDnsSkipped(RunMojo runMojo, TestLog log) {
+	void checkDnsSkipped(RunMojo runMojo) {
 		runMojo.setSkip(true);
 		runMojo.setDnsResolverCheck(false);
 		assertDoesNotThrow(runMojo::execute);
-		assertTrue(log.getMessages(Level.DEBUG).isEmpty());
-		assertTrue(log.getMessages(Level.WARNING).isEmpty());
+		assertEquals(List.of(), LoggerCapturer.getMessages());
 	}
 
 	@DisplayName("dns: success")
 	@Test
-	void checkDnsSuccess(RunMojo runMojo, TestLog log) {
+	void checkDnsSuccess(RunMojo runMojo) {
 		runMojo.setSkip(true);
 		assertDoesNotThrow(runMojo::execute);
-		assertEquals(List.of("DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
-				log.getMessages(Level.DEBUG));
-		assertTrue(log.getMessages(Level.WARNING).isEmpty());
+		assertEquals(
+				List.of("DEBUG DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
+				LoggerCapturer.getMessages());
 	}
 
 	@DisplayName("dns: failure")
 	@Test
-	void checkDnsFailure(RunMojo runMojo, TestLog log) {
+	void checkDnsFailure(RunMojo runMojo) {
 		runMojo.setSkip(true);
 		runMojo.setDnsResolverDomain("nope.example.org");
 		assertDoesNotThrow(runMojo::execute);
-		assertTrue(log.getMessages(Level.DEBUG).isEmpty());
 		assertEquals(
-				List.of("DNS was unable to resolve nope.example.org. Custom domains may not work!"),
-				log.getMessages(Level.WARNING));
+				List.of("WARN DNS was unable to resolve nope.example.org. Custom domains may not work!"),
+				LoggerCapturer.getMessages());
 	}
 }

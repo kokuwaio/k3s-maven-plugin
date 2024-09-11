@@ -230,9 +230,9 @@ public class RunMojo extends K3sMojo {
 		if (dnsResolverCheck) {
 			try {
 				var address = InetAddress.getByName(dnsResolverDomain).getHostAddress();
-				getLog().debug("DNS resolved " + dnsResolverDomain + " to " + address + ".");
+				log.debug("DNS resolved " + dnsResolverDomain + " to " + address + ".");
 			} catch (UnknownHostException e) {
-				getLog().warn("DNS was unable to resolve " + dnsResolverDomain + ". Custom domains may not work!");
+				log.warn("DNS was unable to resolve " + dnsResolverDomain + ". Custom domains may not work!");
 			}
 		}
 
@@ -250,14 +250,14 @@ public class RunMojo extends K3sMojo {
 				throw new MojoExecutionException("Container with id '" + container.id
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
-				getLog().info("Container with id '" + container.id + "' found, replacing");
+				log.info("Container with id '" + container.id + "' found, replacing");
 				getDocker().removeContainer();
 			} else if (!container.isRunning()) {
-				getLog().warn("Container with id '" + container.id + "' found in stopped state, restart container");
+				log.warn("Container with id '" + container.id + "' found in stopped state, restart container");
 				create = false;
 				restart = true;
 			} else {
-				getLog().warn("Container with id '" + container.id + "' found, skip creating");
+				log.warn("Container with id '" + container.id + "' found, skip creating");
 				create = false;
 			}
 		}
@@ -274,7 +274,7 @@ public class RunMojo extends K3sMojo {
 
 			// wait for k3s api to be ready
 
-			var await = Await.await(getLog(), "k3s api available").timeout(nodeTimeout);
+			var await = Await.await(log, "k3s api available").timeout(nodeTimeout);
 			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
 
 			// write file that k3s started
@@ -283,7 +283,7 @@ public class RunMojo extends K3sMojo {
 		}
 
 		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
-		getLog().info("k3s ready: KUBECONFIG=" + kubeconfig + " kubectl get all --all-namespaces");
+		log.info("k3s ready: KUBECONFIG=" + kubeconfig + " kubectl get all --all-namespaces");
 	}
 
 	private void createAndStartK3sContainer() throws MojoExecutionException {
@@ -291,7 +291,7 @@ public class RunMojo extends K3sMojo {
 		// get image name
 
 		if ("latest".equals(imageTag)) {
-			getLog().warn("Using image tag 'latest' is unstable.");
+			log.warn("Using image tag 'latest' is unstable.");
 		}
 		var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
 
@@ -331,7 +331,7 @@ public class RunMojo extends K3sMojo {
 		if (disableTraefik) {
 			command.add("--disable=traefik");
 		}
-		getLog().info("k3s " + command.stream().collect(Collectors.joining(" ")));
+		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
 
 		// create container
 

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestClassOrder;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -36,13 +35,12 @@ public abstract class AbstractTest {
 
 	@BeforeEach
 	@AfterEach
-	void reset(TestInfo test, TestLog log, Docker newDocker) throws MojoExecutionException {
-		log.info("Reset test: " + test.getTestMethod().orElse(null));
+	void reset(Docker newDocker) throws MojoExecutionException {
 		this.docker = newDocker;
 		this.docker.removeContainer();
 		this.docker.removeVolume();
 		this.docker.removeImage(helloWorld());
-		log.clear();
+		LoggerCapturer.clear();
 	}
 
 	public static String helloWorld() {
