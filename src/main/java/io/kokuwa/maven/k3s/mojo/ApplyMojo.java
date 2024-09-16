@@ -93,11 +93,11 @@ public class ApplyMojo extends K3sMojo {
 
 		var serviceAccount = new String[] { "kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name" };
 		if (getDocker().exec(serviceAccount).isEmpty()) {
-			getLog().info("");
-			getLog().info("No service account found, waiting for sa ...");
-			Await.await(getLog(), "k3s service account ready").until(() -> !getDocker().exec(serviceAccount).isEmpty());
-			getLog().info("Service account found, continue ...");
-			getLog().info("");
+			log.info("");
+			log.info("No service account found, waiting for sa ...");
+			Await.await(log, "k3s service account ready").until(() -> !getDocker().exec(serviceAccount).isEmpty());
+			log.info("Service account found, continue ...");
+			log.info("");
 		}
 
 		// wait for node getting ready
@@ -108,7 +108,7 @@ public class ApplyMojo extends K3sMojo {
 
 		var result = apply();
 		if (result.exitCode() != 0 && result.output().stream().anyMatch(l -> l.endsWith("CRDs are installed first"))) {
-			getLog().info("Found CRDs created, but kubectl failed. Try again ...");
+			log.info("Found CRDs created, but kubectl failed. Try again ...");
 			result = apply();
 		}
 		result.verify();
@@ -136,9 +136,9 @@ public class ApplyMojo extends K3sMojo {
 					var oldMissing = missing.getAndSet(newMissing);
 					if (!newMissing.isEmpty()) {
 						if (oldMissing.equals(newMissing)) {
-							getLog().debug("Still waiting for: " + missing);
+							log.debug("Still waiting for: " + missing);
 						} else {
-							getLog().info("Still waiting for: " + missing);
+							log.info("Still waiting for: " + missing);
 						}
 					}
 				}
@@ -173,7 +173,7 @@ public class ApplyMojo extends K3sMojo {
 			command.add("--recursive");
 		}
 
-		getLog().info(command.stream().collect(Collectors.joining(" ")));
+		log.info(command.stream().collect(Collectors.joining(" ")));
 		return getDocker().execWithoutVerify(timeout, command);
 	}
 
@@ -207,9 +207,9 @@ public class ApplyMojo extends K3sMojo {
 				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
 				return Map.entry(representation, (Callable<Boolean>) () -> {
 					try {
-						getLog().debug(kind + " " + representation + " ... waiting");
+						log.debug(kind + " " + representation + " ... waiting");
 						getDocker().exec(timeout.plusSeconds(10), tmp);
-						getLog().info(kind + " " + representation + " ... ready");
+						log.info(kind + " " + representation + " ... ready");
 						return true;
 					} catch (MojoExecutionException e) {
 						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);

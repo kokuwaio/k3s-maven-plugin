@@ -13,9 +13,9 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
 import io.kokuwa.maven.k3s.util.Docker.Container;
@@ -44,7 +44,7 @@ public class DockerTest extends AbstractTest {
 
 	@DisplayName("container handling")
 	@Test
-	void container(Log log) throws MojoExecutionException {
+	void container(Logger log) throws MojoExecutionException {
 
 		assertFalse(docker.getContainer().isPresent(), "container found before testing");
 		docker.removeContainer();

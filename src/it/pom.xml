@@ -14,7 +14,6 @@
 		<!-- ===================================================================== -->
 
 		<project.build.sourceEncoding>@project.build.sourceEncoding@</project.build.sourceEncoding>
-		<project.build.propertiesEncoding>@project.build.propertiesEncoding@</project.build.propertiesEncoding>
 
 		<maven.compiler.source>@maven.compiler.source@</maven.compiler.source>
 		<maven.compiler.target>@maven.compiler.target@</maven.compiler.target>
@@ -29,31 +28,22 @@
 
 		<!-- plugins -->
 
-		<version.org.apache.maven.plugins.clean>@version.org.apache.maven.plugins.clean@</version.org.apache.maven.plugins.clean>
 		<version.org.apache.maven.plugins.compiler>@version.org.apache.maven.plugins.compiler@</version.org.apache.maven.plugins.compiler>
 		<version.org.apache.maven.plugins.jar>@version.org.apache.maven.plugins.jar@</version.org.apache.maven.plugins.jar>
 		<version.org.apache.maven.plugins.resources>@version.org.apache.maven.plugins.resources@</version.org.apache.maven.plugins.resources>
 		<version.org.apache.maven.plugins.surefire>@version.org.apache.maven.plugins.surefire@</version.org.apache.maven.plugins.surefire>
 		<version.org.codehaus.mojo.tidy>@version.org.codehaus.mojo.tidy@</version.org.codehaus.mojo.tidy>
-		<version.io.kokuwa.maven.helm>6.7.0</version.io.kokuwa.maven.helm>
+		<version.io.kokuwa.maven.helm>6.15.0</version.io.kokuwa.maven.helm>
 		<version.io.kokuwa.maven.k3s>@project.version@</version.io.kokuwa.maven.k3s>
 
 		<!-- dependencies -->
 
 		<version.org.junit.jupiter>@version.org.junit.jupiter@</version.org.junit.jupiter>
-		<version.org.slf4j>@version.org.slf4j@</version.org.slf4j>
 
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
-
-			<!-- libraries -->
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-				<version>${version.org.slf4j}</version>
-			</dependency>
 
 			<!-- test -->
 			<dependency>
@@ -80,11 +70,6 @@
 	<build>
 		<pluginManagement>
 			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.clean}</version>
-				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
@@ -146,6 +131,16 @@
 			</plugin>
 
 			<!-- disable jar/surefire -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-jar</id>
+						<phase />
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>

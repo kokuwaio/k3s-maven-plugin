@@ -11,13 +11,14 @@ import java.util.stream.Stream;
 
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
-import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.opentest4j.AssertionFailedError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
 import io.kokuwa.maven.k3s.util.Docker;
@@ -31,7 +32,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	private static final String containerName = "k3s-maven-plugin";
 	private static final String volumeName = "k3s-maven-plugin-junit";
-	private static final TestLog log = new TestLog(false);
+	private static final Logger log = LoggerFactory.getLogger(MojoExtension.class);
 	private static final Docker docker = new Docker(containerName, volumeName, log);
 	private static final Set<MojoDescriptor> mojos = new HashSet<>();
 
@@ -53,8 +54,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
 		var type = parameterContext.getParameter().getType();
 		return mojos.stream().map(MojoDescriptor::getImplementation).anyMatch(type.getName()::equals)
-				|| type.equals(Log.class)
-				|| type.equals(TestLog.class)
+				|| type.equals(Logger.class)
 				|| type.equals(Docker.class);
 	}
 
@@ -62,7 +62,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
 
 		var type = parameterContext.getParameter().getType();
-		if (type.equals(Log.class) || type.equals(TestLog.class)) {
+		if (type.equals(Logger.class)) {
 			return log;
 		}
 		if (type.equals(Docker.class)) {
@@ -92,7 +92,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 					}
 				}
 			}
-			mojo.setLog(log);
 			mojo.setContainerName(containerName);
 			mojo.setVolumeName(volumeName);
 			return mojo;
