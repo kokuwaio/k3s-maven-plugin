@@ -70,13 +70,13 @@ public class Await {
 				lastException = null;
 			} catch (Exception e) {
 				lastException = e;
-				log.debug("Await " + text + " failed with exception " + e.getMessage());
+				log.debug("Await {} failed with exception {}", text, e.getMessage());
 			}
 			wait(interval);
 		}
 
 		if (lastException != null) {
-			log.error("Await " + text + " had exception while waiting", lastException);
+			log.error("Await {} had exception while waiting", text, lastException);
 		}
 
 		onTimeout.run();

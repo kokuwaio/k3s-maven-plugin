@@ -71,7 +71,7 @@ public class Task {
 
 	public Task start() throws MojoExecutionException {
 
-		log.debug(">>> " + this);
+		log.debug(">>> {}", this);
 
 		try {
 			var builder = new ProcessBuilder(command);
@@ -102,8 +102,8 @@ public class Task {
 	public Task verify() throws MojoExecutionException {
 		var exitCode = process.exitValue();
 		if (exitCode != 0) {
-			log.error(">>> " + this);
-			output.forEach(line -> log.error("<<< " + line));
+			log.error(">>> {}", this);
+			output.forEach(line -> log.error("<<< {}", line));
 			throw new MojoExecutionException("Command failed with exit code " + exitCode + ": " + this);
 		}
 		return this;
@@ -128,10 +128,10 @@ public class Task {
 				String line;
 				while ((line = reader.readLine()) != null) {
 					output.add(line);
-					log.debug("<<< [" + stream + "] " + line);
+					log.debug("<<< [{}] {}", stream, line);
 				}
 			} catch (IOException e) {
-				log.debug("Stream " + stream + " closed unexpected: " + e.getMessage());
+				log.debug("Stream {} closed unexpected: {}", stream, e.getMessage());
 			}
 		});
 		thread.start();

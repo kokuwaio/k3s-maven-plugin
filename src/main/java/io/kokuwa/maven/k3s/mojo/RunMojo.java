@@ -230,9 +230,9 @@ public class RunMojo extends K3sMojo {
 		if (dnsResolverCheck) {
 			try {
 				var address = InetAddress.getByName(dnsResolverDomain).getHostAddress();
-				log.debug("DNS resolved " + dnsResolverDomain + " to " + address + ".");
+				log.debug("DNS resolved {} to {}.", dnsResolverDomain, address);
 			} catch (UnknownHostException e) {
-				log.warn("DNS was unable to resolve " + dnsResolverDomain + ". Custom domains may not work!");
+				log.warn("DNS was unable to resolve {}. Custom domains may not work!", dnsResolverDomain);
 			}
 		}
 
@@ -250,14 +250,14 @@ public class RunMojo extends K3sMojo {
 				throw new MojoExecutionException("Container with id '" + container.id
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
-				log.info("Container with id '" + container.id + "' found, replacing");
+				log.info("Container with id '{}' found, replacing", container.id);
 				getDocker().removeContainer();
 			} else if (!container.isRunning()) {
-				log.warn("Container with id '" + container.id + "' found in stopped state, restart container");
+				log.warn("Container with id '{}' found in stopped state, restart container", container.id);
 				create = false;
 				restart = true;
 			} else {
-				log.warn("Container with id '" + container.id + "' found, skip creating");
+				log.warn("Container with id '{}' found, skip creating", container.id);
 				create = false;
 			}
 		}
@@ -283,7 +283,7 @@ public class RunMojo extends K3sMojo {
 		}
 
 		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
-		log.info("k3s ready: KUBECONFIG=" + kubeconfig + " kubectl get all --all-namespaces");
+		log.info("k3s ready: KUBECONFIG={} kubectl get all --all-namespaces", kubeconfig);
 	}
 
 	private void createAndStartK3sContainer() throws MojoExecutionException {
@@ -331,7 +331,7 @@ public class RunMojo extends K3sMojo {
 		if (disableTraefik) {
 			command.add("--disable=traefik");
 		}
-		log.info("k3s " + command.stream().collect(Collectors.joining(" ")));
+		log.info("k3s {}", command.stream().collect(Collectors.joining(" ")));
 
 		// create container
 
