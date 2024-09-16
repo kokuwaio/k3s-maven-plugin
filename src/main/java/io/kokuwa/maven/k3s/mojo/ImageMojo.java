@@ -123,7 +123,7 @@ public class ImageMojo extends K3sMojo {
 	private boolean tar(Map<String, Map<String, ?>> existingImages, Path tarFile) {
 
 		if (!Files.isRegularFile(tarFile)) {
-			log.error("Tar not found: " + tarFile);
+			log.error("Tar not found: {}", tarFile);
 			return false;
 		}
 
@@ -141,13 +141,12 @@ public class ImageMojo extends K3sMojo {
 					.map(l -> l.get(labelChecksum)).filter(Objects::nonNull)
 					.findAny().orElse(null);
 			if (oldChecksum == null) {
-				log.debug("Tar " + tarFile + " does not exists in ctr.");
+				log.debug("Tar {} does not exists in ctr.", tarFile);
 			} else if (oldChecksum.equals(newChecksum)) {
-				log.info("Tar " + tarFile + " present in ctr with checksum " + newChecksum + ", skip.");
+				log.info("Tar {} present in ctr with checksum {}, skip.", tarFile, newChecksum);
 				return true;
 			} else {
-				log.debug("Tar " + tarFile + " present in ctr with checksum " + oldChecksum + ", new is: "
-						+ newChecksum);
+				log.debug("Tar {} present in ctr with checksum {}, new is: {}", tarFile, oldChecksum, newChecksum);
 			}
 
 			// import tar into ctr
@@ -163,30 +162,30 @@ public class ImageMojo extends K3sMojo {
 					getDocker().exec("ctr", "image", "label", matcher.group("image"),
 							labelChecksum + "=" + newChecksum);
 				} else {
-					log.warn("Tar " + tarFile + " import output cannot be parsed: " + output);
+					log.warn("Tar {} import output cannot be parsed: {}", tarFile, output);
 				}
 			}
 		} catch (MojoExecutionException | IOException e) {
-			log.error("Failed to import tar: " + tarFile, e);
+			log.error("Failed to import tar: {}", tarFile, e);
 			return false;
 		}
 
-		log.info("Imported tar from " + tarFile);
+		log.info("Imported tar from {}", tarFile);
 		return true;
 	}
 
 	private boolean ctr(Map<String, Map<String, ?>> existingImages, String image) throws MojoExecutionException {
 
 		if (existingImages.containsKey(image)) {
-			log.debug("Image " + image + " found in ctr, skip pulling");
+			log.debug("Image {} found in ctr, skip pulling", image);
 			return true;
 		}
 
-		log.info("Image " + image + " not found, start pulling");
+		log.info("Image {} not found, start pulling", image);
 		// use crictl instead of cri, because crictl honors custom registry.yaml
 		// see https://github.com/k3s-io/k3s/issues/5277
 		getDocker().exec(pullTimeout, "crictl", "pull", image);
-		log.info("Image " + image + " pulled");
+		log.info("Image {} pulled", image);
 
 		return true;
 	}
@@ -198,19 +197,19 @@ public class ImageMojo extends K3sMojo {
 		var digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
 		if (dockerPullAlways || digest == null) {
 			if (digest != null) {
-				log.debug("Image " + image + " found in docker, pull always ...");
+				log.debug("Image {} found in docker, pull always ...", image);
 			} else {
-				log.debug("Image " + image + " not found in docker, pulling ...");
+				log.debug("Image {} not found in docker, pulling ...", image);
 			}
 			try {
 				getDocker().pullImage(image, pullTimeout);
 			} catch (MojoExecutionException e) {
-				log.error("Failed to pull docker image " + image, e);
+				log.error("Failed to pull docker image {}", image, e);
 				return false;
 			}
 			digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
 		} else {
-			log.debug("Image " + image + " found in docker");
+			log.debug("Image {} found in docker", image);
 		}
 
 		// skip if image is already present in ctr
@@ -219,13 +218,12 @@ public class ImageMojo extends K3sMojo {
 		var label = "k3s-maven-digest";
 		var oldDigest = existingImages.getOrDefault(normalizedImage, Map.of()).get(label);
 		if (oldDigest == null) {
-			log.debug("Image " + image + " does not exists in ctr.");
+			log.debug("Image {} does not exists in ctr.", image);
 		} else if (oldDigest.equals(digest)) {
-			log.info("Image " + image + " present in ctr with digest " + digest + ", skip.");
+			log.info("Image {} present in ctr with digest {}, skip.", image, digest);
 			return true;
 		} else {
-			log.debug(
-					"Image " + image + " present in ctr with digest " + oldDigest + ", new digest is: " + digest);
+			log.debug("Image {} present in ctr with digest {}, new digest is: {}", image, oldDigest, digest);
 		}
 
 		// move from docker to ctr
@@ -239,11 +237,11 @@ public class ImageMojo extends K3sMojo {
 			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
 			getDocker().exec("ctr", "image", "label", normalizedImage, label + "=" + digest);
 		} catch (MojoExecutionException e) {
-			log.error("Failed to import tar " + source, e);
+			log.error("Failed to import tar {}", source, e);
 			return false;
 		}
 
-		log.info("Image " + image + " copied from docker deamon");
+		log.info("Image {} copied from docker deamon", image);
 		return true;
 	}
 
@@ -259,14 +257,14 @@ public class ImageMojo extends K3sMojo {
 				.filter(parts -> {
 					var matches = parts.length == 7;
 					if (!matches) {
-						log.warn("Unexpected output of `ctr image list`: " + List.of(parts));
+						log.warn("Unexpected output of `ctr image list`: {}", List.of(parts));
 					}
 					return matches;
 				})
 				.map(parts -> Map.entry(parts[0], Stream.of(parts[6].split(",")).map(s -> s.split("="))
 						.filter(s -> !"io.cri-containerd.image".equals(s[0]))
 						.collect(Collectors.toMap(s -> s[0], s -> s[1]))))
-				.peek(entry -> log.debug("Found ctr image: " + entry))
+				.peek(entry -> log.debug("Found ctr image: {}", entry))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 

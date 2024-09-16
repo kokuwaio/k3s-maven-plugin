@@ -136,9 +136,9 @@ public class ApplyMojo extends K3sMojo {
 					var oldMissing = missing.getAndSet(newMissing);
 					if (!newMissing.isEmpty()) {
 						if (oldMissing.equals(newMissing)) {
-							log.debug("Still waiting for: " + missing);
+							log.debug("Still waiting for: {}", missing);
 						} else {
-							log.info("Still waiting for: " + missing);
+							log.info("Still waiting for: {}", missing);
 						}
 					}
 				}
@@ -207,9 +207,9 @@ public class ApplyMojo extends K3sMojo {
 				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
 				return Map.entry(representation, (Callable<Boolean>) () -> {
 					try {
-						log.debug(kind + " " + representation + " ... waiting");
+						log.debug("{} {} ... waiting", kind, representation);
 						getDocker().exec(timeout.plusSeconds(10), tmp);
-						log.info(kind + " " + representation + " ... ready");
+						log.info("{} {} ... ready", kind, representation);
 						return true;
 					} catch (MojoExecutionException e) {
 						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
