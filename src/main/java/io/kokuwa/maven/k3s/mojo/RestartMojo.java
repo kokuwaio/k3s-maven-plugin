@@ -108,7 +108,7 @@ public class RestartMojo extends K3sMojo {
 
 		var matcher = resourcePattern.matcher(resoure);
 		if (!matcher.matches()) {
-			getLog().error("Failed to parse resoure: " + resoure);
+			log.error("Failed to parse resoure: " + resoure);
 			return () -> false;
 		}
 
@@ -119,10 +119,10 @@ public class RestartMojo extends K3sMojo {
 		return () -> {
 			try {
 				getDocker().exec("kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
-				getLog().info(kind + " " + namespace + "/" + name + " restarted");
+				log.info(kind + " " + namespace + "/" + name + " restarted");
 				getDocker().exec("kubectl", "rollout", "status", kind, name, "--namespace=" + namespace,
 						"--timeout=" + timeout.getSeconds() + "s");
-				getLog().info(kind + " " + namespace + "/" + name + " restart finished");
+				log.info(kind + " " + namespace + "/" + name + " restart finished");
 				return true;
 			} catch (MojoExecutionException e) {
 				getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);

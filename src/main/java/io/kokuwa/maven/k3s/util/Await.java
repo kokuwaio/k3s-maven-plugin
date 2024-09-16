@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
+import org.slf4j.Logger;
 
 /**
  * Utility for waits.
@@ -19,17 +19,17 @@ import org.apache.maven.plugin.logging.Log;
  */
 public class Await {
 
-	public static Await await(Log log, String text) {
+	public static Await await(Logger log, String text) {
 		return new Await(log, text);
 	}
 
-	private final Log log;
+	private final Logger log;
 	private final String text;
 	private Duration timeout;
 	private Duration interval;
 	private Runnable onTimeout;
 
-	private Await(Log log, String text) {
+	private Await(Logger log, String text) {
 		this.log = log;
 		this.text = text;
 		this.timeout = Duration.ofSeconds(60);

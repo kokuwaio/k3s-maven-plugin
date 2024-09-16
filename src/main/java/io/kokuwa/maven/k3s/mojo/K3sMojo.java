@@ -6,8 +6,9 @@ import java.nio.file.Path;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import io.kokuwa.maven.k3s.util.DebugLog;
 import io.kokuwa.maven.k3s.util.Docker;
 import io.kokuwa.maven.k3s.util.Marker;
 
@@ -49,7 +50,7 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	// generic methods
 
-	private Log log;
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 	private Docker docker;
 
 	public boolean isSkip(boolean skipMojo) {
@@ -60,13 +61,14 @@ public abstract class K3sMojo extends AbstractMojo {
 		return marker;
 	}
 
+	@Deprecated
 	@Override
 	public Log getLog() {
-		return log == null ? log = new DebugLog(super.getLog(), debug) : log;
+		throw new UnsupportedOperationException("Use slf4j, log will be deprecated with maven4.");
 	}
 
 	public Docker getDocker() {
-		return docker == null ? docker = new Docker(containerName, volumeName, getLog()) : docker;
+		return docker == null ? docker = new Docker(containerName, volumeName, log) : docker;
 	}
 
 	public String toLinuxPath(Path path) {

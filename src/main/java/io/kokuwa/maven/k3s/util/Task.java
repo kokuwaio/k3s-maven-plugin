@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
+import org.slf4j.Logger;
 
 /**
  * Wrapper for process with handling.
@@ -22,7 +22,7 @@ import org.apache.maven.plugin.logging.Log;
  */
 public class Task {
 
-	private final Log log;
+	private final Logger log;
 	private final List<String> command;
 	private Duration timeout = Duration.ofSeconds(30);
 
@@ -30,18 +30,18 @@ public class Task {
 	private final List<String> output = new ArrayList<>();
 	private final List<Thread> threads = new ArrayList<>();
 
-	private Task(Log log, List<String> command) {
+	private Task(Logger log, List<String> command) {
 		this.log = log;
 		this.command = command;
 	}
 
 	// config
 
-	public static Task of(Log log, String... command) {
+	public static Task of(Logger log, String... command) {
 		return new Task(log, List.of(command));
 	}
 
-	public static Task of(Log log, List<String> command) {
+	public static Task of(Logger log, List<String> command) {
 		return new Task(log, command);
 	}
 
