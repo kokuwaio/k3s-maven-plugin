@@ -11,8 +11,6 @@ jobs:
     env:
       MAVEN_ARGS: --batch-mode --color=always --no-transfer-progress --settings=.github/settings.xml
     steps:
-      - run: git config --global user.name "${{ vars.KOKUWA_IO_BOT_NAME }}"
-      - run: git config --global user.email "${{ vars.KOKUWA_IO_BOT_EMAIL }}"
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GIT_ACTION_TOKEN }}
@@ -21,11 +19,15 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: maven
+          server-id: sonatype-nexus
+          server-username: SERVER_USERNAME
+          server-password: SERVER_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
       - run: mvn $MAVEN_ARGS dependency:go-offline
       - run: mvn $MAVEN_ARGS deploy
         env:
           SERVER_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
           SERVER_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
-      - run: mvn $MAVEN_ARGS site-deploy
-        env:
           GIT_ACTION_TOKEN: ${{ secrets.GIT_ACTION_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
