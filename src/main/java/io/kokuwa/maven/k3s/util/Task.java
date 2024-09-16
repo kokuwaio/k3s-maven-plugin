@@ -73,11 +73,11 @@ public class Task {
 
 		log.debug(">>> " + this);
 
-		try {
-			var builder = new ProcessBuilder(command);
+		var builder = new ProcessBuilder(command);
+		try (var stdout = process.getInputStream(); var stderr = process.getInputStream()) {
 			process = builder.start();
-			collectLogs("stdout", process.getInputStream());
-			collectLogs("stderr", process.getErrorStream());
+			collectLogs("stdout", stdout);
+			collectLogs("stderr", stderr);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Command failed: " + this, e);
 		}
