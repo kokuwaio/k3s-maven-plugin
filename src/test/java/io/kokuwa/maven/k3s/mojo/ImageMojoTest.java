@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
@@ -107,14 +107,14 @@ public class ImageMojoTest extends AbstractTest {
 	@Test
 	void tarFiles(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException, IOException {
 
-		var tarFile = Paths.get("target/test-classes/tarFile.tar");
+		var tarFile = Path.of("target/test-classes/tarFile.tar");
 		imageMojo.setTarFiles(List.of(tarFile.toString()));
 		assertDoesNotThrow(runMojo::execute);
 
 		// import image
 
 		assertCtrImage(helloWorld(), false);
-		Files.copy(Paths.get("src/test/resources/hello-world.tar"), tarFile, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(Path.of("src/test/resources/hello-world.tar"), tarFile, StandardCopyOption.REPLACE_EXISTING);
 		assertDoesNotThrow(imageMojo::execute);
 		assertCtrImage(helloWorld(), true);
 
@@ -124,7 +124,7 @@ public class ImageMojoTest extends AbstractTest {
 
 		// reimport because file changed
 
-		Files.copy(Paths.get("src/test/resources/hello-world.tar.old"), tarFile, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(Path.of("src/test/resources/hello-world.tar.old"), tarFile, StandardCopyOption.REPLACE_EXISTING);
 		assertDoesNotThrow(imageMojo::execute);
 	}
 

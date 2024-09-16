@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.mojo;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -230,11 +229,11 @@ public class ApplyMojo extends K3sMojo {
 	}
 
 	public void setPath(String path) {
-		this.path = Paths.get(path);
+		this.path = Path.of(path);
 	}
 
 	public void setSubdir(String subdir) {
-		this.subdir = subdir == null ? null : Paths.get(subdir);
+		this.subdir = subdir == null ? null : Path.of(subdir);
 	}
 
 	public void setTimeout(int timeout) {
