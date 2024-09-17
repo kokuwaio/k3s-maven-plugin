@@ -204,7 +204,7 @@
 					<artifactId>maven-release-plugin</artifactId>
 					<version>${version.org.apache.maven.plugins.release}</version>
 					<configuration>
-						<arguments>--no-transfer-progress</arguments>
+						<arguments>--no-transfer-progress -Dmaven.plugin.validation=NONE --color=ALWAYS</arguments>
 						<scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [no ci]</scmReleaseCommitComment>
 						<signTag>true</signTag>
 						<releaseProfiles>deploy,release</releaseProfiles>
