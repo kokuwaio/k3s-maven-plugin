@@ -12,13 +12,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import io.kokuwa.maven.k3s.test.AbstractTest;
+import io.kokuwa.maven.k3s.util.Docker.Container;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
-
-import io.kokuwa.maven.k3s.test.AbstractTest;
-import io.kokuwa.maven.k3s.util.Docker.Container;
 
 /**
  * Test for {@link Docker}.

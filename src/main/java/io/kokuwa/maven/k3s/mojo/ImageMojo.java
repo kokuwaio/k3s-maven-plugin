@@ -18,12 +18,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
+import io.kokuwa.maven.k3s.util.Docker.ContainerImage;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-
-import io.kokuwa.maven.k3s.util.Docker.ContainerImage;
 
 /**
  * Import images into k3s containerd.

@@ -10,6 +10,7 @@ import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import io.kokuwa.maven.k3s.util.Docker;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +19,6 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import io.kokuwa.maven.k3s.util.Docker;
 
 /**
  * Base class for all test cases.

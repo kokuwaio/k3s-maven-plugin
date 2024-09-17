@@ -11,15 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.util.List;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-
 import io.kokuwa.maven.k3s.test.AbstractTest;
 import io.kokuwa.maven.k3s.test.LoggerCapturer;
 import io.kokuwa.maven.k3s.util.Await;
 import io.kokuwa.maven.k3s.util.Task;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 /**
  * Test for {@link RunMojo}.

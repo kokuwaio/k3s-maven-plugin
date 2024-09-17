@@ -10,12 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.kokuwa.maven.k3s.util.Await;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-
-import io.kokuwa.maven.k3s.util.Await;
 
 /**
  * Mojo for start k3s container.

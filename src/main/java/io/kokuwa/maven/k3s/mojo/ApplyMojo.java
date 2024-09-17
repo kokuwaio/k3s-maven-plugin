@@ -17,13 +17,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kokuwa.maven.k3s.util.Await;
+import io.kokuwa.maven.k3s.util.Task;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-
-import io.kokuwa.maven.k3s.util.Await;
-import io.kokuwa.maven.k3s.util.Task;
 
 /**
  * Mojo for kubectl apply.

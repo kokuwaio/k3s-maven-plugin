@@ -10,14 +10,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.slf4j.Logger;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.slf4j.Logger;
 
 /**
  * Wrapper for docker commands.

@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import io.kokuwa.maven.k3s.mojo.K3sMojo;
+import io.kokuwa.maven.k3s.util.Docker;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -19,9 +21,6 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.opentest4j.AssertionFailedError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.kokuwa.maven.k3s.mojo.K3sMojo;
-import io.kokuwa.maven.k3s.util.Docker;
 
 /**
  * JUnit extension to provide prepared mojos as test parameter.
