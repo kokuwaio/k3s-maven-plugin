@@ -226,7 +226,7 @@ public class RunMojo extends K3sMojo {
 	public void execute() throws MojoExecutionException {
 
 		// check dns
-		
+
 		if (dnsResolverCheck) {
 			try {
 				var address = InetAddress.getByName(dnsResolverDomain).getHostAddress();
