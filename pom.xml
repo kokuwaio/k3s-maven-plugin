@@ -98,6 +98,8 @@
 		<version.org.codehaus.mojo.tidy>1.3.0</version.org.codehaus.mojo.tidy>
 		<version.org.codehaus.mojo.versions>2.17.1</version.org.codehaus.mojo.versions>
 		<version.org.sonatype.plugins.nexus-staging>1.7.0</version.org.sonatype.plugins.nexus-staging>
+		<version.net.revelc.code.formatter>2.24.1</version.net.revelc.code.formatter>
+		<version.net.revelc.code.impsort>1.12.0</version.net.revelc.code.impsort>
 
 		<version.org.junit.jupiter>5.11.0</version.org.junit.jupiter>
 		<version.org.slf4j>1.7.36</version.org.slf4j>
@@ -276,6 +278,24 @@
 						<autoReleaseAfterClose>true</autoReleaseAfterClose>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>net.revelc.code.formatter</groupId>
+					<artifactId>formatter-maven-plugin</artifactId>
+					<version>${version.net.revelc.code.formatter}</version>
+					<configuration>
+						<configFile>${project.basedir}/src/main/eclipse/formatter.xml</configFile>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>net.revelc.code</groupId>
+					<artifactId>impsort-maven-plugin</artifactId>
+					<version>${version.net.revelc.code.impsort}</version>
+					<configuration>
+						<groups>java.,javax.,org.,com.</groups>
+						<removeUnused>true</removeUnused>
+						<treatSamePackageAsUnused>true</treatSamePackageAsUnused>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -337,6 +357,54 @@
 
 	<profiles>
 		<profile>
+			<id>format</id>
+			<build>
+				<plugins>
+
+					<!-- fail if any pom is dirty -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>tidy-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>pom</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- fail if java is misformatted -->
+					<plugin>
+						<groupId>net.revelc.code</groupId>
+						<artifactId>impsort-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>sort</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>net.revelc.code.formatter</groupId>
+						<artifactId>formatter-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>format</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>check</id>
 			<activation>
 				<property>
@@ -355,6 +423,32 @@
 								<phase>validate</phase>
 								<goals>
 									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- fail if java is misformatted -->
+					<plugin>
+						<groupId>net.revelc.code</groupId>
+						<artifactId>impsort-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>net.revelc.code.formatter</groupId>
+						<artifactId>formatter-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>validate</goal>
 								</goals>
 							</execution>
 						</executions>

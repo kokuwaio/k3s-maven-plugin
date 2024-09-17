@@ -42,7 +42,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			try (var inputStream = K3sMojo.class.getResourceAsStream("/META-INF/maven/plugin.xml");) {
 				assertNotNull(inputStream, "Plugin descriptor for not found, run 'mvn plugin:descriptor'.");
 				new PluginDescriptorBuilder()
-						.build(new StringReader( new String(inputStream.readAllBytes())
+						.build(new StringReader(new String(inputStream.readAllBytes())
 								.replaceAll("\\$\\{project.build.directory}", "target")
 								.replaceAll("\\$\\{project.basedir}", ".")))
 						.getMojos().forEach(mojos::add);
