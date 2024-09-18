@@ -5,14 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.io.File;
 import java.util.List;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import io.kokuwa.maven.k3s.mojo.ApplyMojo;
 import io.kokuwa.maven.k3s.mojo.ImageMojo;
 import io.kokuwa.maven.k3s.mojo.RemoveMojo;
 import io.kokuwa.maven.k3s.mojo.RunMojo;
 import io.kokuwa.maven.k3s.test.AbstractTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test fof all mojos to simulate test lifecycle.

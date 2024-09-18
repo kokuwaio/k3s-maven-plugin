@@ -12,11 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import io.kokuwa.maven.k3s.test.AbstractTest;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import io.kokuwa.maven.k3s.test.AbstractTest;
 
 /**
  * Test for {@link ImageMojo}.

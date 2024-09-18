@@ -4,11 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
+import io.kokuwa.maven.k3s.test.AbstractTest;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import io.kokuwa.maven.k3s.test.AbstractTest;
 
 /**
  * Test for {@link ApplyMojo}.
