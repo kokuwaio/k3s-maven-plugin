@@ -36,9 +36,9 @@ public class RemoveMojo extends K3sMojo {
 			return;
 		}
 
-		getDocker().removeContainer();
+		getDocker().removeContainer(getDefaultTaskTimeout());
 		if (includeCache) {
-			getDocker().removeVolume();
+			getDocker().removeVolume(getDefaultTaskTimeout());
 			log.info("Deleted cache volume.");
 		}
 	}

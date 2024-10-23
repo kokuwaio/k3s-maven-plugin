@@ -32,46 +32,47 @@ public class DockerTest extends AbstractTest {
 	@Test
 	void volume() throws MojoExecutionException {
 
-		assertFalse(docker.getVolume().isPresent(), "volume found before testing");
-		docker.removeVolume();
+		assertFalse(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent(), "volume found before testing");
+		docker.removeVolume(DEFAUL_TASK_TIMEOUT);
 
-		docker.createVolume();
-		assertTrue(docker.getVolume().isPresent(), "volume missing after creating");
+		docker.createVolume(DEFAUL_TASK_TIMEOUT);
+		assertTrue(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent(), "volume missing after creating");
 
-		docker.removeVolume();
-		assertFalse(docker.getVolume().isPresent(), "volume found after removing");
+		docker.removeVolume(DEFAUL_TASK_TIMEOUT);
+		assertFalse(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent(), "volume found after removing");
 	}
 
 	@DisplayName("container handling")
 	@Test
 	void container(Logger log) throws MojoExecutionException {
 
-		assertFalse(docker.getContainer().isPresent(), "container found before testing");
-		docker.removeContainer();
+		assertFalse(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent(), "container found before testing");
+		docker.removeContainer(DEFAUL_TASK_TIMEOUT);
 
 		var ports = List.of("9001:9001", "9002:9002");
-		docker.createVolume();
-		docker.createContainer("rancher/k3s", ports, List.of("server"), null);
-		assertTrue(docker.getContainer().isPresent(), "container not found after creating");
-		assertTrue(docker.getContainer().map(Container::isRunning).orElse(null));
-		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")));
+		docker.createVolume(DEFAUL_TASK_TIMEOUT);
+		docker.createContainer("rancher/k3s", ports, List.of("server"), null, DEFAUL_TASK_TIMEOUT);
+		assertTrue(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent(), "container not found after creating");
+		assertTrue(docker.getContainer(DEFAUL_TASK_TIMEOUT).map(Container::isRunning).orElse(null));
+		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")),
+				DEFAUL_TASK_TIMEOUT);
 
-		docker.removeContainer();
-		assertFalse(docker.getContainer().isPresent(), "container found after removing");
+		docker.removeContainer(DEFAUL_TASK_TIMEOUT);
+		assertFalse(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent(), "container found after removing");
 	}
 
 	@DisplayName("image handling")
 	@Test
 	void image() throws MojoExecutionException {
 
-		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found before testing");
-		docker.removeImage(helloWorld());
+		assertFalse(docker.getImage(helloWorld(), DEFAUL_TASK_TIMEOUT).isPresent(), "image found before testing");
+		docker.removeImage(helloWorld(), DEFAUL_TASK_TIMEOUT);
 
 		docker.pullImage(helloWorld(), Duration.ofSeconds(30));
-		assertTrue(docker.getImage(helloWorld()).isPresent(), "image missing after pulling");
+		assertTrue(docker.getImage(helloWorld(), DEFAUL_TASK_TIMEOUT).isPresent(), "image missing after pulling");
 
-		docker.removeImage(helloWorld());
-		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found after removing");
+		docker.removeImage(helloWorld(), DEFAUL_TASK_TIMEOUT);
+		assertFalse(docker.getImage(helloWorld(), DEFAUL_TASK_TIMEOUT).isPresent(), "image found after removing");
 	}
 
 	@DisplayName("normalizeImage()")
@@ -107,8 +108,8 @@ public class DockerTest extends AbstractTest {
 
 		// start container
 
-		docker.createVolume();
-		docker.createContainer("rancher/k3s", List.of(), List.of("server"), null);
+		docker.createVolume(DEFAUL_TASK_TIMEOUT);
+		docker.createContainer("rancher/k3s", List.of(), List.of("server"), null, DEFAUL_TASK_TIMEOUT);
 
 		// define test data
 
@@ -126,8 +127,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, initialContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir.toString());
-		docker.copyFromContainer(containerDir.toString(), returnDir);
+		docker.copyToContainer(sourceDir, containerDir.toString(), DEFAUL_TASK_TIMEOUT);
+		docker.copyFromContainer(containerDir.toString(), returnDir, DEFAUL_TASK_TIMEOUT);
 		assertEquals(initialContent, Files.readString(returnFile));
 
 		// write changed file and copy to container
@@ -136,8 +137,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, changedContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir.toString());
-		docker.copyFromContainer(containerDir.toString(), returnDir);
+		docker.copyToContainer(sourceDir, containerDir.toString(), DEFAUL_TASK_TIMEOUT);
+		docker.copyFromContainer(containerDir.toString(), returnDir, DEFAUL_TASK_TIMEOUT);
 		assertEquals(changedContent, Files.readString(returnFile));
 	}
 }

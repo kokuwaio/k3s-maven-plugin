@@ -244,14 +244,14 @@ public class RunMojo extends K3sMojo {
 
 		var create = true;
 		var restart = false;
-		var container = getDocker().getContainer().orElse(null);
+		var container = getDocker().getContainer(getDefaultTaskTimeout()).orElse(null);
 		if (container != null) {
 			if (failIfExists) {
 				throw new MojoExecutionException("Container with id '" + container.id
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
 				log.info("Container with id '{}' found, replacing", container.id);
-				getDocker().removeContainer();
+				getDocker().removeContainer(getDefaultTaskTimeout());
 			} else if (!container.isRunning()) {
 				log.warn("Container with id '{}' found in stopped state, restart container", container.id);
 				create = false;
@@ -269,20 +269,21 @@ public class RunMojo extends K3sMojo {
 			if (create) {
 				createAndStartK3sContainer();
 			} else if (restart) {
-				getDocker().startContainer();
+				getDocker().startContainer(getDefaultTaskTimeout());
 			}
 
 			// wait for k3s api to be ready
 
 			var await = Await.await(log, "k3s api available").timeout(nodeTimeout);
-			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
+			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")),
+					getDefaultTaskTimeout());
 
 			// write file that k3s started
 
 			getMarker().writeStarted();
 		}
 
-		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
+		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig, getDefaultTaskTimeout());
 		log.info("k3s ready: KUBECONFIG={} kubectl get all --all-namespaces", kubeconfig);
 	}
 
@@ -340,8 +341,8 @@ public class RunMojo extends K3sMojo {
 		}
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
-		getDocker().createContainer(image, ports, command, registries);
-		getDocker().createVolume();
+		getDocker().createContainer(image, ports, command, registries, getDefaultTaskTimeout());
+		getDocker().createVolume(getDefaultTaskTimeout());
 	}
 
 	// setter

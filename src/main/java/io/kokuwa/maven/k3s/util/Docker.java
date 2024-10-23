@@ -38,16 +38,17 @@ public class Docker {
 		this.log = log;
 	}
 
-	public Optional<Container> getContainer() throws MojoExecutionException {
+	public Optional<Container> getContainer(Duration timeout) throws MojoExecutionException {
 		return Task
-				.of(log, "docker", "container", "ls", "--all", "--filter=name=" + containerName, "--format={{json .}}")
+				.of(log, timeout, "docker", "container", "ls", "--all", "--filter=name=" + containerName,
+						"--format={{json .}}")
 				.run().stream()
 				.map(output -> readValue(Container.class, output))
 				.filter(container -> containerName.equals(container.name))
 				.findAny();
 	}
 
-	public void createContainer(String image, List<String> ports, List<String> k3s, Path registries)
+	public void createContainer(String image, List<String> ports, List<String> k3s, Path registries, Duration timeout)
 			throws MojoExecutionException {
 		var command = new ArrayList<String>();
 		command.add("docker");
@@ -62,35 +63,33 @@ public class Docker {
 		ports.stream().map(port -> "--publish=" + port).forEach(command::add);
 		command.add(image);
 		command.addAll(k3s);
-		Task.of(log, command).run();
+		Task.of(log, timeout, command).run();
 	}
 
-	public void startContainer() throws MojoExecutionException {
-		Task.of(log, "docker", "start", containerName).run();
+	public void startContainer(Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "start", containerName).run();
 	}
 
-	public void removeContainer() throws MojoExecutionException {
-		Task.of(log, "docker", "rm", containerName, "--force", "--volumes").run();
+	public void removeContainer(Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "rm", containerName, "--force", "--volumes").run();
 	}
 
-	public void copyFromContainer(String source, Path destination) throws MojoExecutionException {
-		Task.of(log, "docker", "cp", containerName + ":" + source, destination.toString()).run();
+	public void copyFromContainer(String source, Path destination, Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "cp", containerName + ":" + source, destination.toString()).run();
 	}
 
-	public void copyToContainer(Path source, String destination) throws MojoExecutionException {
+	public void copyToContainer(Path source, String destination, Duration timeout) throws MojoExecutionException {
 		// suffix directories with '/.', see https://docs.docker.com/engine/reference/commandline/cp/#description
 		var sourceString = Files.isDirectory(source) ? source + File.separator + "." : source.toString();
-		Task.of(log, "docker", "cp", sourceString, containerName + ":" + destination).run();
+		Task.of(log, timeout, "docker", "cp", sourceString, containerName + ":" + destination).run();
 	}
 
-	public void waitForLog(Await await, Function<List<String>, Boolean> checker) throws MojoExecutionException {
-		var process = Task.of(log, "docker", "logs", containerName, "--follow").timeout(Duration.ofHours(1)).start();
+	public void waitForLog(Await await, Function<List<String>, Boolean> checker, Duration timeout)
+			throws MojoExecutionException {
+		var process = Task.of(log, timeout, "docker", "logs", containerName, "--follow").timeout(Duration.ofHours(1))
+				.start();
 		await.onTimeout(() -> process.output().forEach(log::warn)).until(() -> process.output(), checker);
 		process.close();
-	}
-
-	public List<String> exec(String... commands) throws MojoExecutionException {
-		return exec(null, commands);
 	}
 
 	public List<String> exec(Duration timeout, String... commands) throws MojoExecutionException {
@@ -101,39 +100,32 @@ public class Docker {
 		return execWithoutVerify(timeout, commands).verify().output();
 	}
 
-	public Task execWithoutVerify(List<String> commands) throws MojoExecutionException {
-		return execWithoutVerify(null, commands);
-	}
-
 	public Task execWithoutVerify(Duration timeout, List<String> commands) throws MojoExecutionException {
 		var command = new ArrayList<String>();
 		command.add("docker");
 		command.add("exec");
 		command.add(containerName);
 		command.addAll(commands);
-		var task = Task.of(log, command);
-		if (timeout != null) {
-			task.timeout(timeout);
-		}
+		var task = Task.of(log, timeout, command);
 		return task.start().waitFor();
 	}
 
 	// volume
 
-	public Optional<ContainerVolume> getVolume() throws MojoExecutionException {
-		return Task.of(log, "docker", "volume", "ls", "--filter=name=" + volumeName, "--format={{json .}}")
+	public Optional<ContainerVolume> getVolume(Duration timeout) throws MojoExecutionException {
+		return Task.of(log, timeout, "docker", "volume", "ls", "--filter=name=" + volumeName, "--format={{json .}}")
 				.run().stream()
 				.map(output -> readValue(ContainerVolume.class, output))
 				.filter(volume -> volumeName.equals(volume.name))
 				.findAny();
 	}
 
-	public void createVolume() throws MojoExecutionException {
-		Task.of(log, "docker", "volume", "create", volumeName).run();
+	public void createVolume(Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "volume", "create", volumeName).run();
 	}
 
-	public void removeVolume() throws MojoExecutionException {
-		Task.of(log, "docker", "volume", "rm", volumeName, "--force").run();
+	public void removeVolume(Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "volume", "rm", volumeName, "--force").run();
 	}
 
 	// images
@@ -156,23 +148,23 @@ public class Docker {
 		return newImageName;
 	}
 
-	public Optional<ContainerImage> getImage(String image) throws MojoExecutionException {
-		var task = Task.of(log, "docker", "image", "inspect", image, "--format={{json .}}").start().waitFor();
+	public Optional<ContainerImage> getImage(String image, Duration timeout) throws MojoExecutionException {
+		var task = Task.of(log, timeout, "docker", "image", "inspect", image, "--format={{json .}}").start().waitFor();
 		return task.exitCode() == 0
 				? task.output().stream().map(output -> readValue(ContainerImage.class, output)).findAny()
 				: Optional.empty();
 	}
 
 	public void pullImage(String image, Duration timeout) throws MojoExecutionException {
-		Task.of(log, "docker", "image", "pull", "--quiet", image).timeout(timeout).run();
+		Task.of(log, timeout, "docker", "image", "pull", "--quiet", image).run();
 	}
 
-	public void saveImage(String image, Path path) throws MojoExecutionException {
-		Task.of(log, "docker", "image", "save", "--output=" + path, image).run();
+	public void saveImage(String image, Path path, Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "image", "save", "--output=" + path, image).run();
 	}
 
-	public void removeImage(String image) throws MojoExecutionException {
-		Task.of(log, "docker", "image", "rm", "--force", image).run();
+	public void removeImage(String image, Duration timeout) throws MojoExecutionException {
+		Task.of(log, timeout, "docker", "image", "rm", "--force", image).run();
 	}
 
 	// internal

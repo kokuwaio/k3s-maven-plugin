@@ -44,10 +44,10 @@ public class RemoveMojoTest extends AbstractTest {
 	@DisplayName("without container but present cache")
 	@Test
 	void withoutContainerButPresentCache(RemoveMojo removeMojo) throws MojoExecutionException {
-		docker.createVolume();
+		docker.createVolume(DEFAUL_TASK_TIMEOUT);
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(removeMojo::execute);
-		assertFalse(docker.getVolume().isPresent());
+		assertFalse(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent());
 	}
 
 	@DisplayName("with container")
@@ -55,8 +55,8 @@ public class RemoveMojoTest extends AbstractTest {
 	void withContainer(RunMojo runMojo, RemoveMojo removeMojo) throws MojoExecutionException {
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
-		assertFalse(docker.getContainer().isPresent());
-		assertTrue(docker.getVolume().isPresent());
+		assertFalse(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent());
+		assertTrue(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent());
 	}
 
 	@DisplayName("with container and cache")
@@ -65,7 +65,7 @@ public class RemoveMojoTest extends AbstractTest {
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
-		assertFalse(docker.getContainer().isPresent());
-		assertFalse(docker.getVolume().isPresent());
+		assertFalse(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent());
+		assertFalse(docker.getVolume(DEFAUL_TASK_TIMEOUT).isPresent());
 	}
 }

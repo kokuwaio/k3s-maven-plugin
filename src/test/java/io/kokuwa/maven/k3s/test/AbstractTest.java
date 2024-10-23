@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.AfterEach;
@@ -31,15 +32,17 @@ import io.kokuwa.maven.k3s.util.Docker;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public abstract class AbstractTest {
 
+	public static final Duration DEFAUL_TASK_TIMEOUT = Duration.ofSeconds(30);
+
 	public Docker docker;
 
 	@BeforeEach
 	@AfterEach
 	void reset(Docker newDocker) throws MojoExecutionException {
 		this.docker = newDocker;
-		this.docker.removeContainer();
-		this.docker.removeVolume();
-		this.docker.removeImage(helloWorld());
+		this.docker.removeContainer(DEFAUL_TASK_TIMEOUT);
+		this.docker.removeVolume(DEFAUL_TASK_TIMEOUT);
+		this.docker.removeImage(helloWorld(), DEFAUL_TASK_TIMEOUT);
 		LoggerCapturer.clear();
 	}
 

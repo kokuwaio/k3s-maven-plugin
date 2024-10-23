@@ -84,25 +84,26 @@ public class ApplyMojo extends K3sMojo {
 
 		// verify container and copy manifests
 
-		if (getDocker().getContainer().isEmpty()) {
+		if (getDocker().getContainer(getDefaultTaskTimeout()).isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
-		getDocker().copyToContainer(manifests, toLinuxPath(path));
+		getDocker().copyToContainer(manifests, toLinuxPath(path), getDefaultTaskTimeout());
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
 		var serviceAccount = new String[] { "kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name" };
-		if (getDocker().exec(serviceAccount).isEmpty()) {
+		if (getDocker().exec(getDefaultTaskTimeout(), serviceAccount).isEmpty()) {
 			log.info("");
 			log.info("No service account found, waiting for sa ...");
-			Await.await(log, "k3s service account ready").until(() -> !getDocker().exec(serviceAccount).isEmpty());
+			Await.await(log, "k3s service account ready")
+					.until(() -> !getDocker().exec(getDefaultTaskTimeout(), serviceAccount).isEmpty());
 			log.info("Service account found, continue ...");
 			log.info("");
 		}
 
 		// wait for node getting ready
 
-		getDocker().exec("kubectl", "wait", "--for=condition=Ready", "node", "k3s");
+		getDocker().exec(getDefaultTaskTimeout(), "kubectl", "wait", "--for=condition=Ready", "node", "k3s");
 
 		// execute command
 
@@ -182,7 +183,7 @@ public class ApplyMojo extends K3sMojo {
 
 			var kind = entry.getKey();
 			var resources = getDocker()
-					.exec("kubectl", "get", kind,
+					.exec(getDefaultTaskTimeout(), "kubectl", "get", kind,
 							"--all-namespaces",
 							"--no-headers",
 							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
@@ -212,7 +213,8 @@ public class ApplyMojo extends K3sMojo {
 						log.info("{} {} ... ready", kind, representation);
 						return true;
 					} catch (MojoExecutionException e) {
-						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
+						getDocker().exec(getDefaultTaskTimeout(), "kubectl", "get", "--output=yaml",
+								"--namespace=" + namespace, kind, name);
 						return false;
 					}
 				});

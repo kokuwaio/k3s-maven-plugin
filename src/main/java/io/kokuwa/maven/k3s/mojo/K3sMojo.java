@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
@@ -27,6 +28,14 @@ public abstract class K3sMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "k3s.debug", defaultValue = "false")
 	private boolean debug;
+
+	/**
+	 * Default timout for plugin tasks in seconds.
+	 *
+	 * @since 1.5.0
+	 */
+	@Parameter(property = "k3s.defaultTaskTimeout", defaultValue = "30")
+	private Duration defaultTaskTimeout;
 
 	/**
 	 * Skip plugin.
@@ -61,6 +70,10 @@ public abstract class K3sMojo extends AbstractMojo {
 		return marker;
 	}
 
+	public Duration getDefaultTaskTimeout() {
+		return defaultTaskTimeout;
+	}
+
 	@Deprecated
 	@Override
 	public Log getLog() {
@@ -84,6 +97,10 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public void setDefaultTaskTimeout(int defaultTaskTimeout) {
+		this.defaultTaskTimeout = Duration.ofSeconds(defaultTaskTimeout);
 	}
 
 	public void setSkip(boolean skip) {

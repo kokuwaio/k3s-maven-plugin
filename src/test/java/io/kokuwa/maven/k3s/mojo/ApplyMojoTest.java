@@ -22,7 +22,7 @@ public class ApplyMojoTest extends AbstractTest {
 	@Test
 	void withSkip(ApplyMojo applyMojo) throws MojoExecutionException {
 
-		assertFalse(docker.getContainer().isPresent());
+		assertFalse(docker.getContainer(DEFAUL_TASK_TIMEOUT).isPresent());
 
 		applyMojo.setSkipApply(false);
 		applyMojo.setSkip(true);

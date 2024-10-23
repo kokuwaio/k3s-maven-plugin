@@ -97,7 +97,8 @@ public class ImageMojoTest extends AbstractTest {
 		// pull again in docker, and copy to container because digest was changed
 
 		imageMojo.setDockerPullAlways(true);
-		docker.exec("ctr", "image", "label", docker.normalizeImage(helloWorld()), "k3s-maven-digest=nope");
+		docker.exec(DEFAUL_TASK_TIMEOUT, "ctr", "image", "label", docker.normalizeImage(helloWorld()),
+				"k3s-maven-digest=nope");
 		assertCtrImage(helloWorld(), true);
 		assertDoesNotThrow(imageMojo::execute);
 		assertCtrImage(helloWorld(), true);
@@ -131,13 +132,13 @@ public class ImageMojoTest extends AbstractTest {
 	// internal
 
 	private void assertCtrImage(String image, boolean exists) throws MojoExecutionException {
-		var images = docker.exec("ctr", "image", "list", "--quiet");
+		var images = docker.exec(DEFAUL_TASK_TIMEOUT, "ctr", "image", "list", "--quiet");
 		var normalizedImage = docker.normalizeImage(image);
 		assertEquals(exists, images.contains(normalizedImage),
 				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + images);
 	}
 
 	private boolean hasDockerImage(String image) throws MojoExecutionException {
-		return docker.getImage(image).isPresent();
+		return docker.getImage(image, DEFAUL_TASK_TIMEOUT).isPresent();
 	}
 }
