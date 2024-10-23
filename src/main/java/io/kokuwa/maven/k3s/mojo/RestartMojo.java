@@ -81,7 +81,7 @@ public class RestartMojo extends K3sMojo {
 
 		// verify container
 
-		if (getDocker().getContainer().isEmpty()) {
+		if (getDocker().getContainer(getDefaultTaskTimeout()).isEmpty()) {
 			throw new MojoExecutionException("No k3s container found");
 		}
 
@@ -118,14 +118,17 @@ public class RestartMojo extends K3sMojo {
 
 		return () -> {
 			try {
-				getDocker().exec("kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
+				getDocker().exec(timeout, "kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
 				log.info("{} {}/{} restarted", kind, namespace, name);
-				getDocker().exec("kubectl", "rollout", "status", kind, name, "--namespace=" + namespace,
+				// Docker exec timeout should be greater than "inner" K3s timeout
+				getDocker().exec(timeout.plusSeconds(10), "kubectl", "rollout", "status", kind, name,
+						"--namespace=" + namespace,
 						"--timeout=" + timeout.getSeconds() + "s");
 				log.info("{} {}/{} restart finished", kind, namespace, name);
 				return true;
 			} catch (MojoExecutionException e) {
-				getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
+				getDocker().exec(getDefaultTaskTimeout(), "kubectl", "get", "--output=yaml", "--namespace=" + namespace,
+						kind, name);
 				return false;
 			}
 		};
