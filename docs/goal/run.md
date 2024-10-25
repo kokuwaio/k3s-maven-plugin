@@ -27,3 +27,4 @@ Start and run k3s container.
 | `registries` | `k3s.registries` | Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml". | `null` |
 | `skipRun` | `skipRun` | Skip running of k3s. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
+| `taskTimeout` | `k3s.taskTimeout` | Default timeout for docker tasks in seconds. | 30 |

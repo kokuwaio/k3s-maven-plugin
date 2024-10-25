@@ -24,38 +24,30 @@ public class Task {
 
 	private final Logger log;
 	private final List<String> command;
-	private Duration timeout = Duration.ofSeconds(30);
+	private Duration timeout;
 
 	private Process process;
 	private final List<String> output = new ArrayList<>();
 	private final List<Thread> threads = new ArrayList<>();
 
-	private Task(Logger log, List<String> command) {
+	private Task(Logger log, Duration timeout, List<String> command) {
 		this.log = log;
 		this.command = command;
+		this.timeout = timeout;
 	}
 
 	// config
 
-	public static Task of(Logger log, String... command) {
-		return new Task(log, List.of(command));
+	public static Task of(Logger log, Duration timeout, String... command) {
+		return new Task(log, timeout, List.of(command));
 	}
 
-	public static Task of(Logger log, List<String> command) {
-		return new Task(log, command);
+	public static Task of(Logger log, Duration timeout, List<String> command) {
+		return new Task(log, timeout, command);
 	}
 
 	public List<String> command() {
 		return command;
-	}
-
-	public Duration timeout() {
-		return timeout;
-	}
-
-	public Task timeout(Duration newTimeout) {
-		this.timeout = newTimeout;
-		return this;
 	}
 
 	@Override

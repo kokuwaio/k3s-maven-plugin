@@ -75,6 +75,22 @@ public class ImageMojo extends K3sMojo {
 	private Duration pullTimeout;
 
 	/**
+	 * Timeout for "docker cp" in seconds.
+	 *
+	 * @since 1.5.0
+	 */
+	@Parameter(property = "k3s.copyToContainerTimeout", defaultValue = "120")
+	private Duration copyTimeout;
+
+	/**
+	 * Timeout for "docker save" in seconds.
+	 *
+	 * @since 1.5.0
+	 */
+	@Parameter(property = "k3s.saveTimeout", defaultValue = "120")
+	private Duration saveTimeout;
+
+	/**
 	 * Skip starting of k3s container.
 	 *
 	 * @since 0.3.0
@@ -154,7 +170,7 @@ public class ImageMojo extends K3sMojo {
 			var destination = "/tmp/" + tarFile.getFileName() + "_" + System.nanoTime();
 			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
 
-			getDocker().copyToContainer(tarFile, destination);
+			getDocker().copyToContainer(tarFile, destination, copyTimeout);
 			for (var output : getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString())) {
 				var matcher = outputPattern.matcher(output);
 				if (matcher.matches()) {
@@ -232,8 +248,8 @@ public class ImageMojo extends K3sMojo {
 		var source = Paths.get(System.getProperty("java.io.tmpdir")).resolve(filename);
 		var destination = "/tmp/" + filename;
 		try {
-			getDocker().saveImage(image, source);
-			getDocker().copyToContainer(source, destination);
+			getDocker().saveImage(image, source, saveTimeout);
+			getDocker().copyToContainer(source, destination, copyTimeout);
 			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
 			getDocker().exec("ctr", "image", "label", normalizedImage, label + "=" + digest);
 		} catch (MojoExecutionException e) {
@@ -288,6 +304,14 @@ public class ImageMojo extends K3sMojo {
 
 	public void setPullTimeout(int pullTimeout) {
 		this.pullTimeout = Duration.ofSeconds(pullTimeout);
+	}
+
+	public void setCopyTimeout(int copyTimeout) {
+		this.copyTimeout = Duration.ofSeconds(copyTimeout);
+	}
+
+	public void setSaveTimeout(int saveTimeout) {
+		this.saveTimeout = Duration.ofSeconds(saveTimeout);
 	}
 
 	public void setSkipImage(boolean skipImage) {
