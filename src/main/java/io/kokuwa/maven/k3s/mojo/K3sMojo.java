@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
@@ -21,12 +22,20 @@ import io.kokuwa.maven.k3s.util.Marker;
 public abstract class K3sMojo extends AbstractMojo {
 
 	/**
-	 * Enable debuging of docker and k3s logs.
+	 * Enable debugging of docker and k3s logs.
 	 *
 	 * @since 1.0.0
 	 */
 	@Parameter(property = "k3s.debug", defaultValue = "false")
 	private boolean debug;
+
+	/**
+	 * Default timeout for docker tasks in seconds.
+	 *
+	 * @since 1.5.0
+	 */
+	@Parameter(property = "k3s.taskTimeout", defaultValue = "30")
+	private Duration taskTimeout;
 
 	/**
 	 * Skip plugin.
@@ -68,7 +77,8 @@ public abstract class K3sMojo extends AbstractMojo {
 	}
 
 	public Docker getDocker() {
-		return docker == null ? docker = new Docker(containerName, volumeName, log) : docker;
+		if (docker == null && taskTimeout == null) throw new NullPointerException();
+		return docker == null ? docker = new Docker(containerName, volumeName, log, taskTimeout) : docker;
 	}
 
 	public String toLinuxPath(Path path) {
@@ -84,6 +94,10 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public void setTaskTimeout(int taskTimeout) {
+		this.taskTimeout = Duration.ofSeconds(taskTimeout);
 	}
 
 	public void setSkip(boolean skip) {

@@ -9,3 +9,4 @@ Runs kubectl to apply manifests.
 | `timeout` | `k3s.timeout` | Timeout in seconds to wait for resources getting ready. | 300 |
 | `skipApply` | `k3s.skipApply` | Skip applying kubectl manifests. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
+| `taskTimeout` | `k3s.taskTimeout` | Default timeout for docker tasks in seconds. | 30 |

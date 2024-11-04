@@ -120,8 +120,8 @@ public class RestartMojo extends K3sMojo {
 			try {
 				getDocker().exec("kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
 				log.info("{} {}/{} restarted", kind, namespace, name);
-				getDocker().exec("kubectl", "rollout", "status", kind, name, "--namespace=" + namespace,
-						"--timeout=" + timeout.getSeconds() + "s");
+				getDocker().exec(timeout.plusSeconds(5), "kubectl", "rollout", "status", kind, name,
+						"--namespace=" + namespace, "--timeout=" + timeout.getSeconds() + "s");
 				log.info("{} {}/{} restart finished", kind, namespace, name);
 				return true;
 			} catch (MojoExecutionException e) {
