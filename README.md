@@ -75,26 +75,11 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 * Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
 * [test](/src/it/traefik/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
 
-### [Istio and Dashboard](src/it/istio)
-
-* manifest are applied with `k3s:apply` using custom command with kustomize
-* Istio for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/istio/src/test/k3s/istio/istio.yaml#L9334) on port 80
-* Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:80](http://dashboard.127.0.0.1.nip.io)
-* Deployment with Ingress [http://echo.127.0.0.1.nip.io:80](http://echo.127.0.0.1.nip.io:80)
-* [test](/src/it/istio/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:80` as endpoint
-
 ### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
 
 * manifest are applied with `k3s:apply` using custom command with kustomize
 * PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
 * [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
-
-### [Kafka/Kafka Web UI with HostPort](src/it/kafka-with-hostport)
-
-* manifest are applied with `k3s:apply`
-* Kafka is running with [hostport](/src/it/kafka-with-hostport/src/test/k3s/kafka.yaml#L29) 9091
-* [Kafka Web UI](https://github.com/obsidiandynamics/kafdrop) available at [http://kafdrop.127.0.0.1.nip.io:9000](http://kafdrop.127.0.0.1.nip.io:9000)
-* [test](/src/it/kafka-with-hostport/src/test/java/io/kokuwa/maven/k3s/KafkaIT.java#L30) uses `http://kafka.127.0.0.1.nip.io:9091` as endpoint
 
 ### [Cert-Manager](src/it/cert-manager)
 
