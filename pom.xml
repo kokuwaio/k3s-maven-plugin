@@ -76,7 +76,7 @@
 		<!-- ============================= Versions ============================== -->
 		<!-- ===================================================================== -->
 
-		<version.org.junit.jupiter>5.12.1</version.org.junit.jupiter>
+		<version.org.junit.jupiter>5.12.2</version.org.junit.jupiter>
 		<version.org.slf4j>2.0.17</version.org.slf4j>
 		<version.com.fasterxml.jackson>2.18.3</version.com.fasterxml.jackson>
 
