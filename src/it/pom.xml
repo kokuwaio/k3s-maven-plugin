@@ -175,4 +175,18 @@
 
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<activation>
+				<property>
+					<name>!env.CI</name>
+				</property>
+			</activation>
+			<properties>
+				<k3s.registries>${project.parent.basedir}/k3s-registries.yaml</k3s.registries>
+			</properties>
+		</profile>
+	</profiles>
 </project>

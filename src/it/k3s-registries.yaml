@@ -1,0 +1,10 @@
+# https://docs.k3s.io/installation/private-registry
+mirrors:
+  docker.io:
+    endpoint: [https://mirror.kokuwa.io]
+    rewrite: {"^(.*)$": docker.io/$1}
+  quay.io:
+    endpoint: [https://mirror.kokuwa.io]
+    rewrite: {"^(.*)$": quay.io/$1}
+  "*":
+    endpoint: []

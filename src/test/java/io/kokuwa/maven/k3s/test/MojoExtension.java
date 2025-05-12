@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
+import io.kokuwa.maven.k3s.mojo.RunMojo;
 import io.kokuwa.maven.k3s.util.Docker;
 
 /**
@@ -95,6 +96,11 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			}
 			mojo.setContainerName(containerName);
 			mojo.setVolumeName(volumeName);
+
+			if (mojo instanceof RunMojo && System.getenv("CI") == null) {
+				((RunMojo) mojo).setRegistries(new File("src/it/k3s-registries.yaml"));
+			}
+
 			return mojo;
 		} catch (ReflectiveOperationException e) {
 			throw new ParameterResolutionException("Failed to setup mojo " + descriptor + ".", e);
