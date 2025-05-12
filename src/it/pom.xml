@@ -22,6 +22,10 @@
 		<maven.compiler.showWarnings>@maven.compiler.showWarnings</maven.compiler.showWarnings>
 		<maven.compiler.failOnWarning>@maven.compiler.failOnWarning</maven.compiler.failOnWarning>
 
+		<!-- use mirror docker registry -->
+		<k3s.registries>${project.parent.basedir}/k3s-registries.yaml</k3s.registries>
+		<k3s.disableDefaultRegistryEndpoint>true</k3s.disableDefaultRegistryEndpoint>
+
 		<!-- ===================================================================== -->
 		<!-- ============================= Libaries ============================== -->
 		<!-- ===================================================================== -->
