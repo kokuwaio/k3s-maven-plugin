@@ -18,6 +18,7 @@ Start and run k3s container.
 | `disableLocalStorage` | `k3s.disableLocalStorage` | Disable local storage. | true |
 | `disableMetricsServer` | `k3s.disableMetricsServer` | Disable metrics server. | true |
 | `disableTraefik` | `k3s.disableTraefik` | Disable traefik. | true |
+| `disableCoredns` | `k3s.disableCoredns` | Disable coredns. | false |
 | `disableCloudController` | `k3s.disableCloudController` | Disable cloud-controller. | true |
 | `disableNetworkPolicy` | `k3s.disableNetworkPolicy` | Disable network-policy. | true |
 | `failIfExists` | `k3s.failIfExists` | Fail if docker container from previous run exists. E.g. with `mvn k3s:rm` | true |
