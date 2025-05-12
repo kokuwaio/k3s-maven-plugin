@@ -26,6 +26,7 @@ Start and run k3s container.
 | `nodeTimeout` | `k3s.nodeTimeout` | Timeout in seconds to wait for nodes getting ready. | 30 |
 | `kubeconfig` | `k3s.kubeconfig` | Path where to place kubectl config for external usage. | ${project.build.directory}/k3s.yaml |
 | `registries` | `k3s.registries` | Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml". | `null` |
+| `disableDefaultRegistryEndpoint` | `k3s.disableDefaultRegistryEndpoint` | Disables containerd's fallback default registry endpoint when a mirror is configured for that registry. | false |
 | `skipRun` | `skipRun` | Skip running of k3s. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
 | `taskTimeout` | `k3s.taskTimeout` | Default timeout for docker tasks in seconds. | 30 |
