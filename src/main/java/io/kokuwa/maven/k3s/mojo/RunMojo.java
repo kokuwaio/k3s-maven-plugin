@@ -115,6 +115,14 @@ public class RunMojo extends K3sMojo {
 	private boolean disableNetworkPolicy;
 
 	/**
+	 * Disables containerd's fallback default registry endpoint when a mirror is configured for that registry.
+	 *
+	 * @since 1.5.1
+	 */
+	@Parameter(property = "k3s.disableDefaultRegistryEndpoint", defaultValue = "false")
+	private boolean disableDefaultRegistryEndpoint;
+
+	/**
 	 * Additional port bindings e.g. 8080:8080.
 	 *
 	 * @since 1.0.0
@@ -342,13 +350,21 @@ public class RunMojo extends K3sMojo {
 		if (disableCoredns) {
 			command.add("--disable=coredns");
 		}
+		if (registries != null) {
+			if (!Files.isRegularFile(registries)) {
+				throw new MojoExecutionException("Registries file '" + registries + "' not found.");
+			}
+			command.add("--private-registry=/etc/rancher/k3s/registries.yaml");
+			if (disableDefaultRegistryEndpoint) {
+				command.add("--disable-default-registry-endpoint");
+			}
+		} else if (disableDefaultRegistryEndpoint) {
+			log.warn("Skip setting --disable-default-registry-endpoint because no registries were configured.");
+		}
 		log.info("k3s {}", command.stream().collect(Collectors.joining(" ")));
 
 		// create container
 
-		if (registries != null && !Files.isRegularFile(registries)) {
-			throw new MojoExecutionException("Registries file '" + registries + "' not found.");
-		}
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
 		getDocker().createContainer(image, ports, command, registries);
@@ -407,6 +423,10 @@ public class RunMojo extends K3sMojo {
 
 	public void setDisableNetworkPolicy(boolean disableNetworkPolicy) {
 		this.disableNetworkPolicy = disableNetworkPolicy;
+	}
+
+	public void setDisableDefaultRegistryEndpoint(boolean disableDefaultRegistryEndpoint) {
+		this.disableDefaultRegistryEndpoint = disableDefaultRegistryEndpoint;
 	}
 
 	public void setPortBindings(List<String> portBindings) {
