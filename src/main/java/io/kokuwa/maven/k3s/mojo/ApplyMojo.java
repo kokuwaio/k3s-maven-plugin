@@ -103,6 +103,17 @@ public class ApplyMojo extends K3sMojo {
 		// wait for node getting ready
 
 		getDocker().exec("kubectl", "wait", "--for=condition=Ready", "node", "k3s");
+	
+		// check taints
+
+		var taints = getDocker()
+				.exec("kubectl", "get", "nodes", 
+						"-o=jsonpath={range .items[*]}{.spec.taints[?(@.effect==\"NoSchedule\")].key}{\"\\n\"}{end}")
+				.stream().map(String::strip).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+		if (!taints.isEmpty()) {
+			log.error("Found node taints with effect NoSchedule: {}", taints);
+			throw new MojoExecutionException("Node has taints " + taints + " with effect NoSchedule");
+		}
 
 		// execute command
 

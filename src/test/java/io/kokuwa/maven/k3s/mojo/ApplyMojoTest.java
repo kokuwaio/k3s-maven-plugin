@@ -3,12 +3,14 @@ package io.kokuwa.maven.k3s.mojo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
+import io.kokuwa.maven.k3s.test.LoggerCapturer;
 
 /**
  * Test for {@link ApplyMojo}.
@@ -49,5 +51,35 @@ public class ApplyMojoTest extends AbstractTest {
 		applyMojo.setSubdir("crd");
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(applyMojo::execute);
+		assertFalse(LoggerCapturer.getMessages().contains("WARN This may cause issues!"), "No taint expected.");
+	}
+
+	@DisplayName("taint: node.kubernetes.io/disk-pressure")
+	@Test
+	void taintDiskPressure(RunMojo runMojo, ApplyMojo applyMojo) throws MojoExecutionException {
+		assertDoesNotThrow(runMojo::execute);
+
+		// write file to get disk usage above 95%
+		var sizes = docker.exec("df", "--output=size,used", "--block-size=1MiB", "/").get(1).strip().split(" ");
+		var totalSize = Long.parseLong(sizes[0]);
+		var usedSize = Long.parseLong(sizes[1]);
+		docker.exec("fallocate", "-l", ((long) (totalSize * 0.95)) - usedSize + "MiB", "/spam");
+		docker.exec("df", "--block-size=1MiB", "/");
+		docker.exec("kubectl", "wait", "--for=condition=DiskPressure", "node", "k3s");
+
+		assertThrowsExactly(MojoExecutionException.class, applyMojo::execute,
+				() -> "Node has taints [node.kubernetes.io/disk-pressure] with effect NoSchedule");
+		assertTrue(LoggerCapturer.getMessages()
+				.contains("ERROR Found node taints with effect NoSchedule: [node.kubernetes.io/disk-pressure]"));
+	}
+
+	@DisplayName("taint: bar")
+	@Test
+	void taintBar(RunMojo runMojo, ApplyMojo applyMojo) throws MojoExecutionException {
+		assertDoesNotThrow(runMojo::execute);
+		docker.exec("kubectl", "taint", "nodes", "k3s", "bar:NoSchedule");
+		assertThrowsExactly(MojoExecutionException.class, applyMojo::execute,
+				() -> "Node has taints [bar] with effect NoSchedule");
+		assertTrue(LoggerCapturer.getMessages().contains("ERROR Found node taints with effect NoSchedule: [bar]"));
 	}
 }
