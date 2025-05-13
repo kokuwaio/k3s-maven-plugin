@@ -44,7 +44,7 @@ public abstract class AbstractTest {
 	}
 
 	public static String helloWorld() {
-		return "hello-world:linux";
+		return "hello-world@sha256:c41088499908a59aae84b0a49c70e86f4731e588a737f1637e73c8c09d995654";
 	}
 
 	public static void assertPodRunning() {

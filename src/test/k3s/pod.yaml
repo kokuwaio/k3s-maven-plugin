@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: echo
-      image: jmalloc/echo-server:0.3.1
+      image: jmalloc/echo-server:v0.3.7@sha256:c87f80de8dbb976a59b228fc9ecf257e0574c6f760c2f1c5f05f64c7ac7fbc1e
       ports:
         - name: http
           containerPort: 8080

@@ -27,7 +27,8 @@ public class LifecycleTest extends AbstractTest {
 
 		applyMojo.setManifests(new File("src/test/k3s/pod.yaml"));
 		runMojo.setPortBindings(List.of("8080:8080"));
-		imageMojo.setCtrImages(List.of("jmalloc/echo-server:0.3.1"));
+		imageMojo.setCtrImages(List.of(
+				"jmalloc/echo-server:v0.3.7@sha256:c87f80de8dbb976a59b228fc9ecf257e0574c6f760c2f1c5f05f64c7ac7fbc1e"));
 
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(imageMojo::execute);
