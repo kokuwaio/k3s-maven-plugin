@@ -77,7 +77,8 @@ public abstract class K3sMojo extends AbstractMojo {
 	}
 
 	public Docker getDocker() {
-		if (docker == null && taskTimeout == null) throw new NullPointerException();
+		if (docker == null && taskTimeout == null)
+			throw new NullPointerException();
 		return docker == null ? docker = new Docker(containerName, volumeName, log, taskTimeout) : docker;
 	}
 
