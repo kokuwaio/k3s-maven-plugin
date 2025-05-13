@@ -91,6 +91,14 @@ public class RunMojo extends K3sMojo {
 	private boolean disableTraefik;
 
 	/**
+	 * Disable coredns.
+	 *
+	 * @since 1.5.1
+	 */
+	@Parameter(property = "k3s.disableCoredns", defaultValue = "false")
+	private boolean disableCoredns;
+
+	/**
 	 * Disable cloud-controller.
 	 *
 	 * @since 1.0.0
@@ -331,6 +339,9 @@ public class RunMojo extends K3sMojo {
 		if (disableTraefik) {
 			command.add("--disable=traefik");
 		}
+		if (disableCoredns) {
+			command.add("--disable=coredns");
+		}
 		log.info("k3s {}", command.stream().collect(Collectors.joining(" ")));
 
 		// create container
@@ -384,6 +395,10 @@ public class RunMojo extends K3sMojo {
 
 	public void setDisableTraefik(boolean disableTraefik) {
 		this.disableTraefik = disableTraefik;
+	}
+
+	public void setDisableCoredns(boolean disableCoredns) {
+		this.disableCoredns = disableCoredns;
 	}
 
 	public void setDisableCloudController(boolean disableCloudController) {
