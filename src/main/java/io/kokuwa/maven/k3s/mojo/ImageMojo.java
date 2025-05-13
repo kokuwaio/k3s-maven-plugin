@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.mojo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
@@ -245,8 +244,8 @@ public class ImageMojo extends K3sMojo {
 
 		// move from docker to ctr
 
-		var filename = Paths.get(image.hashCode() + ".tar");
-		var source = Paths.get(System.getProperty("java.io.tmpdir")).resolve(filename);
+		var filename = Path.of(image.hashCode() + ".tar");
+		var source = Path.of(System.getProperty("java.io.tmpdir")).resolve(filename);
 		var destination = "/tmp/" + filename;
 		try {
 			getDocker().saveImage(image, source, saveTimeout);
@@ -292,11 +291,11 @@ public class ImageMojo extends K3sMojo {
 	}
 
 	public void setDockerImages(List<String> dockerImages) {
-		this.dockerImages = dockerImages.stream().collect(Collectors.toSet());
+		this.dockerImages = Set.copyOf(dockerImages);
 	}
 
 	public void setTarFiles(List<String> tarFiles) {
-		this.tarFiles = tarFiles.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toSet());
+		this.tarFiles = tarFiles.stream().map(Path::of).map(Path::toAbsolutePath).collect(Collectors.toSet());
 	}
 
 	public void setDockerPullAlways(boolean dockerPullAlways) {

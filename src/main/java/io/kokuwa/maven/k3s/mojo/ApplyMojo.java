@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.mojo;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +108,7 @@ public class ApplyMojo extends K3sMojo {
 		var taints = getDocker()
 				.exec("kubectl", "get", "nodes",
 						"-o=jsonpath={range .items[*]}{.spec.taints[?(@.effect==\"NoSchedule\")].key}{\"\\n\"}{end}")
-				.stream().map(String::strip).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+				.stream().map(String::strip).filter(s -> !s.isEmpty()).toList();
 		if (!taints.isEmpty()) {
 			log.error("Found node taints with effect NoSchedule: {}", taints);
 			throw new MojoExecutionException("Node has taints " + taints + " with effect NoSchedule");
@@ -137,13 +136,13 @@ public class ApplyMojo extends K3sMojo {
 			var success = true;
 			var pool = Executors.newWorkStealingPool();
 			var futures = tasks.stream().collect(Collectors.toMap(Entry::getKey, e -> pool.submit(e.getValue())));
-			var missing = new AtomicReference<>(futures.keySet().stream().sorted().collect(Collectors.toList()));
+			var missing = new AtomicReference<>(futures.keySet().stream().sorted().toList());
 			pool.submit(() -> {
 				while (!futures.values().stream().allMatch(Future::isDone)) {
 					Thread.sleep(15000);
 					var newMissing = futures.entrySet().stream()
 							.filter(f -> !f.getValue().isDone())
-							.map(Entry::getKey).sorted().collect(Collectors.toList());
+							.map(Entry::getKey).sorted().toList();
 					var oldMissing = missing.getAndSet(newMissing);
 					if (!newMissing.isEmpty()) {
 						if (oldMissing.equals(newMissing)) {
@@ -241,11 +240,11 @@ public class ApplyMojo extends K3sMojo {
 	}
 
 	public void setPath(String path) {
-		this.path = Paths.get(path);
+		this.path = Path.of(path);
 	}
 
 	public void setSubdir(String subdir) {
-		this.subdir = subdir == null ? null : Paths.get(subdir);
+		this.subdir = subdir == null ? null : Path.of(subdir);
 	}
 
 	public void setTimeout(int timeout) {
