@@ -101,6 +101,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 				((RunMojo) mojo).setDisableCoredns(true);
 				if (System.getenv("CI") == null) {
 					((RunMojo) mojo).setRegistries(new File("src/it/k3s-registries.yaml"));
+					((RunMojo) mojo).setDisableDefaultRegistryEndpoint(true);
 				}
 			}
 
