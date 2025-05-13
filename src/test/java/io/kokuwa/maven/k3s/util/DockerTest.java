@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -111,10 +111,10 @@ public class DockerTest extends AbstractTest {
 
 		// define test data
 
-		var containerDir = Paths.get("/k3s-data");
-		var sourceDir = Paths.get("target", "docker-copy", "source");
+		var containerDir = Path.of("/k3s-data");
+		var sourceDir = Path.of("target", "docker-copy", "source");
 		var sourceFile = sourceDir.resolve("test.txt");
-		var returnDir = Paths.get("target", "docker-copy", "return");
+		var returnDir = Path.of("target", "docker-copy", "return");
 		var returnFile = sourceDir.resolve("test.txt");
 		Files.createDirectories(sourceDir);
 		Files.createDirectories(returnDir);

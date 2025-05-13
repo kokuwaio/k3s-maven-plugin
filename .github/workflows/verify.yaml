@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
       - run: mvn $MAVEN_ARGS -P!check test -Dtest=${{ matrix.test }} -Dmaven.test.redirectTestOutputToFile=false
 
   invoker-matrix:
@@ -75,5 +75,5 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
       - run: mvn $MAVEN_ARGS -P!check verify -Dinvoker.test=${{ matrix.test }} -Dinvoker.streamLogs -Dmaven.test.skip
