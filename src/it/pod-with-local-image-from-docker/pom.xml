@@ -43,7 +43,6 @@
 			<plugin>
 				<groupId>com.google.cloud.tools</groupId>
 				<artifactId>jib-maven-plugin</artifactId>
-				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -51,9 +50,6 @@
 							<goal>dockerBuild</goal>
 						</goals>
 						<configuration>
-							<from>
-								<image>gcr.io/distroless/java:${maven.compiler.target}-nonroot</image>
-							</from>
 							<to>
 								<image>${project.artifactId}</image>
 							</to>
