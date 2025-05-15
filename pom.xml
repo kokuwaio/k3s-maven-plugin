@@ -71,6 +71,7 @@
 		<!-- ===================================================================== -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.outputTimestamp>2025-05-15T07:52:00Z</project.build.outputTimestamp>
 
 		<maven.compiler.release>11</maven.compiler.release>
 		<maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
