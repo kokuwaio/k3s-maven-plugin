@@ -32,14 +32,14 @@ public class DockerTest extends AbstractTest {
 	@Test
 	void volume() throws MojoExecutionException {
 
-		assertFalse(docker.getVolume().isPresent(), "volume found before testing");
+		assertFalse(docker.isVolumePresent(), "volume found before testing");
 		docker.removeVolume();
 
 		docker.createVolume();
-		assertTrue(docker.getVolume().isPresent(), "volume missing after creating");
+		assertTrue(docker.isVolumePresent(), "volume missing after creating");
 
 		docker.removeVolume();
-		assertFalse(docker.getVolume().isPresent(), "volume found after removing");
+		assertFalse(docker.isVolumePresent(), "volume found after removing");
 	}
 
 	@DisplayName("container handling")

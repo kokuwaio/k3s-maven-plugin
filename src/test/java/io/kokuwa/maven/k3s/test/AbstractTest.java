@@ -1,16 +1,10 @@
 package io.kokuwa.maven.k3s.test;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpClient.Version;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.IOException;
+import java.nio.file.Paths;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.codehaus.plexus.util.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -35,25 +29,16 @@ public abstract class AbstractTest {
 
 	@BeforeEach
 	@AfterEach
-	void reset(Docker newDocker) throws MojoExecutionException {
+	void reset(Docker newDocker) throws MojoExecutionException, IOException {
 		this.docker = newDocker;
 		this.docker.removeContainer();
 		this.docker.removeVolume();
 		this.docker.removeImage(helloWorld());
+		FileUtils.deleteDirectory(Paths.get("target/maven-status/k3s-maven-plugin").toFile());
 		LoggerCapturer.clear();
 	}
 
 	public static String helloWorld() {
 		return "hello-world:linux";
-	}
-
-	public static void assertPodRunning() {
-		var response = assertDoesNotThrow(() -> HttpClient.newHttpClient().send(HttpRequest.newBuilder()
-				.GET()
-				.uri(URI.create("http://localhost:8080"))
-				.version(Version.HTTP_1_1)
-				.build(), HttpResponse.BodyHandlers.ofString()));
-		assertEquals(200, response.statusCode(), "status");
-		assertTrue(response.body().startsWith("Request served by echo"), "body");
 	}
 }

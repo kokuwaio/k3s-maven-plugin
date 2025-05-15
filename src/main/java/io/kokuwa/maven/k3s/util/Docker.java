@@ -119,12 +119,12 @@ public class Docker {
 
 	// volume
 
-	public Optional<ContainerVolume> getVolume() throws MojoExecutionException {
+	public boolean isVolumePresent() throws MojoExecutionException {
 		return Task.of(log, timeout, "docker", "volume", "ls", "--filter=name=" + volumeName, "--format={{json .}}")
 				.run().stream()
 				.map(output -> readValue(ContainerVolume.class, output))
 				.filter(volume -> volumeName.equals(volume.name))
-				.findAny();
+				.findAny().isPresent();
 	}
 
 	public void createVolume() throws MojoExecutionException {
