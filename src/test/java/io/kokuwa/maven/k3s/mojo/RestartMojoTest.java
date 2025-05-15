@@ -16,7 +16,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 /**
  * Test for {@link RestartMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: restart")
 public class RestartMojoTest extends AbstractTest {

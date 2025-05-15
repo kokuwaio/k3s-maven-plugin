@@ -16,6 +16,8 @@ import org.slf4j.Logger;
  * <li><a>https://github.com/rnorth/duct-tape</a> - dead project?</li>
  * <li><a>https://github.com/awaitility/awaitility</a> - has junit dependency</li>
  * </ul>
+ *
+ * @author stephan@schnabel.org
  */
 public class Await {
 

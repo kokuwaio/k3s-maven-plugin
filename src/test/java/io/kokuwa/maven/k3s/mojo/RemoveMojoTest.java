@@ -13,7 +13,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 /**
  * Test for {@link RemoveMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: rm")
 public class RemoveMojoTest extends AbstractTest {

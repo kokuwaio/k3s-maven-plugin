@@ -24,7 +24,7 @@ import io.kokuwa.maven.k3s.util.Task;
 /**
  * Test for {@link RunMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: run")
 public class RunMojoTest extends AbstractTest {

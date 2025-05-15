@@ -13,7 +13,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * Mojo for copying files to docker container.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.6.0
  */
 @Mojo(name = "copy", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)

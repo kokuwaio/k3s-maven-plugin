@@ -23,7 +23,7 @@ import io.kokuwa.maven.k3s.util.Docker;
 /**
  * Base class for all test cases.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @ExtendWith(MojoExtension.class)
 @TestClassOrder(ClassOrderer.DisplayName.class)

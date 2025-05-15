@@ -20,7 +20,7 @@ import io.kokuwa.maven.k3s.util.Await;
 /**
  * Mojo for start k3s container.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.0.0
  */
 @Mojo(name = "run", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)

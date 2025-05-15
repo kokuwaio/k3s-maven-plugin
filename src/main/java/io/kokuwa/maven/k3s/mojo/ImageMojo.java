@@ -29,6 +29,7 @@ import io.kokuwa.maven.k3s.util.Docker.ContainerImage;
 /**
  * Import images into k3s containerd.
  *
+ * @author stephan@schnabel.org
  * @since 0.3.0
  */
 @Mojo(name = "image", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)

@@ -18,7 +18,7 @@ import io.kokuwa.maven.k3s.test.LoggerCapturer;
 /**
  * Test for {@link ApplyMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: apply")
 public class ApplyMojoTest extends AbstractTest {
