@@ -8,6 +8,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * Mojo to remove k3s container.
  *
+ * @author stephan@schnabel.org
  * @since 0.1.0
  */
 @Mojo(name = "rm", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST, requiresProject = false)

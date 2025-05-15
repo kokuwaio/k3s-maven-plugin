@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * Wrapper for slf4j logger to capture output.
  *
+ * @author stephan@schnabel.org
  * @since 1.4.0
  */
 @SuppressWarnings("resource")

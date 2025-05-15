@@ -21,7 +21,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 /**
  * Test for {@link ImageMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: image")
 public class ImageMojoTest extends AbstractTest {

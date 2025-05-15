@@ -22,7 +22,7 @@ import io.kokuwa.maven.k3s.util.Docker.Container;
 /**
  * Test for {@link Docker}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("util: docker")
 public class DockerTest extends AbstractTest {

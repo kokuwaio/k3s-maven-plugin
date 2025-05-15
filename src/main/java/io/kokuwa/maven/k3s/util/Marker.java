@@ -10,7 +10,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 /**
  * Class to handle markers as communication between mojo executions.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.3.0
  */
 public class Marker {

@@ -15,7 +15,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 /**
  * Test for {@link CopyMojo}.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("mojo: copy")
 public class CopyMojoTest extends AbstractTest {

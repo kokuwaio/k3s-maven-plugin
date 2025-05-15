@@ -19,7 +19,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * Mojo for kubectl rollout restart.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.1.0
  */
 @Mojo(name = "restart", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)

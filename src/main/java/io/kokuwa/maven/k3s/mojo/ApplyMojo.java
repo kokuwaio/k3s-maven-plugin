@@ -29,7 +29,7 @@ import io.kokuwa.maven.k3s.util.Task;
 /**
  * Mojo for kubectl apply.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.0.0
  */
 @Mojo(name = "apply", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)

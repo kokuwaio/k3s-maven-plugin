@@ -28,7 +28,7 @@ import io.kokuwa.maven.k3s.util.Docker;
 /**
  * JUnit extension to provide prepared mojos as test parameter.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 

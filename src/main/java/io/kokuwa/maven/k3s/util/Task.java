@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 /**
  * Wrapper for process with handling.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.0.0
  */
 public class Task {

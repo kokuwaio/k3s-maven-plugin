@@ -16,7 +16,7 @@ import io.kokuwa.maven.k3s.util.Marker;
 /**
  * Base class for all mojos of this plugin.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 0.1.0
  */
 public abstract class K3sMojo extends AbstractMojo {

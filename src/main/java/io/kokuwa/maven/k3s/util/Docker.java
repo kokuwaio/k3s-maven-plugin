@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Wrapper for docker commands.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  * @since 1.0.0
  */
 public class Docker {

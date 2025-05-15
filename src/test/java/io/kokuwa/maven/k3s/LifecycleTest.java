@@ -24,7 +24,7 @@ import io.kokuwa.maven.k3s.test.AbstractTest;
 /**
  * Test fof all mojos to simulate test lifecycle.
  *
- * @author stephan.schnabel@posteo.de
+ * @author stephan@schnabel.org
  */
 @DisplayName("lifecycle")
 public class LifecycleTest extends AbstractTest {
