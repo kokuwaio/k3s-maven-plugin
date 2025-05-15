@@ -114,6 +114,7 @@
 		<version.org.junit.jupiter>5.12.2</version.org.junit.jupiter>
 		<version.org.slf4j>1.7.36</version.org.slf4j>
 		<version.com.fasterxml.jackson>2.19.0</version.com.fasterxml.jackson>
+		<version.com.github.docker.java>3.5.0</version.com.github.docker.java>
 
 	</properties>
 
@@ -138,6 +139,22 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>${version.com.fasterxml.jackson}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.docker-java</groupId>
+			<artifactId>docker-java-core</artifactId>
+			<version>${version.com.github.docker.java}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcpkix-jdk18on</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.github.docker-java</groupId>
+			<artifactId>docker-java-transport-zerodep</artifactId>
+			<version>${version.com.github.docker.java}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

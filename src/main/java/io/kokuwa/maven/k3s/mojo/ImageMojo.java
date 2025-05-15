@@ -23,7 +23,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import io.kokuwa.maven.k3s.util.Docker.ContainerImage;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 
 /**
  * Import images into k3s containerd.
@@ -75,22 +76,6 @@ public class ImageMojo extends K3sMojo {
 	private Duration pullTimeout;
 
 	/**
-	 * Timeout for "docker cp" in seconds.
-	 *
-	 * @since 1.5.0
-	 */
-	@Parameter(property = "k3s.copyToContainerTimeout", defaultValue = "120")
-	private Duration copyTimeout;
-
-	/**
-	 * Timeout for "docker save" in seconds.
-	 *
-	 * @since 1.5.0
-	 */
-	@Parameter(property = "k3s.saveTimeout", defaultValue = "120")
-	private Duration saveTimeout;
-
-	/**
 	 * Skip starting of k3s container.
 	 *
 	 * @since 0.3.0
@@ -107,19 +92,14 @@ public class ImageMojo extends K3sMojo {
 			return;
 		}
 
-		// verify container
-
-		if (getDocker().getContainer().isEmpty()) {
-			throw new MojoExecutionException("No k3s container found");
-		}
-
 		// get callables that handle images
 
-		var existingImages = getCtrImages();
+		var container = getDocker().getContainer().orElseThrow(() -> new MojoExecutionException("No container found"));
+		var existingImages = getCtrImages(container);
 		var tasks = new HashSet<Callable<Boolean>>();
-		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(existingImages, requestedImage)));
-		tarFiles.forEach(tarFile -> tasks.add(() -> tar(existingImages, tarFile)));
-		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(existingImages, requestedImage)));
+		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(container, existingImages, requestedImage)));
+		tarFiles.forEach(tarFile -> tasks.add(() -> tar(container, existingImages, tarFile)));
+		ctrImages.forEach(requestedImage -> tasks.add(() -> ctr(container, existingImages, requestedImage)));
 
 		// execute callables
 
@@ -136,7 +116,7 @@ public class ImageMojo extends K3sMojo {
 		}
 	}
 
-	private boolean tar(Map<String, Map<String, ?>> existingImages, Path tarFile) {
+	private boolean tar(Container container, Map<String, Map<String, ?>> existingImages, Path tarFile) {
 
 		if (!Files.isRegularFile(tarFile)) {
 			log.error("Tar not found: {}", tarFile);
@@ -167,15 +147,16 @@ public class ImageMojo extends K3sMojo {
 
 			// import tar into ctr
 
-			var destination = "/tmp/" + tarFile.getFileName() + "_" + System.nanoTime();
+			var destination = "/tmp/" + System.nanoTime();
 			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
-
-			getDocker().copyToContainer(tarFile, destination, copyTimeout);
-			for (var output : getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString())) {
+			getDocker().copyToContainer(container, tarFile, destination);
+			for (var output : getDocker().exec(container, pullTimeout, "ctr", "image", "import",
+					destination + "/" + tarFile.getFileName())) {
 				var matcher = outputPattern.matcher(output);
 				if (matcher.matches()) {
-					getDocker().exec("ctr", "image", "label", matcher.group("image"), labelPath + "=" + tarFile);
-					getDocker().exec("ctr", "image", "label", matcher.group("image"),
+					getDocker().exec(container, "ctr", "image", "label", matcher.group("image"),
+							labelPath + "=" + tarFile);
+					getDocker().exec(container, "ctr", "image", "label", matcher.group("image"),
 							labelChecksum + "=" + newChecksum);
 				} else {
 					log.warn("Tar {} import output cannot be parsed: {}", tarFile, output);
@@ -190,7 +171,8 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	private boolean ctr(Map<String, Map<String, ?>> existingImages, String image) throws MojoExecutionException {
+	private boolean ctr(Container container, Map<String, Map<String, ?>> existingImages, String image)
+			throws MojoExecutionException {
 
 		if (existingImages.containsKey(image)) {
 			log.debug("Image {} found in ctr, skip pulling", image);
@@ -200,17 +182,18 @@ public class ImageMojo extends K3sMojo {
 		log.info("Image {} not found, start pulling", image);
 		// use crictl instead of cri, because crictl honors custom registry.yaml
 		// see https://github.com/k3s-io/k3s/issues/5277
-		getDocker().exec(pullTimeout, "crictl", "pull", image);
+		getDocker().exec(container, pullTimeout, "crictl", "pull", image);
 		log.info("Image {} pulled", image);
 
 		return true;
 	}
 
-	private boolean docker(Map<String, Map<String, ?>> existingImages, String image) throws MojoExecutionException {
+	private boolean docker(Container container, Map<String, Map<String, ?>> existingImages, String image)
+			throws MojoExecutionException {
 
 		// pull image
 
-		var digest = getDocker().findImage(image).map(ContainerImage::getDigest).orElse(null);
+		var digest = getDocker().findImage(image).map(Image::getRepoDigests).orElse(null);
 		if (dockerPullAlways || digest == null) {
 			if (digest != null) {
 				log.debug("Image {} found in docker, pull always ...", image);
@@ -223,7 +206,7 @@ public class ImageMojo extends K3sMojo {
 				log.error("Failed to pull docker image {}", image, e);
 				return false;
 			}
-			digest = getDocker().findImage(image).map(ContainerImage::getDigest).orElse(null);
+			digest = getDocker().findImage(image).map(Image::getRepoDigests).orElse(null);
 		} else {
 			log.debug("Image {} found in docker", image);
 		}
@@ -246,12 +229,11 @@ public class ImageMojo extends K3sMojo {
 
 		var filename = Path.of(image.hashCode() + ".tar");
 		var source = Path.of(System.getProperty("java.io.tmpdir")).resolve(filename);
-		var destination = "/tmp/" + filename;
 		try {
-			getDocker().saveImage(image, source, saveTimeout);
-			getDocker().copyToContainer(source, destination, copyTimeout);
-			getDocker().exec(pullTimeout, "ctr", "image", "import", destination.toString());
-			getDocker().exec("ctr", "image", "label", normalizedImage, label + "=" + digest);
+			getDocker().saveImage(image, source);
+			getDocker().copyToContainer(container, source, "/tmp/");
+			getDocker().exec(container, pullTimeout, "ctr", "image", "import", "/tmp/" + filename);
+			getDocker().exec(container, "ctr", "image", "label", normalizedImage, label + "=" + digest);
 		} catch (MojoExecutionException e) {
 			log.error("Failed to import tar {}", source, e);
 			return false;
@@ -266,8 +248,8 @@ public class ImageMojo extends K3sMojo {
 	 *
 	 * @return Image name with labels.
 	 */
-	private Map<String, Map<String, ?>> getCtrImages() throws MojoExecutionException {
-		return getDocker().exec("ctr", "image", "list").stream().map(String::strip)
+	private Map<String, Map<String, ?>> getCtrImages(Container container) throws MojoExecutionException {
+		return getDocker().exec(container, "ctr", "image", "list").stream().map(String::strip)
 				.filter(row -> !row.startsWith("REF") && !row.startsWith("sha256:"))
 				.map(row -> row.split("(\\s)+"))
 				.filter(parts -> {
@@ -304,14 +286,6 @@ public class ImageMojo extends K3sMojo {
 
 	public void setPullTimeout(int pullTimeout) {
 		this.pullTimeout = Duration.ofSeconds(pullTimeout);
-	}
-
-	public void setCopyTimeout(int copyTimeout) {
-		this.copyTimeout = Duration.ofSeconds(copyTimeout);
-	}
-
-	public void setSaveTimeout(int saveTimeout) {
-		this.saveTimeout = Duration.ofSeconds(saveTimeout);
 	}
 
 	public void setSkipImage(boolean skipImage) {

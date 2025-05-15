@@ -15,6 +15,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.github.dockerjava.api.model.Container;
 import io.kokuwa.maven.k3s.util.Await;
 
 /**
@@ -267,8 +268,8 @@ public class RunMojo extends K3sMojo {
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
 				log.info("Container with id '{}' found, replacing", container.getId());
-				getDocker().removeContainer();
-			} else if (!container.isRunning()) {
+				getDocker().remove(container);
+			} else if (!getDocker().isRunning(container)) {
 				log.warn("Container with id '{}' found in stopped state, restart container", container.getId());
 				create = false;
 				restart = true;
@@ -283,26 +284,26 @@ public class RunMojo extends K3sMojo {
 		if (create || restart) {
 
 			if (create) {
-				createAndStartK3sContainer();
-			} else if (restart) {
-				getDocker().startContainer();
+				container = createContainer();
 			}
+			getDocker().start(container);
 
 			// wait for k3s api to be ready
 
 			var await = Await.await(log, "k3s api available").timeout(nodeTimeout);
-			getDocker().waitForLog(await, output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
+			getDocker().waitForLog(container, await,
+					output -> output.stream().anyMatch(l -> l.contains("k3s is up and running")));
 
 			// write file that k3s started
 
 			getMarker().writeStarted();
 		}
 
-		getDocker().copyFromContainer("/etc/rancher/k3s/k3s.yaml", kubeconfig);
+		getDocker().copyFromContainer(container, "/etc/rancher/k3s/k3s.yaml", kubeconfig);
 		log.info("k3s ready: KUBECONFIG={} kubectl get all --all-namespaces", kubeconfig);
 	}
 
-	private void createAndStartK3sContainer() throws MojoExecutionException {
+	private Container createContainer() throws MojoExecutionException {
 
 		// get image name
 
@@ -367,8 +368,9 @@ public class RunMojo extends K3sMojo {
 
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
-		getDocker().createContainer(image, ports, command, registries);
 		getDocker().createVolume();
+		getDocker().pullImage(image, Duration.ofMinutes(10));
+		return getDocker().createContainer(image, registries, ports, command);
 	}
 
 	// setter

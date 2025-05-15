@@ -1,23 +1,32 @@
 package io.kokuwa.maven.k3s.util;
 
-import java.io.File;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 /**
  * Wrapper for docker commands.
@@ -25,114 +34,49 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author stephan@schnabel.org
  * @since 1.0.0
  */
+@SuppressWarnings("resource")
 public class Docker {
 
-	private final ObjectMapper mapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+	private static final Logger log = LoggerFactory.getLogger(Docker.class);
+
+	private final DockerClient client;
 	private final String containerName;
 	private final String volumeName;
-	private final Logger log;
-	private final Duration timeout;
 
-	public Docker(String containerName, String volumeName, Logger log, Duration timeout) {
-		this.containerName = containerName;
+	public Docker(String volumeName, String containerName) {
+		var config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+		var httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
+		this.client = DockerClientImpl.getInstance(config, httpClient);
 		this.volumeName = volumeName;
-		this.log = log;
-		this.timeout = timeout;
-	}
-
-	public Optional<Container> getContainer() throws MojoExecutionException {
-		return Task
-				.of(log, timeout, "docker", "container", "ls", "--all", "--filter=name=" + containerName,
-						"--format={{json .}}")
-				.run().stream()
-				.map(output -> readValue(Container.class, output))
-				.filter(container -> containerName.equals(container.name))
-				.findAny();
-	}
-
-	public void createContainer(String image, List<String> ports, List<String> k3s, Path registries)
-			throws MojoExecutionException {
-		var command = new ArrayList<String>();
-		command.add("docker");
-		command.add("run");
-		command.add("--name=" + containerName);
-		command.add("--privileged");
-		command.add("--detach");
-		command.add("--volume=" + volumeName + ":/var/lib/rancher/k3s/agent");
-		if (registries != null) {
-			command.add("--volume=" + registries + ":/etc/rancher/k3s/registries.yaml");
-		}
-		ports.stream().map(port -> "--publish=" + port).forEach(command::add);
-		command.add(image);
-		command.addAll(k3s);
-		Task.of(log, timeout, command).run();
-	}
-
-	public void startContainer() throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "start", containerName).run();
-	}
-
-	public void removeContainer() throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "rm", containerName, "--force", "--volumes").run();
-	}
-
-	public void copyFromContainer(String source, Path destination) throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "cp", containerName + ":" + source, destination.toString()).run();
-	}
-
-	public void copyToContainer(Path source, String destination, Duration copyTimeout) throws MojoExecutionException {
-		// suffix directories with '/.', see https://docs.docker.com/engine/reference/commandline/cp/#description
-		var sourceString = Files.isDirectory(source) ? source + File.separator + "." : source.toString();
-		Task.of(log, copyTimeout, "docker", "cp", sourceString, containerName + ":" + destination).run();
-	}
-
-	public void waitForLog(Await await, Function<List<String>, Boolean> checker) throws MojoExecutionException {
-		var process = Task.of(log, Duration.ofHours(1), "docker", "logs", containerName, "--follow").start();
-		await.onTimeout(() -> process.output().forEach(log::warn)).until(() -> process.output(), checker);
-		process.close();
-	}
-
-	public List<String> exec(String... commands) throws MojoExecutionException {
-		return exec(timeout, commands);
-	}
-
-	public List<String> exec(Duration execTimeout, String... commands) throws MojoExecutionException {
-		return exec(execTimeout, List.of(commands));
-	}
-
-	public List<String> exec(Duration execTimeout, List<String> commands) throws MojoExecutionException {
-		return execWithoutVerify(execTimeout, commands).verify().output();
-	}
-
-	public Task execWithoutVerify(List<String> commands) throws MojoExecutionException {
-		return execWithoutVerify(timeout, commands);
-	}
-
-	public Task execWithoutVerify(Duration execTimeout, List<String> commands) throws MojoExecutionException {
-		var command = new ArrayList<String>();
-		command.add("docker");
-		command.add("exec");
-		command.add(containerName);
-		command.addAll(commands);
-		return Task.of(log, execTimeout, command).start().waitFor();
+		this.containerName = containerName;
 	}
 
 	// volume
 
-	public boolean isVolumePresent() throws MojoExecutionException {
-		return Task.of(log, timeout, "docker", "volume", "ls", "--filter=name=" + volumeName, "--format={{json .}}")
-				.run().stream()
-				.map(output -> readValue(ContainerVolume.class, output))
-				.filter(volume -> volumeName.equals(volume.name))
-				.findAny().isPresent();
+	public boolean isVolumePresent() {
+		try {
+			return client.inspectVolumeCmd(volumeName).exec() != null;
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 
-	public void createVolume() throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "volume", "create", volumeName).run();
+	public void createVolume() {
+		if (isVolumePresent()) {
+			log.trace("Cache volume {} found, skip creating", volumeName);
+		} else {
+			client.createVolumeCmd().withName(volumeName).exec();
+			log.debug("Cache volume {} created", volumeName);
+		}
 	}
 
-	public void removeVolume() throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "volume", "rm", volumeName, "--force").run();
+	public void removeVolume() {
+		if (isVolumePresent()) {
+			client.removeVolumeCmd(volumeName).exec();
+			log.debug("Volume {} removed", volumeName);
+		} else {
+			log.trace("Volume {} not found, skip removing", volumeName);
+		}
 	}
 
 	// images
@@ -152,137 +96,170 @@ public class Docker {
 			newImageName = "docker.io/" + newImageName;
 		}
 
+		log.trace("Normalized {} to {}", image, newImageName);
+
 		return newImageName;
 	}
 
-	public Optional<ContainerImage> findImage(String image) throws MojoExecutionException {
-		var task = Task.of(log, timeout, "docker", "image", "inspect", image, "--format={{json .}}").start().waitFor();
-		return task.exitCode() == 0
-				? task.output().stream().map(output -> readValue(ContainerImage.class, output)).findAny()
-				: Optional.empty();
+	public Optional<Image> findImage(String image) {
+		var normalizedImage = normalizeImage(image);
+		return client.listImagesCmd()
+				.withImageNameFilter(normalizedImage)
+				.exec().stream()
+				.filter(i -> Optional.ofNullable(i.getRepoTags())
+						.map(Stream::of).orElseGet(Stream::empty)
+						.map(this::normalizeImage)
+						.anyMatch(normalizedImage::equals))
+				.findFirst();
 	}
 
-	public void pullImage(String image, Duration pullTimeout) throws MojoExecutionException {
-		Task.of(log, pullTimeout, "docker", "image", "pull", "--quiet", image).run();
+	public void pullImage(String image, Duration timeout) throws MojoExecutionException {
+		var callback = client.pullImageCmd(image).exec(new DockerPullCallback(image));
+		Await.await(log, "pull images").timeout(timeout).until(callback::isCompleted);
+		if (!callback.isSuccess()) {
+			throw new MojoExecutionException("Failed to pull image " + image);
+		}
 	}
 
-	public void saveImage(String image, Path path, Duration saveTimeout) throws MojoExecutionException {
-		Task.of(log, saveTimeout, "docker", "image", "save", "--output=" + path, image).run();
-	}
-
-	public void removeImage(String image) throws MojoExecutionException {
-		Task.of(log, timeout, "docker", "image", "rm", "--force", image).run();
-	}
-
-	// internal
-
-	private <T> T readValue(Class<T> type, String output) {
+	public void saveImage(String image, Path target) throws MojoExecutionException {
 		try {
-			return mapper.readValue(output, type);
-		} catch (JsonProcessingException e) {
-			throw new IllegalStateException("Failed to parse line to " + type.getName() + ": " + output, e);
+			FileUtils.copyInputStreamToFile(client.saveImageCmd(image).exec(), target.toFile());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw new MojoExecutionException("");
 		}
 	}
 
-	// models
-
-	/**
-	 * Response of <code>docker ps --format=json</code>.
-	 *
-	 * @see <a href="https://docs.docker.com/engine/reference/commandline/volume_inspect/#format">docker v inspect</a>
-	 */
-	public static class Container {
-
-		private final String id;
-		private final String name;
-		private final ContainerStatus state;
-
-		@JsonCreator
-		public Container(
-				@JsonProperty("ID") String id,
-				@JsonProperty("Names") String name,
-				@JsonProperty("State") ContainerStatus state) {
-			this.id = id;
-			this.name = name;
-			this.state = state;
-		}
-
-		public boolean isRunning() {
-			return state == ContainerStatus.running || state == ContainerStatus.restarting;
-		}
-
-		public String getId() {
-			return id;
-		}
+	public void removeImage(String image) {
+		findImage(image).map(Image::getId).ifPresent(id -> client.removeImageCmd(id).withForce(true).exec());
 	}
 
-	/**
-	 * Available status of a container.
-	 *
-	 * @see <a href="https://docs.docker.com/engine/reference/commandline/ps/#status">docker ps</a>
-	 */
-	public enum ContainerStatus {
+	// container
 
-		created,
-		restarting,
-		running,
-		removing,
-		paused,
-		exited,
-		dead
+	public Optional<Container> getContainer() {
+		return client.listContainersCmd()
+				.withShowAll(true)
+				.withNameFilter(Set.of(containerName))
+				.exec().stream().findFirst();
 	}
 
-	/**
-	 * Response of <code>docker volume ls --format=json</code>.
-	 *
-	 * @see <a href="https://docs.docker.com/engine/reference/commandline/volume_inspect/#format">docker v inspect</a>
-	 */
-	public static class ContainerVolume {
+	public Container createContainer(
+			String dockerImage,
+			Path registries,
+			List<String> portBindings,
+			List<String> command) {
 
-		private final String name;
+		// host config
 
-		@JsonCreator
-		public ContainerVolume(@JsonProperty("Name") String name) {
-			this.name = name;
+		var mounts = new ArrayList<Mount>();
+		mounts.add(new Mount()
+				.withType(MountType.VOLUME)
+				.withSource(volumeName)
+				.withTarget("/var/lib/rancher/k3s/agent"));
+		if (registries != null) {
+			mounts.add(new Mount()
+					.withType(MountType.BIND)
+					.withReadOnly(true)
+					.withSource(registries.toAbsolutePath().toString())
+					.withTarget("/etc/rancher/k3s/registries.yaml"));
 		}
+		var hostConfig = new HostConfig()
+				.withPrivileged(true)
+				.withMounts(mounts)
+				.withPortBindings(portBindings.stream().map(PortBinding::parse).toList());
+
+		// container
+
+		var container = client
+				.createContainerCmd(dockerImage)
+				.withName(containerName)
+				.withCmd(command)
+				.withExposedPorts(List.copyOf(hostConfig.getPortBindings().getBindings().keySet()))
+				.withHostConfig(hostConfig)
+				.exec();
+		log.debug("Container created with id {}", container.getId());
+		for (var warning : container.getWarnings()) {
+			log.warn("Container with id {} had warning: {}", container.getId(), warning);
+		}
+
+		return client.listContainersCmd()
+				.withShowAll(true)
+				.withIdFilter(Set.of(container.getId()))
+				.exec().get(0);
 	}
 
-	/**
-	 * Response of <code>docker image inspect --format=json</code>.
-	 *
-	 * @see <a href="https://docs.docker.com/engine/reference/commandline/image_inspect/">docker image inspect</a>
-	 */
-	public static class ContainerImage {
+	public void remove(Container container) {
+		client.removeContainerCmd(container.getId()).withRemoveVolumes(true).withForce(true).exec();
+		log.debug("Container with id {} and name {} removed", container.getId(), container.getNames()[0]);
+	}
 
-		private final String id;
-		private final String created;
-		private final Long size;
-		private final List<String> repoDigests;
-		private final Map<String, Object> rootFs;
-		private final Map<String, Object> metadata;
+	public void start(Container container) {
+		client.startContainerCmd(container.getId()).exec();
+		log.debug("Container {} and name {} started", container.getId(), container.getNames()[0]);
+	}
 
-		@JsonCreator
-		public ContainerImage(
-				@JsonProperty("Id") String id,
-				@JsonProperty("Created") String created,
-				@JsonProperty("Size") Long size,
-				@JsonProperty("RepoDigests") List<String> repoDigests,
-				@JsonProperty("RootFS") Map<String, Object> rootFs,
-				@JsonProperty("Metadata") Map<String, Object> metadata) {
-			this.id = id;
-			this.created = created;
-			this.size = size;
-			this.repoDigests = repoDigests;
-			this.rootFs = rootFs;
-			this.metadata = metadata;
-		}
+	public void kill(Container container) {
+		client.killContainerCmd(container.getId()).exec();
+		log.debug("Container {} and name {} stopped", container.getId(), container.getNames()[0]);
+	}
 
-		public String getDigest() {
-			return repoDigests.stream()
-					.filter(i -> i.contains("@sha256"))
-					.map(i -> i.substring(i.indexOf("@sha256:") + 8))
-					.findFirst()
-					.orElse(id + "_" + size + "_" + created + "_" + rootFs.hashCode() + "_" + metadata.hashCode());
-		}
+	public boolean isRunning(Container container) {
+		var state = container.getState();
+		var running = "running".equals(state) || "restarting".equals(state);
+		log.debug("Container {} is {}running (state: {})", container.getId(), running ? "" : "not ", state);
+		return running;
+	}
+
+	public void waitForLog(Container container, Await await, Function<List<String>, Boolean> checker)
+			throws MojoExecutionException {
+		var callback = new DockerLogCallback();
+		client.logContainerCmd(container.getId())
+				.withStdOut(true)
+				.withStdErr(true)
+				.withFollowStream(true)
+				.withSince(0)
+				.exec(callback);
+		await.onTimeout(callback::replayOnWarn).until(() -> checker.apply(callback.messages));
+	}
+
+	public void copyFromContainer(Container container, String source, Path destination) throws MojoExecutionException {
+		log.debug("Copy from container {} to host {}", source, destination);
+		client.copyArchiveFromContainerCmd(container.getId(), source)
+				.withHostPath(destination.toString())
+				.exec();
+	}
+
+	public void copyToContainer(Container container, Path source, String destination) throws MojoExecutionException {
+		log.debug("Copy from host {} to container {}", source, destination);
+		exec(container, "mkdir", "-p", destination.toString());
+		client.copyArchiveToContainerCmd(container.getId())
+				.withHostResource(source.toAbsolutePath().toString())
+				.withRemotePath(destination)
+				.withDirChildrenOnly(true)
+				.exec();
+	}
+
+	public List<String> exec(Container container, String... command) throws MojoExecutionException {
+		return exec(container, null, command);
+	}
+
+	public List<String> exec(Container container, Duration timeout, String... command) throws MojoExecutionException {
+		return execWithoutVerify(container, timeout, command).verify();
+	}
+
+	public DockerExecResult execWithoutVerify(Container container, Duration timeout, String... command)
+			throws MojoExecutionException {
+		var execId = client.execCreateCmd(container.getId())
+				.withCmd(command)
+				.withAttachStdout(true)
+				.withAttachStderr(true)
+				.exec().getId();
+		var logs = client.execStartCmd(execId).exec(new DockerLogCallback());
+		Await.await(log, Stream.of(command).collect(Collectors.joining(" ")))
+				.timeout(timeout == null ? Duration.ofMinutes(30) : timeout)
+				.onTimeout(logs::replayOnWarn)
+				.until(logs::isCompleted);
+		var exitCode = client.inspectExecCmd(execId).exec().getExitCodeLong();
+		return new DockerExecResult(log, command, exitCode, logs.messages);
 	}
 }

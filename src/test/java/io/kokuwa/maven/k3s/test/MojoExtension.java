@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.StringReader;
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -18,8 +17,6 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.opentest4j.AssertionFailedError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.mojo.K3sMojo;
 import io.kokuwa.maven.k3s.mojo.RunMojo;
@@ -34,8 +31,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	private static final String containerName = "k3s-maven-plugin";
 	private static final String volumeName = "k3s-maven-plugin-junit";
-	private static final Logger log = LoggerFactory.getLogger(MojoExtension.class);
-	private static final Docker docker = new Docker(containerName, volumeName, log, Duration.ofSeconds(30));
+	private static final Docker docker = new Docker(containerName, volumeName);
 	private static final Set<MojoDescriptor> mojos = new HashSet<>();
 
 	@Override

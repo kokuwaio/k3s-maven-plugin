@@ -8,4 +8,3 @@ Restart selected resources. Usefull for local development and restarting service
 | `timeout` | `k3s.timeout` | Timeout in seconds to wait for resources getting ready. | 300 |
 | `skipRestart` | `k3s.skipImage` | Skip image handling. | false |
 | `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
-| `taskTimeout` | `k3s.taskTimeout` | Default timeout for docker tasks in seconds. | 30 |

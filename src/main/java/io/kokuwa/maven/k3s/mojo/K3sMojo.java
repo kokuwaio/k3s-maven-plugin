@@ -2,10 +2,8 @@ package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.time.Duration;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,14 +28,6 @@ public abstract class K3sMojo extends AbstractMojo {
 	private boolean debug;
 
 	/**
-	 * Default timeout for docker tasks in seconds.
-	 *
-	 * @since 1.5.0
-	 */
-	@Parameter(property = "k3s.taskTimeout", defaultValue = "30")
-	private Duration taskTimeout;
-
-	/**
 	 * Skip plugin.
 	 *
 	 * @since 0.1.0
@@ -47,11 +37,11 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	/** Name for the create docker container. */
 	@Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
-	private String containerName;
+	private String containerName = "k3s-maven-plugin";
 
 	/** Name for the create volume container. */
 	@Parameter(defaultValue = "k3s-maven-plugin", readonly = true)
-	private String volumeName;
+	private String volumeName = "k3s-maven-plugin";
 
 	/** Marker for maven status stuff. */
 	@Parameter(defaultValue = "${project.build.directory}/maven-status/k3s-maven-plugin", readonly = true)
@@ -70,16 +60,8 @@ public abstract class K3sMojo extends AbstractMojo {
 		return marker;
 	}
 
-	@Deprecated
-	@Override
-	public Log getLog() {
-		throw new UnsupportedOperationException("Use slf4j, log will be deprecated with maven4.");
-	}
-
 	public Docker getDocker() {
-		if (docker == null && taskTimeout == null)
-			throw new NullPointerException();
-		return docker == null ? docker = new Docker(containerName, volumeName, log, taskTimeout) : docker;
+		return docker == null ? docker = new Docker(containerName, volumeName) : docker;
 	}
 
 	public String toLinuxPath(Path path) {
@@ -95,10 +77,6 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
-	}
-
-	public void setTaskTimeout(int taskTimeout) {
-		this.taskTimeout = Duration.ofSeconds(taskTimeout);
 	}
 
 	public void setSkip(boolean skip) {

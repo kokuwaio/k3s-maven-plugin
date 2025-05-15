@@ -42,7 +42,8 @@ public class CopyMojoTest extends AbstractTest {
 	void withoutContainer(CopyMojo copyMojo) {
 		copyMojo.setCopySource(new File("target"));
 		copyMojo.setCopyTarget(new File("/"));
-		assertThrowsExactly(MojoExecutionException.class, copyMojo::execute, () -> "No k3s container found");
+		var exception = assertThrowsExactly(MojoExecutionException.class, copyMojo::execute, () -> "No container");
+		assertEquals("No container found", exception.getMessage(), "Exception message invalid.");
 	}
 
 	@DisplayName("source missing")

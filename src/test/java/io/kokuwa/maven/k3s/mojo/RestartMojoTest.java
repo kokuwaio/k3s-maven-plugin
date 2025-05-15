@@ -1,6 +1,7 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,7 +43,8 @@ public class RestartMojoTest extends AbstractTest {
 	@Test
 	void withoutContainer(RestartMojo restartMojo) {
 		restartMojo.setResources(List.of("pod/nope"));
-		assertThrowsExactly(MojoExecutionException.class, restartMojo::execute, () -> "No k3s container found");
+		var exception = assertThrowsExactly(MojoExecutionException.class, restartMojo::execute, () -> "No container");
+		assertEquals("No container found", exception.getMessage(), "Exception message invalid.");
 	}
 
 	@DisplayName("without resources")
@@ -106,5 +108,4 @@ public class RestartMojoTest extends AbstractTest {
 		assertTrue(duration < 10, "restart did happend");
 		assertFalse(assertDoesNotThrow(runMojo.getMarker()::consumeStarted), "no started marker expected");
 	}
-
 }

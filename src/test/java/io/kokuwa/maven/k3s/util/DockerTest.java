@@ -2,6 +2,7 @@ package io.kokuwa.maven.k3s.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
-import io.kokuwa.maven.k3s.util.Docker.Container;
 
 /**
  * Test for {@link Docker}.
@@ -44,18 +44,16 @@ public class DockerTest extends AbstractTest {
 	@DisplayName("container handling")
 	@Test
 	void container() throws MojoExecutionException {
-
 		assertFalse(docker.getContainer().isPresent(), "container found before testing");
-		docker.removeContainer();
-
-		var ports = List.of("9001:9001", "9002:9002");
+		docker.pullImage("docker.io/rancher/k3s:latest", Duration.ofMinutes(10));
 		docker.createVolume();
-		docker.createContainer("rancher/k3s", ports, List.of("server"), null);
-		assertTrue(docker.getContainer().isPresent(), "container not found after creating");
-		assertTrue(docker.getContainer().map(Container::isRunning).orElse(null));
-		docker.waitForLog(Await.await(log, "k3s"), o -> o.stream().anyMatch(l -> l.contains("k3s is up and running")));
-
-		docker.removeContainer();
+		docker.createContainer("docker.io/rancher/k3s:latest", null, List.of("6443:6443"), List.of("server"));
+		var container = docker.getContainer().orElse(null);
+		assertNotNull(container, "container not found after creating");
+		docker.start(container);
+		container = docker.getContainer().get();
+		assertTrue(docker.isRunning(container), "container should run, status: " + container.getStatus());
+		docker.remove(container);
 		assertFalse(docker.getContainer().isPresent(), "container found after removing");
 	}
 
@@ -107,7 +105,9 @@ public class DockerTest extends AbstractTest {
 		// start container
 
 		docker.createVolume();
-		docker.createContainer("rancher/k3s", List.of(), List.of("server"), null);
+		docker.pullImage("docker.io/rancher/k3s:latest", Duration.ofMinutes(10));
+		var container = docker.createContainer("docker.io/rancher/k3s:latest", null, List.of(), List.of("server"));
+		docker.start(container);
 
 		// define test data
 
@@ -125,8 +125,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, initialContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir.toString(), Duration.ofSeconds(30));
-		docker.copyFromContainer(containerDir.toString(), returnDir);
+		docker.copyToContainer(container, sourceDir, containerDir.toString());
+		docker.copyFromContainer(container, containerDir.toString(), returnDir);
 		assertEquals(initialContent, Files.readString(returnFile));
 
 		// write changed file and copy to container
@@ -135,8 +135,8 @@ public class DockerTest extends AbstractTest {
 		Files.deleteIfExists(sourceFile);
 		Files.deleteIfExists(returnFile);
 		Files.write(sourceFile, changedContent.toString().getBytes());
-		docker.copyToContainer(sourceDir, containerDir.toString(), Duration.ofSeconds(30));
-		docker.copyFromContainer(containerDir.toString(), returnDir);
+		docker.copyToContainer(container, sourceDir, containerDir.toString());
+		docker.copyFromContainer(container, containerDir.toString(), returnDir);
 		assertEquals(changedContent, Files.readString(returnFile));
 	}
 }
