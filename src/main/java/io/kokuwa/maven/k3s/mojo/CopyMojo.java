@@ -3,7 +3,6 @@ package io.kokuwa.maven.k3s.mojo;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -49,13 +48,12 @@ public class CopyMojo extends K3sMojo {
 		if (isSkip(skipCopy)) {
 			return;
 		}
+
 		if (!Files.exists(copySource)) {
 			throw new MojoExecutionException("Path " + copySource + " not found.");
 		}
-		if (getDocker().getContainer().isEmpty()) {
-			throw new MojoExecutionException("No k3s container found");
-		}
-		getDocker().copyToContainer(copySource, toLinuxPath(copyTarget), Duration.ofMinutes(5));
+		var container = getDocker().getContainer().orElseThrow(() -> new MojoExecutionException("No container found"));
+		getDocker().copyToContainer(container, copySource, toLinuxPath(copyTarget));
 	}
 
 	// setter

@@ -50,7 +50,8 @@ public class ImageMojoTest extends AbstractTest {
 	@Test
 	void withoutContainer(ImageMojo imageMojo) {
 		imageMojo.setCtrImages(List.of(helloWorld()));
-		assertThrowsExactly(MojoExecutionException.class, imageMojo::execute, () -> "No k3s container found");
+		var exception = assertThrowsExactly(MojoExecutionException.class, imageMojo::execute, () -> "No container");
+		assertEquals("No container found", exception.getMessage(), "Exception message invalid.");
 	}
 
 	@DisplayName("without images")
@@ -133,7 +134,7 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertCtrImage(String image, boolean exists) throws MojoExecutionException {
 		var images = exec("ctr", "image", "list", "--quiet");
 		var normalizedImage = docker.normalizeImage(image);
-		assertEquals(exists, images.contains(normalizedImage),
+		assertEquals(exists, images.stream().filter(i -> i.startsWith(normalizedImage)).findAny().isPresent(),
 				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + images);
 	}
 

@@ -16,6 +16,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.github.dockerjava.api.model.Container;
+
 /**
  * Mojo for kubectl rollout restart.
  *
@@ -81,13 +83,8 @@ public class RestartMojo extends K3sMojo {
 
 		// verify container
 
-		if (getDocker().getContainer().isEmpty()) {
-			throw new MojoExecutionException("No k3s container found");
-		}
-
-		// get callables that restarts stuff
-
-		var tasks = resources.stream().map(this::restart).collect(Collectors.toSet());
+		var container = getDocker().getContainer().orElseThrow(() -> new MojoExecutionException("No container found"));
+		var tasks = resources.stream().map(r -> restart(container, r)).collect(Collectors.toSet());
 
 		// execute callables
 
@@ -104,7 +101,7 @@ public class RestartMojo extends K3sMojo {
 		}
 	}
 
-	private Callable<Boolean> restart(String resoure) {
+	private Callable<Boolean> restart(Container container, String resoure) {
 
 		var matcher = resourcePattern.matcher(resoure);
 		if (!matcher.matches()) {
@@ -118,14 +115,14 @@ public class RestartMojo extends K3sMojo {
 
 		return () -> {
 			try {
-				getDocker().exec("kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
+				getDocker().exec(container, "kubectl", "rollout", "restart", kind, name, "--namespace=" + namespace);
 				log.info("{} {}/{} restarted", kind, namespace, name);
-				getDocker().exec(timeout.plusSeconds(5), "kubectl", "rollout", "status", kind, name,
+				getDocker().exec(container, timeout.plusSeconds(5), "kubectl", "rollout", "status", kind, name,
 						"--namespace=" + namespace, "--timeout=" + timeout.getSeconds() + "s");
 				log.info("{} {}/{} restart finished", kind, namespace, name);
 				return true;
 			} catch (MojoExecutionException e) {
-				getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
+				getDocker().exec(container, "kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
 				return false;
 			}
 		};

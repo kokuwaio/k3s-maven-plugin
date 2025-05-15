@@ -22,8 +22,9 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import com.github.dockerjava.api.model.Container;
 import io.kokuwa.maven.k3s.util.Await;
-import io.kokuwa.maven.k3s.util.Task;
+import io.kokuwa.maven.k3s.util.DockerExecResult;
 
 /**
  * Mojo for kubectl apply.
@@ -83,32 +84,28 @@ public class ApplyMojo extends K3sMojo {
 
 		// verify container and copy manifests
 
-		if (getDocker().getContainer().isEmpty()) {
-			throw new MojoExecutionException("No k3s container found");
-		}
-		getDocker().copyToContainer(manifests, toLinuxPath(path), timeout);
+		var container = getDocker().getContainer().orElseThrow(() -> new MojoExecutionException("No container found"));
+		getDocker().copyToContainer(container, manifests, toLinuxPath(path));
 
 		// wait for service account, see https://github.com/kubernetes/kubernetes/issues/66689
 
-		var serviceAccount = new String[] { "kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name" };
-		if (getDocker().exec(serviceAccount).isEmpty()) {
+		var command = new String[] { "kubectl", "get", "sa", "default", "--ignore-not-found", "--output=name" };
+		if (getDocker().exec(container, command).isEmpty()) {
 			log.info("");
 			log.info("No service account found, waiting for sa ...");
-			Await.await(log, "k3s service account ready").until(() -> !getDocker().exec(serviceAccount).isEmpty());
+			Await.await(log, "k3s service account ready").until(() -> !getDocker().exec(container, command).isEmpty());
 			log.info("Service account found, continue ...");
 			log.info("");
 		}
 
 		// wait for node getting ready
 
-		getDocker().exec("kubectl", "wait", "--for=condition=Ready", "node", "k3s");
+		getDocker().exec(container, "kubectl", "wait", "--for=condition=Ready", "node", "k3s");
 
 		// check taints
 
-		var taints = getDocker()
-				.exec("kubectl", "get", "nodes",
-						"-o=jsonpath={range .items[*]}{.spec.taints[?(@.effect==\"NoSchedule\")].key}{\"\\n\"}{end}")
-				.stream().map(String::strip).filter(s -> !s.isEmpty()).toList();
+		var taints = getDocker().exec(container, "kubectl", "get", "nodes",
+				"-o=jsonpath={range .items[*]}{.spec.taints[?(@.effect==\"NoSchedule\")].key}{\"\\n\"}{end}");
 		if (!taints.isEmpty()) {
 			log.error("Found node taints with effect NoSchedule: {}", taints);
 			throw new MojoExecutionException("Node has taints " + taints + " with effect NoSchedule");
@@ -116,10 +113,11 @@ public class ApplyMojo extends K3sMojo {
 
 		// execute command
 
-		var result = apply();
-		if (result.exitCode() != 0 && result.output().stream().anyMatch(l -> l.endsWith("CRDs are installed first"))) {
+		var result = apply(container);
+		if (result.exitCode() != 0
+				&& result.messages().stream().anyMatch(l -> l.endsWith("CRDs are installed first"))) {
 			log.info("Found CRDs created, but kubectl failed. Try again ...");
-			result = apply();
+			result = apply(container);
 		}
 		result.verify();
 
@@ -131,7 +129,7 @@ public class ApplyMojo extends K3sMojo {
 						"deployment", List.of("kubectl", "rollout", "status"),
 						"job", List.of("kubectl", "wait", "--for=condition=complete"),
 						"pod", List.of("kubectl", "wait", "--for=condition=ready"))
-				.entrySet().stream().parallel().flatMap(this::waitFor).collect(Collectors.toSet());
+				.entrySet().stream().parallel().flatMap(e -> waitFor(container, e)).collect(Collectors.toSet());
 		try {
 			var success = true;
 			var pool = Executors.newWorkStealingPool();
@@ -166,7 +164,7 @@ public class ApplyMojo extends K3sMojo {
 		}
 	}
 
-	private Task apply() throws MojoExecutionException {
+	private DockerExecResult apply(Container container) throws MojoExecutionException {
 
 		var subPath = toLinuxPath(subdir == null ? path : path.resolve(subdir));
 		var kustomizePath = subdir == null ? manifests : manifests.resolve(subdir);
@@ -184,15 +182,15 @@ public class ApplyMojo extends K3sMojo {
 		}
 
 		log.info(command.stream().collect(Collectors.joining(" ")));
-		return getDocker().execWithoutVerify(timeout, command);
+		return getDocker().execWithoutVerify(container, timeout, command.toArray(new String[command.size()]));
 	}
 
-	private Stream<Entry<String, Callable<Boolean>>> waitFor(Entry<String, List<String>> entry) {
+	private Stream<Entry<String, Callable<Boolean>>> waitFor(Container container, Entry<String, List<String>> entry) {
 		try {
 
 			var kind = entry.getKey();
 			var resources = getDocker()
-					.exec("kubectl", "get", kind,
+					.exec(container, "kubectl", "get", kind,
 							"--all-namespaces",
 							"--no-headers",
 							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
@@ -218,11 +216,12 @@ public class ApplyMojo extends K3sMojo {
 				return Map.entry(representation, (Callable<Boolean>) () -> {
 					try {
 						log.debug("{} {} ... waiting", kind, representation);
-						getDocker().exec(timeout.plusSeconds(10), tmp);
+						getDocker().exec(container, timeout.plusSeconds(10), tmp.toArray(new String[tmp.size()]));
 						log.info("{} {} ... ready", kind, representation);
 						return true;
 					} catch (MojoExecutionException e) {
-						getDocker().exec("kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind, name);
+						getDocker().exec(container, "kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind,
+								name);
 						return false;
 					}
 				});
