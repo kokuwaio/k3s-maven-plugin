@@ -56,7 +56,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
 		var type = parameterContext.getParameter().getType();
 		return mojos.stream().map(MojoDescriptor::getImplementation).anyMatch(type.getName()::equals)
-				|| type.equals(Logger.class)
 				|| type.equals(Docker.class);
 	}
 
@@ -64,9 +63,6 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
 
 		var type = parameterContext.getParameter().getType();
-		if (type.equals(Logger.class)) {
-			return log;
-		}
 		if (type.equals(Docker.class)) {
 			return docker;
 		}

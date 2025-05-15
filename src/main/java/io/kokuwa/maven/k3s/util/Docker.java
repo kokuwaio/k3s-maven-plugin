@@ -119,12 +119,12 @@ public class Docker {
 
 	// volume
 
-	public Optional<ContainerVolume> getVolume() throws MojoExecutionException {
+	public boolean isVolumePresent() throws MojoExecutionException {
 		return Task.of(log, timeout, "docker", "volume", "ls", "--filter=name=" + volumeName, "--format={{json .}}")
 				.run().stream()
 				.map(output -> readValue(ContainerVolume.class, output))
 				.filter(volume -> volumeName.equals(volume.name))
-				.findAny();
+				.findAny().isPresent();
 	}
 
 	public void createVolume() throws MojoExecutionException {
@@ -155,7 +155,7 @@ public class Docker {
 		return newImageName;
 	}
 
-	public Optional<ContainerImage> getImage(String image) throws MojoExecutionException {
+	public Optional<ContainerImage> findImage(String image) throws MojoExecutionException {
 		var task = Task.of(log, timeout, "docker", "image", "inspect", image, "--format={{json .}}").start().waitFor();
 		return task.exitCode() == 0
 				? task.output().stream().map(output -> readValue(ContainerImage.class, output)).findAny()
@@ -193,25 +193,26 @@ public class Docker {
 	 */
 	public static class Container {
 
-		public final String id;
-		public final String name;
-		public final ContainerStatus state;
-		public final String status;
+		private final String id;
+		private final String name;
+		private final ContainerStatus state;
 
 		@JsonCreator
 		public Container(
 				@JsonProperty("ID") String id,
 				@JsonProperty("Names") String name,
-				@JsonProperty("State") ContainerStatus state,
-				@JsonProperty("Status") String status) {
+				@JsonProperty("State") ContainerStatus state) {
 			this.id = id;
 			this.name = name;
 			this.state = state;
-			this.status = status;
 		}
 
 		public boolean isRunning() {
 			return state == ContainerStatus.running || state == ContainerStatus.restarting;
+		}
+
+		public String getId() {
+			return id;
 		}
 	}
 
@@ -238,13 +239,11 @@ public class Docker {
 	 */
 	public static class ContainerVolume {
 
-		public final String name;
-		public final String mountpoint;
+		private final String name;
 
 		@JsonCreator
-		public ContainerVolume(@JsonProperty("Name") String name, @JsonProperty("Mountpoint") String mountpoint) {
+		public ContainerVolume(@JsonProperty("Name") String name) {
 			this.name = name;
-			this.mountpoint = mountpoint;
 		}
 	}
 
@@ -255,12 +254,12 @@ public class Docker {
 	 */
 	public static class ContainerImage {
 
-		public final String id;
-		public final String created;
-		public final Long size;
-		public final List<String> repoDigests;
-		public final Map<String, Object> rootFs;
-		public final Map<String, Object> metadata;
+		private final String id;
+		private final String created;
+		private final Long size;
+		private final List<String> repoDigests;
+		private final Map<String, Object> rootFs;
+		private final Map<String, Object> metadata;
 
 		@JsonCreator
 		public ContainerImage(

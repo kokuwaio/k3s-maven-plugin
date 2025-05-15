@@ -263,17 +263,17 @@ public class RunMojo extends K3sMojo {
 		var container = getDocker().getContainer().orElse(null);
 		if (container != null) {
 			if (failIfExists) {
-				throw new MojoExecutionException("Container with id '" + container.id
+				throw new MojoExecutionException("Container with id '" + container.getId()
 						+ "' found. Please remove that container or set 'k3s.failIfExists' to false.");
 			} else if (replaceIfExists) {
-				log.info("Container with id '{}' found, replacing", container.id);
+				log.info("Container with id '{}' found, replacing", container.getId());
 				getDocker().removeContainer();
 			} else if (!container.isRunning()) {
-				log.warn("Container with id '{}' found in stopped state, restart container", container.id);
+				log.warn("Container with id '{}' found in stopped state, restart container", container.getId());
 				create = false;
 				restart = true;
 			} else {
-				log.warn("Container with id '{}' found, skip creating", container.id);
+				log.warn("Container with id '{}' found, skip creating", container.getId());
 				create = false;
 			}
 		}

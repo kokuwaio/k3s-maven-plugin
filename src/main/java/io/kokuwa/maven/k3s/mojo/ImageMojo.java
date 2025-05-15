@@ -210,7 +210,7 @@ public class ImageMojo extends K3sMojo {
 
 		// pull image
 
-		var digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
+		var digest = getDocker().findImage(image).map(ContainerImage::getDigest).orElse(null);
 		if (dockerPullAlways || digest == null) {
 			if (digest != null) {
 				log.debug("Image {} found in docker, pull always ...", image);
@@ -223,7 +223,7 @@ public class ImageMojo extends K3sMojo {
 				log.error("Failed to pull docker image {}", image, e);
 				return false;
 			}
-			digest = getDocker().getImage(image).map(ContainerImage::getDigest).orElse(null);
+			digest = getDocker().findImage(image).map(ContainerImage::getDigest).orElse(null);
 		} else {
 			log.debug("Image {} found in docker", image);
 		}

@@ -63,12 +63,12 @@ public class ApplyMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 
 		// write file to get disk usage above 95%
-		var sizes = docker.exec("df", "--output=size,used", "--block-size=1MiB", "/").get(1).strip().split(" ");
+		var sizes = exec("df", "--output=size,used", "--block-size=1MiB", "/").get(1).strip().split(" ");
 		var totalSize = Long.parseLong(sizes[0]);
 		var usedSize = Long.parseLong(sizes[1]);
-		docker.exec("fallocate", "-l", ((long) (totalSize * 0.95)) - usedSize + "MiB", "/spam");
-		docker.exec("df", "--block-size=1MiB", "/");
-		docker.exec("kubectl", "wait", "--for=condition=DiskPressure", "node", "k3s");
+		exec("fallocate", "-l", ((long) (totalSize * 0.95)) - usedSize + "MiB", "/spam");
+		exec("df", "--block-size=1MiB", "/");
+		exec("kubectl", "wait", "--for=condition=DiskPressure", "node", "k3s");
 
 		var e = assertThrowsExactly(MojoExecutionException.class, applyMojo::execute, () -> "no exception");
 		assertEquals("Node has taints [node.kubernetes.io/disk-pressure] with effect NoSchedule", e.getMessage());
@@ -81,7 +81,7 @@ public class ApplyMojoTest extends AbstractTest {
 	@Test
 	void taintBar(RunMojo runMojo, ApplyMojo applyMojo) throws MojoExecutionException {
 		assertDoesNotThrow(runMojo::execute);
-		docker.exec("kubectl", "taint", "nodes", "k3s", "bar:NoSchedule");
+		exec("kubectl", "taint", "nodes", "k3s", "bar:NoSchedule");
 		var e = assertThrowsExactly(MojoExecutionException.class, applyMojo::execute, () -> "no exception");
 		assertEquals("Node has taints [bar] with effect NoSchedule", e.getMessage());
 		assertTrue(LoggerCapturer.getMessages().contains("ERROR io.kokuwa.maven.k3s.mojo.ApplyMojo - "

@@ -61,7 +61,7 @@ public class CopyMojoTest extends AbstractTest {
 		copyMojo.setCopyTarget(new File("/source"));
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(copyMojo::execute);
-		docker.exec("test", "-f", "/source/it/pom.xml");
+		exec("test", "-f", "/source/it/pom.xml");
 	}
 
 	@DisplayName("copy file")
@@ -71,6 +71,6 @@ public class CopyMojoTest extends AbstractTest {
 		copyMojo.setCopyTarget(new File("/tmp"));
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(copyMojo::execute);
-		docker.exec("test", "-f", "/tmp/pom.xml");
+		exec("test", "-f", "/tmp/pom.xml");
 	}
 }

@@ -47,7 +47,7 @@ public class RemoveMojoTest extends AbstractTest {
 		docker.createVolume();
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(removeMojo::execute);
-		assertFalse(docker.getVolume().isPresent());
+		assertFalse(docker.isVolumePresent());
 	}
 
 	@DisplayName("with container")
@@ -56,7 +56,7 @@ public class RemoveMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
-		assertTrue(docker.getVolume().isPresent());
+		assertTrue(docker.isVolumePresent());
 	}
 
 	@DisplayName("with container and cache")
@@ -66,6 +66,6 @@ public class RemoveMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
-		assertFalse(docker.getVolume().isPresent());
+		assertFalse(docker.isVolumePresent());
 	}
 }

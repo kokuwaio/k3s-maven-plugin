@@ -15,7 +15,6 @@ import java.util.function.BiConsumer;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
 import io.kokuwa.maven.k3s.util.Docker.Container;
@@ -32,19 +31,19 @@ public class DockerTest extends AbstractTest {
 	@Test
 	void volume() throws MojoExecutionException {
 
-		assertFalse(docker.getVolume().isPresent(), "volume found before testing");
+		assertFalse(docker.isVolumePresent(), "volume found before testing");
 		docker.removeVolume();
 
 		docker.createVolume();
-		assertTrue(docker.getVolume().isPresent(), "volume missing after creating");
+		assertTrue(docker.isVolumePresent(), "volume missing after creating");
 
 		docker.removeVolume();
-		assertFalse(docker.getVolume().isPresent(), "volume found after removing");
+		assertFalse(docker.isVolumePresent(), "volume found after removing");
 	}
 
 	@DisplayName("container handling")
 	@Test
-	void container(Logger log) throws MojoExecutionException {
+	void container() throws MojoExecutionException {
 
 		assertFalse(docker.getContainer().isPresent(), "container found before testing");
 		docker.removeContainer();
@@ -64,14 +63,14 @@ public class DockerTest extends AbstractTest {
 	@Test
 	void image() throws MojoExecutionException {
 
-		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found before testing");
+		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found before testing");
 		docker.removeImage(helloWorld());
 
 		docker.pullImage(helloWorld(), Duration.ofSeconds(30));
-		assertTrue(docker.getImage(helloWorld()).isPresent(), "image missing after pulling");
+		assertTrue(docker.findImage(helloWorld()).isPresent(), "image missing after pulling");
 
 		docker.removeImage(helloWorld());
-		assertFalse(docker.getImage(helloWorld()).isPresent(), "image found after removing");
+		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found after removing");
 	}
 
 	@DisplayName("normalizeImage()")
