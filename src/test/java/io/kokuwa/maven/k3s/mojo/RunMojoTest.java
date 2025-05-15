@@ -168,8 +168,8 @@ public class RunMojoTest extends AbstractTest {
 	void checkDnsSuccess(RunMojo runMojo) {
 		runMojo.setSkip(true);
 		assertDoesNotThrow(runMojo::execute);
-		assertEquals(
-				List.of("DEBUG DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
+		assertEquals(List.of("DEBUG io.kokuwa.maven.k3s.mojo.RunMojo - "
+				+ "DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
 				LoggerCapturer.getMessages());
 	}
 
@@ -179,8 +179,8 @@ public class RunMojoTest extends AbstractTest {
 		runMojo.setSkip(true);
 		runMojo.setDnsResolverDomain("nope.example.org");
 		assertDoesNotThrow(runMojo::execute);
-		assertEquals(
-				List.of("WARN DNS was unable to resolve nope.example.org. Custom domains may not work!"),
+		assertEquals(List.of("WARN io.kokuwa.maven.k3s.mojo.RunMojo - "
+				+ "DNS was unable to resolve nope.example.org. Custom domains may not work!"),
 				LoggerCapturer.getMessages());
 	}
 }

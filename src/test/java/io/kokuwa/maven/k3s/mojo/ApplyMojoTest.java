@@ -1,9 +1,12 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
@@ -67,10 +70,11 @@ public class ApplyMojoTest extends AbstractTest {
 		docker.exec("df", "--block-size=1MiB", "/");
 		docker.exec("kubectl", "wait", "--for=condition=DiskPressure", "node", "k3s");
 
-		assertThrowsExactly(MojoExecutionException.class, applyMojo::execute,
-				() -> "Node has taints [node.kubernetes.io/disk-pressure] with effect NoSchedule");
-		assertTrue(LoggerCapturer.getMessages()
-				.contains("ERROR Found node taints with effect NoSchedule: [node.kubernetes.io/disk-pressure]"));
+		var e = assertThrowsExactly(MojoExecutionException.class, applyMojo::execute, () -> "no exception");
+		assertEquals("Node has taints [node.kubernetes.io/disk-pressure] with effect NoSchedule", e.getMessage());
+		assertTrue(LoggerCapturer.getMessages().contains("ERROR io.kokuwa.maven.k3s.mojo.ApplyMojo - "
+				+ "Found node taints with effect NoSchedule: [node.kubernetes.io/disk-pressure]"),
+				"Log message not found: \n" + LoggerCapturer.getMessages().stream().collect(Collectors.joining("\n")));
 	}
 
 	@DisplayName("taint: bar")
@@ -78,8 +82,10 @@ public class ApplyMojoTest extends AbstractTest {
 	void taintBar(RunMojo runMojo, ApplyMojo applyMojo) throws MojoExecutionException {
 		assertDoesNotThrow(runMojo::execute);
 		docker.exec("kubectl", "taint", "nodes", "k3s", "bar:NoSchedule");
-		assertThrowsExactly(MojoExecutionException.class, applyMojo::execute,
-				() -> "Node has taints [bar] with effect NoSchedule");
-		assertTrue(LoggerCapturer.getMessages().contains("ERROR Found node taints with effect NoSchedule: [bar]"));
+		var e = assertThrowsExactly(MojoExecutionException.class, applyMojo::execute, () -> "no exception");
+		assertEquals("Node has taints [bar] with effect NoSchedule", e.getMessage());
+		assertTrue(LoggerCapturer.getMessages().contains("ERROR io.kokuwa.maven.k3s.mojo.ApplyMojo - "
+				+ "Found node taints with effect NoSchedule: [bar]"),
+				"Log message not found: \n" + LoggerCapturer.getMessages().stream().collect(Collectors.joining("\n")));
 	}
 }
