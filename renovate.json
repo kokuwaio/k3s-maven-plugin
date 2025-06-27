@@ -1,0 +1,16 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": ["renovate-config"],
+	"packageRules": [
+		{
+			"groupName": "org.apache.maven.plugin-tools",
+			"matchPackageNames": ["org.apache.maven.plugins:maven-plugin-plugin", "org.apache.maven.plugin-tools:maven-plugin-annotations"]
+		},{
+			"groupName": "org.slf4j",
+			"matchPackageNames": ["org.slf4j:**"]
+		},{
+			"matchPackageNames": ["io.kokuwa.maven:k3s-maven-plugin-it"],
+			"enabled": false
+		}
+	]
+}

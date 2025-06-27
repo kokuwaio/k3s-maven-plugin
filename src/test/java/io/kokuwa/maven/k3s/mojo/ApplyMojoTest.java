@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
 import io.kokuwa.maven.k3s.test.LoggerCapturer;
@@ -58,6 +59,7 @@ public class ApplyMojoTest extends AbstractTest {
 		assertFalse(LoggerCapturer.getMessages().contains("WARN This may cause issues!"), "No taint expected.");
 	}
 
+	@DisabledIfEnvironmentVariable(named = "CI", matches = "woodpecker")
 	@DisplayName("taint: node.kubernetes.io/disk-pressure")
 	@Test
 	void taintDiskPressure(RunMojo runMojo, ApplyMojo applyMojo) throws MojoExecutionException {

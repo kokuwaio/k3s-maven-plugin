@@ -1,0 +1,16 @@
+when:
+  instance: ci.kokuwa.io
+  repo: kokuwaio/k3s-maven-plugin
+  event: [manual, push]
+  branch: main
+  path: [.woodpecker/deploy.yaml, pom.xml, src/main/**]
+
+steps:
+
+  maven:
+    image: maven:3.9.10-eclipse-temurin-17
+    commands: mvn deploy --settings=.woodpecker/maven/settings.xml -Pdeploy -DskipTests -Dinvoker.skip
+    environment:
+      MAVEN_GPG_KEY: {from_secret: woodpecker_gpg_key}
+      SONATYPE_ORG_USERNAME: {from_secret: sonatype_org_username}
+      SONATYPE_ORG_PASSWORD: {from_secret: sonatype_org_password}

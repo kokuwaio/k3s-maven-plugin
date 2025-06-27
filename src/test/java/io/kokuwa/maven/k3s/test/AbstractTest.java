@@ -30,7 +30,8 @@ import io.kokuwa.maven.k3s.util.Docker;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public abstract class AbstractTest {
 
-	public Logger log = LoggerFactory.getLogger(getClass());
+	public final Logger log = LoggerFactory.getLogger(getClass());
+	public String host;
 	public Docker docker;
 
 	@BeforeEach
@@ -47,6 +48,7 @@ public abstract class AbstractTest {
 	}
 
 	void reset(Docker newDocker, RunMojo runMojo) {
+		this.host = System.getenv().getOrDefault("DOCKER_HOST_IP", "127.0.0.1");
 		this.docker = newDocker;
 		this.docker.getContainer().ifPresent(docker::remove);
 		this.docker.removeVolume();

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>@project.groupId@</groupId>
-		<artifactId>@project.artifactId@-it</artifactId>
+		<groupId>io.kokuwa.maven</groupId>
+		<artifactId>k3s-maven-plugin-it</artifactId>
 		<version>LOCAL-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>@project.artifactId@-it-cert-manager</artifactId>
+	<artifactId>k3s-maven-plugin-it-cert-manager</artifactId>
 
 	<build>
 		<plugins>
@@ -19,6 +20,7 @@
 					<helmVersion>3.11.1</helmVersion>
 					<chartDirectory>${project.basedir}/src/test/charts</chartDirectory>
 					<skipTemplate>false</skipTemplate>
+					<namespace>default</namespace>
 					<additionalArguments>--output-dir ${project.build.directory}/it/cert-manager/k3s</additionalArguments>
 				</configuration>
 				<executions>

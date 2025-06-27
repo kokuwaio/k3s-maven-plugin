@@ -1,70 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>@project.groupId@</groupId>
-	<artifactId>@project.artifactId@-it</artifactId>
+	<groupId>io.kokuwa.maven</groupId>
+	<artifactId>k3s-maven-plugin-it</artifactId>
 	<version>LOCAL-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
-
-		<!-- ===================================================================== -->
-		<!-- ============================== Build ================================ -->
-		<!-- ===================================================================== -->
-
-		<project.build.sourceEncoding>@project.build.sourceEncoding@</project.build.sourceEncoding>
-
-		<maven.compiler.release>@maven.compiler.release@</maven.compiler.release>
-		<maven.compiler.source>@maven.compiler.source@</maven.compiler.source>
-		<maven.compiler.target>@maven.compiler.target@</maven.compiler.target>
-		<maven.compiler.compilerArgument>@maven.compiler.compilerArgument@</maven.compiler.compilerArgument>
-		<maven.compiler.parameters>@maven.compiler.parameters</maven.compiler.parameters>
-		<maven.compiler.showDeprecation>@maven.compiler.showDeprecation</maven.compiler.showDeprecation>
-		<maven.compiler.showWarnings>@maven.compiler.showWarnings</maven.compiler.showWarnings>
-		<maven.compiler.failOnWarning>@maven.compiler.failOnWarning</maven.compiler.failOnWarning>
-
-		<!-- ===================================================================== -->
-		<!-- ============================= Libaries ============================== -->
-		<!-- ===================================================================== -->
-
-		<!-- plugins -->
-
-		<version.org.apache.maven.plugins.compiler>@version.org.apache.maven.plugins.compiler@</version.org.apache.maven.plugins.compiler>
-		<version.org.apache.maven.plugins.jar>@version.org.apache.maven.plugins.jar@</version.org.apache.maven.plugins.jar>
-		<version.org.apache.maven.plugins.resources>@version.org.apache.maven.plugins.resources@</version.org.apache.maven.plugins.resources>
-		<version.org.apache.maven.plugins.surefire>@version.org.apache.maven.plugins.surefire@</version.org.apache.maven.plugins.surefire>
-		<version.org.codehaus.mojo.tidy>@version.org.codehaus.mojo.tidy@</version.org.codehaus.mojo.tidy>
-		<version.com.google.cloud.jib>3.4.5</version.com.google.cloud.jib>
-		<version.io.kokuwa.maven.helm>6.15.0</version.io.kokuwa.maven.helm>
-		<version.io.kokuwa.maven.k3s>@project.version@</version.io.kokuwa.maven.k3s>
-
-		<!-- dependencies -->
-
-		<version.org.junit.jupiter>@version.org.junit.jupiter@</version.org.junit.jupiter>
-
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.outputTimestamp>@project.build.outputTimestamp@</project.build.outputTimestamp>
+		<maven.compiler.release>17</maven.compiler.release>
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-
-			<!-- test -->
-			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>${version.org.junit.jupiter}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 
 		<!-- test -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.13.2</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -76,70 +32,76 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.compiler}</version>
+					<version>3.14.0</version>
 					<configuration>
-						<compilerArgument>${maven.compiler.compilerArgument}</compilerArgument>
+						<showDeprecation>true</showDeprecation>
+						<showWarnings>true</showWarnings>
+						<failOnWarning>true</failOnWarning>
+						<compilerArgument>-Xlint:all,-processing,-options</compilerArgument>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.surefire}</version>
+					<version>3.5.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.jar}</version>
+					<version>3.4.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-resources-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.resources}</version>
+					<version>3.3.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.surefire}</version>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>tidy-maven-plugin</artifactId>
-					<version>${version.org.codehaus.mojo.tidy}</version>
+					<version>3.5.3</version>
 				</plugin>
 				<plugin>
 					<groupId>com.google.cloud.tools</groupId>
 					<artifactId>jib-maven-plugin</artifactId>
-					<version>${version.com.google.cloud.jib}</version>
+					<version>3.4.5</version>
 				</plugin>
 				<plugin>
 					<groupId>io.kokuwa.maven</groupId>
 					<artifactId>k3s-maven-plugin</artifactId>
-					<version>${version.io.kokuwa.maven.k3s}</version>
+					<version>@project.version@</version>
 					<configuration>
+						<clusterDns>10.53.0.10</clusterDns>
+						<clusterCidr>10.52.0.0/16</clusterCidr>
+						<serviceCidr>10.53.0.0/16</serviceCidr>
 						<failIfExists>false</failIfExists>
 						<replaceIfExists>true</replaceIfExists>
+						<disableCoredns>true</disableCoredns>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>io.kokuwa.maven</groupId>
 					<artifactId>helm-maven-plugin</artifactId>
-					<version>${version.io.kokuwa.maven.helm}</version>
+					<version>6.17.0</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
 
-			<!-- fail if any pom is dirty -->
+			<!-- run tests -->
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>tidy-maven-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
 				<executions>
 					<execution>
 						<goals>
-							<goal>check</goal>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<failIfNoTests>true</failIfNoTests>
+				</configuration>
 			</plugin>
 
 			<!-- disable jar/surefire -->
@@ -163,22 +125,19 @@
 					</execution>
 				</executions>
 			</plugin>
-
-			<!-- run tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-failsafe-plugin</artifactId>
+				<artifactId>maven-resources-plugin</artifactId>
 				<executions>
 					<execution>
-						<goals>
-							<goal>integration-test</goal>
-							<goal>verify</goal>
-						</goals>
+						<id>default-resources</id>
+						<phase />
+					</execution>
+					<execution>
+						<id>default-testResources</id>
+						<phase />
 					</execution>
 				</executions>
-				<configuration>
-					<failIfNoTests>true</failIfNoTests>
-				</configuration>
 			</plugin>
 
 		</plugins>

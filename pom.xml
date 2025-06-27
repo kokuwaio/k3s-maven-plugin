@@ -34,88 +34,34 @@
 	</developers>
 
 	<prerequisites>
-		<maven>${version.org.apache.maven.plugin.api}</maven>
+		<maven>3.2.5</maven>
 	</prerequisites>
 
 	<scm>
-		<url>https://github.com/kokuwaio/k3s-maven-plugin</url>
-		<connection>scm:git:https://github.com/kokuwaio/k3s-maven-plugin.git</connection>
-		<developerConnection>scm:git:https://github.com/kokuwaio/k3s-maven-plugin.git</developerConnection>
+		<url>https://git.kokuwa.io/keycloak/k3s-maven-plugin</url>
+		<connection>scm:git:https://git.kokuwa.io/keycloak/k3s-maven-plugin.git</connection>
+		<developerConnection>scm:git:https://git.kokuwa.io/keycloak/k3s-maven-plugin.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 	<issueManagement>
-		<system>github</system>
-		<url>https://github.com/kokuwaio/k3s-maven-plugin/issues</url>
+		<system>forgejo</system>
+		<url>https://git.kokuwa.io/keycloak/k3s-maven-plugin/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>github</system>
-		<url>https://github.com/kokuwaio/k3s-maven-plugin/actions</url>
+		<system>woodpecker</system>
+		<url>https://ci.kokuwa.io/repos/kokuwaio/k3s-maven-plugin</url>
 	</ciManagement>
 	<distributionManagement>
-		<repository>
-			<id>sonatype-nexus</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
 		<snapshotRepository>
-			<id>sonatype-nexus</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<id>sonatype.org</id>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	<properties>
-
-		<!-- ===================================================================== -->
-		<!-- ============================== Build ================================ -->
-		<!-- ===================================================================== -->
-
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.build.outputTimestamp>2025-05-15T07:52:00Z</project.build.outputTimestamp>
-
 		<maven.compiler.release>17</maven.compiler.release>
-		<maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
-		<maven.compiler.target>${maven.compiler.release}</maven.compiler.target>
-		<maven.compiler.compilerArgument>-Xlint:all,-processing</maven.compiler.compilerArgument>
-		<maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
-		<maven.compiler.showWarnings>true</maven.compiler.showWarnings>
-		<maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
-
-		<maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-		<invoker.streamLogs>true</invoker.streamLogs>
-		<invoker.streamLogsOnFailures>true</invoker.streamLogsOnFailures>
-
-		<impsort.removeUnused>true</impsort.removeUnused>
-		<impsort.groups>java.,javax.,jakarta.,org.</impsort.groups>
-		<formatter.configFile>${project.basedir}/src/eclipse/formatter.xml</formatter.configFile>
-
-		<!-- ===================================================================== -->
-		<!-- ============================= Versions ============================== -->
-		<!-- ===================================================================== -->
-
-		<version.org.apache.maven.plugin.api>3.2.5</version.org.apache.maven.plugin.api>
-		<version.org.apache.maven.plugins.compiler>3.14.0</version.org.apache.maven.plugins.compiler>
-		<version.org.apache.maven.plugins.deploy>3.1.4</version.org.apache.maven.plugins.deploy>
-		<version.org.apache.maven.plugins.gpg>3.2.7</version.org.apache.maven.plugins.gpg>
-		<version.org.apache.maven.plugins.install>3.1.4</version.org.apache.maven.plugins.install>
-		<version.org.apache.maven.plugins.invoker>3.9.0</version.org.apache.maven.plugins.invoker>
-		<version.org.apache.maven.plugins.javadoc>3.11.2</version.org.apache.maven.plugins.javadoc>
-		<version.org.apache.maven.plugins.jar>3.4.2</version.org.apache.maven.plugins.jar>
-		<version.org.apache.maven.plugins.plugin>3.15.1</version.org.apache.maven.plugins.plugin>
-		<version.org.apache.maven.plugins.release>3.1.1</version.org.apache.maven.plugins.release>
-		<version.org.apache.maven.plugins.resources>3.3.1</version.org.apache.maven.plugins.resources>
-		<version.org.apache.maven.plugins.site>3.21.0</version.org.apache.maven.plugins.site>
-		<version.org.apache.maven.plugins.source>3.3.1</version.org.apache.maven.plugins.source>
-		<version.org.apache.maven.plugins.surefire>3.5.3</version.org.apache.maven.plugins.surefire>
-		<version.org.codehaus.mojo.tidy>1.4.0</version.org.codehaus.mojo.tidy>
-		<version.org.codehaus.mojo.versions>2.18.0</version.org.codehaus.mojo.versions>
-		<version.org.sonatype.plugins.nexus-staging>1.7.0</version.org.sonatype.plugins.nexus-staging>
-		<version.net.revelc.code.formatter>2.26.0</version.net.revelc.code.formatter>
-		<version.net.revelc.code.impsort>1.12.0</version.net.revelc.code.impsort>
-
-		<version.org.junit.jupiter>5.12.2</version.org.junit.jupiter>
-		<version.org.slf4j>1.7.36</version.org.slf4j>
-		<version.com.fasterxml.jackson>2.19.0</version.com.fasterxml.jackson>
-		<version.com.github.docker.java>3.5.0</version.com.github.docker.java>
-
 	</properties>
 
 	<dependencies>
@@ -124,26 +70,21 @@
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-plugin-api</artifactId>
-			<version>${version.org.apache.maven.plugin.api}</version>
+			<version>${project.prerequisites.maven}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-annotations</artifactId>
-			<version>${version.org.apache.maven.plugins.plugin}</version>
+			<version>3.14.0</version>
 			<scope>provided</scope>
 		</dependency>
 
 		<!-- libraries -->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${version.com.fasterxml.jackson}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java-core</artifactId>
-			<version>${version.com.github.docker.java}</version>
+			<version>3.5.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.bouncycastle</groupId>
@@ -154,12 +95,12 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java-transport-zerodep</artifactId>
-			<version>${version.com.github.docker.java}</version>
+			<version>3.5.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>${version.org.slf4j}</version>
+			<version>1.7.36</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -167,13 +108,13 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>${version.org.junit.jupiter}</version>
+			<version>5.13.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
-			<version>${version.org.slf4j}</version>
+			<version>1.7.36</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -185,63 +126,67 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.compiler}</version>
+					<version>3.14.0</version>
 					<configuration>
-						<compilerArgument>${maven.compiler.compilerArgument}</compilerArgument>
+						<showDeprecation>true</showDeprecation>
+						<showWarnings>true</showWarnings>
+						<failOnWarning>true</failOnWarning>
+						<compilerArgument>-Xlint:all,-processing,-options</compilerArgument>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.deploy}</version>
+					<version>3.1.4</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-gpg-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.gpg}</version>
+					<version>3.2.7</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-install-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.install}</version>
+					<version>3.1.4</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-invoker-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.invoker}</version>
+					<version>3.9.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.jar}</version>
+					<version>3.4.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.javadoc}</version>
+					<version>3.11.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-release-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.release}</version>
+					<version>3.1.0</version>
 					<configuration>
-						<preparationGoals>clean verify</preparationGoals>
+						<preparationGoals>verify -Pcheck -DskipTests -Dinvoker.skip</preparationGoals>
 						<preparationProfiles>check</preparationProfiles>
+						<goals>deploy -DskipTests -Dinvoker.skip</goals>
 						<releaseProfiles>deploy,release</releaseProfiles>
 						<signTag>true</signTag>
-						<scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [ci skip]</scmReleaseCommitComment>
+						<scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [CI SKIP]</scmReleaseCommitComment>
 						<tagNameFormat>@{project.version}</tagNameFormat>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-resources-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.resources}</version>
+					<version>3.3.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-plugin-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.plugin}</version>
+					<version>3.14.0</version>
 					<configuration>
 						<extractors>java-annotations</extractors>
 					</configuration>
@@ -249,77 +194,54 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.site}</version>
+					<version>3.21.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-source-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.source}</version>
+					<version>3.3.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${version.org.apache.maven.plugins.surefire}</version>
+					<version>3.5.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>tidy-maven-plugin</artifactId>
-					<version>${version.org.codehaus.mojo.tidy}</version>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>versions-maven-plugin</artifactId>
-					<version>${version.org.codehaus.mojo.versions}</version>
-					<configuration>
-						<generateBackupPoms>false</generateBackupPoms>
-						<ignoredVersions>
-							<ignoredVersion>.*-(alpha|beta|rc|M)-?[0-9]+</ignoredVersion>
-						</ignoredVersions>
-						<ruleSet>
-							<rules>
-								<!-- maven api version is fixed -->
-								<rule>
-									<groupId>org.apache.maven</groupId>
-									<artifactId>maven-plugin-api</artifactId>
-									<ignoreVersions>
-										<ignoreVersion>
-											<type>regex</type>
-											<version>.*</version>
-										</ignoreVersion>
-									</ignoreVersions>
-								</rule>
-								<!-- maven provides 1.x -->
-								<rule>
-									<groupId>org.slf4j</groupId>
-									<artifactId>slf4j-api</artifactId>
-									<ignoreVersions>
-										<ignoreVersion>
-											<type>range</type>
-											<version>[2.0.0,)</version>
-										</ignoreVersion>
-									</ignoreVersions>
-								</rule>
-							</rules>
-						</ruleSet>
-					</configuration>
+					<version>1.4.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.sonatype.plugins</groupId>
 					<artifactId>nexus-staging-maven-plugin</artifactId>
-					<version>${version.org.sonatype.plugins.nexus-staging}</version>
+					<version>1.7.0</version>
 				</plugin>
 				<plugin>
 					<groupId>net.revelc.code.formatter</groupId>
 					<artifactId>formatter-maven-plugin</artifactId>
-					<version>${version.net.revelc.code.formatter}</version>
+					<version>2.27.0</version>
 					<configuration>
-						<configFile>${formatter.configFile}</configFile>
+						<configFile>${project.basedir}/src/eclipse/formatter.xml</configFile>
+						<directories>
+							<directory>${project.basedir}/src/main/java</directory>
+							<directory>${project.basedir}/src/test/java</directory>
+							<directory>${project.basedir}/src/it</directory>
+						</directories>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>net.revelc.code</groupId>
 					<artifactId>impsort-maven-plugin</artifactId>
-					<version>${version.net.revelc.code.impsort}</version>
+					<version>1.12.0</version>
+					<configuration>
+						<removeUnused>true</removeUnused>
+						<groups>java.,javax.,jakarta.,org.</groups>
+						<directories>
+							<directory>${project.basedir}/src/main/java</directory>
+							<directory>${project.basedir}/src/test/java</directory>
+							<directory>${project.basedir}/src/it</directory>
+						</directories>
+					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -337,7 +259,11 @@
 							<goal>verify</goal>
 						</goals>
 						<configuration>
+							<cloneProjectsTo>${project.build.directory}/its</cloneProjectsTo>
+							<mergeUserSettings>true</mergeUserSettings>
 							<goals>verify</goals>
+							<streamLogs>false</streamLogs>
+							<streamLogsOnFailures>true</streamLogsOnFailures>
 						</configuration>
 					</execution>
 				</executions>
@@ -386,6 +312,9 @@
 					<name>!env.CI</name>
 				</property>
 			</activation>
+			<properties>
+				 <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -477,35 +406,17 @@
 		</profile>
 		<profile>
 			<id>deploy</id>
-			<activation>
-				<property>
-					<name>env.CI</name>
-				</property>
-			</activation>
 			<build>
 				<plugins>
 
-					<!-- add help -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-plugin-plugin</artifactId>
-						<executions>
-							<execution>
-								<goals>
-									<goal>helpmojo</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<!-- add source/javadoc -->
+					<!-- add source/javadoc for downstream projects -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
 						<executions>
 							<execution>
 								<goals>
-									<goal>jar-no-fork</goal>
+									<goal>jar</goal>
 								</goals>
 							</execution>
 						</executions>
@@ -522,7 +433,7 @@
 						</executions>
 					</plugin>
 
-					<!-- sign documents before upload -->
+					<!-- sign before upload -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
@@ -531,6 +442,9 @@
 								<goals>
 									<goal>sign</goal>
 								</goals>
+								<configuration>
+									<signer>bc</signer>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
@@ -542,19 +456,16 @@
 			<id>release</id>
 			<build>
 				<plugins>
-
-					<!-- autoclose sonatype nexus repo -->
 					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
 						<extensions>true</extensions>
 						<configuration>
-							<serverId>${project.distributionManagement.repository.id}</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+							<publishingServerId>sonatype.org</publishingServerId>
+							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
 						</configuration>
 					</plugin>
-
 				</plugins>
 			</build>
 		</profile>

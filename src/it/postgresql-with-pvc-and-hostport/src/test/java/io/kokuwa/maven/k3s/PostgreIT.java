@@ -13,7 +13,7 @@ public class PostgreIT {
 	@Test
 	void test() throws SQLException {
 
-		var url = "jdbc:postgresql://localhost:5432/data";
+		var url = "jdbc:postgresql://" + System.getenv().getOrDefault("DOCKER_HOST_IP", "127.0.0.1") + ":5432/data";
 		var username = "data_owner";
 		var password = "changeMe";
 		var connection = DriverManager.getConnection(url, username, password);

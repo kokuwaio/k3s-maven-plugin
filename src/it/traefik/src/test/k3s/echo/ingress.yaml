@@ -4,7 +4,7 @@ metadata:
   name: echo
 spec:
   rules:
-    - host: echo.127.0.0.1.nip.io
+    - host: echo.${k3s.ip}.nip.io
       http:
         paths:
           - path: /

@@ -4,7 +4,7 @@ metadata:
   name: traefik
 spec:
   rules:
-    - host: traefik.127.0.0.1.nip.io
+    - host: traefik.${k3s.ip}.nip.io
       http:
         paths:
           - path: /

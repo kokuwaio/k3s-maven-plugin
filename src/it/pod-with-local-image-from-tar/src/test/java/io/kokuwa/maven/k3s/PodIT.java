@@ -17,7 +17,8 @@ public class PodIT {
 	void test() {
 		var response = assertDoesNotThrow(() -> HttpClient.newHttpClient().send(HttpRequest.newBuilder()
 				.GET()
-				.uri(URI.create("http://localhost:8080/health"))
+				.uri(URI.create(
+						"http://" + System.getenv().getOrDefault("DOCKER_HOST_IP", "127.0.0.1") + ":8080/health"))
 				.version(Version.HTTP_1_1)
 				.build(), HttpResponse.BodyHandlers.ofString()));
 		assertEquals(200, response.statusCode(), "status");

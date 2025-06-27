@@ -125,6 +125,7 @@ public class RunMojoTest extends AbstractTest {
 		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerBefore = docker.getContainer().orElseThrow();
 		docker.kill(containerBefore);
+		assertEquals("exited", docker.getContainer().orElseThrow().getState());
 		assertDoesNotThrow(runMojo::execute);
 		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
 		var containerAfter = docker.getContainer().orElseThrow();
@@ -165,9 +166,8 @@ public class RunMojoTest extends AbstractTest {
 	void checkDnsSuccess(RunMojo runMojo) {
 		runMojo.setSkip(true);
 		assertDoesNotThrow(runMojo::execute);
-		assertEquals(List.of("DEBUG io.kokuwa.maven.k3s.mojo.RunMojo - "
-				+ "DNS resolved k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."),
-				LoggerCapturer.getMessages());
+		assertEquals(List.of("DEBUG io.kokuwa.maven.k3s.mojo.RunMojo - DNS resolved "
+				+ "k3s-maven-plugin.127.0.0.1.nip.io to 127.0.0.1."), LoggerCapturer.getMessages());
 	}
 
 	@DisplayName("dns: failure")

@@ -10,6 +10,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -40,10 +41,12 @@ public class LifecycleTest extends AbstractTest {
 		assertDoesNotThrow(imageMojo::execute);
 		assertDoesNotThrow(applyMojo::execute);
 
+		log.info("Request: http://" + host + ":8080");
 		var response = assertDoesNotThrow(() -> HttpClient.newHttpClient().send(HttpRequest.newBuilder()
 				.GET()
-				.uri(URI.create("http://localhost:8080"))
+				.uri(URI.create("http://" + host + ":8080"))
 				.version(Version.HTTP_1_1)
+				.timeout(Duration.ofSeconds(2))
 				.build(), HttpResponse.BodyHandlers.ofString()));
 		assertEquals(200, response.statusCode(), "status");
 		assertTrue(response.body().startsWith("Request served by echo"), "body");

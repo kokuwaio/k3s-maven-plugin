@@ -1,17 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>@project.groupId@</groupId>
-		<artifactId>@project.artifactId@-it</artifactId>
+		<groupId>io.kokuwa.maven</groupId>
+		<artifactId>k3s-maven-plugin-it</artifactId>
 		<version>LOCAL-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>@project.artifactId@-it-traefik</artifactId>
+	<artifactId>k3s-maven-plugin-it-traefik</artifactId>
+
+	<properties>
+		<k3s.ip>127.0.0.1</k3s.ip>
+		<k3s.manifests>${project.build.directory}/k3s</k3s.manifests>
+	</properties>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>k3s</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/test/k3s</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+							<outputDirectory>${project.build.directory}/k3s</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>io.kokuwa.maven</groupId>
 				<artifactId>k3s-maven-plugin</artifactId>
@@ -32,4 +60,18 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>ip</id>
+			<activation>
+				<property>
+					<name>env.DOCKER_HOST_IP</name>
+				</property>
+			</activation>
+			<properties>
+				<k3s.ip>${env.DOCKER_HOST_IP}</k3s.ip>
+			</properties>
+		</profile>
+	</profiles>
 </project>

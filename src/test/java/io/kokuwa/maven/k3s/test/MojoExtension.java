@@ -89,11 +89,16 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			mojo.setContainerName(containerName);
 			mojo.setVolumeName(volumeName);
 
-			if (mojo instanceof RunMojo) {
-				((RunMojo) mojo).setDisableCoredns(true);
-				if (System.getenv("CI") == null) {
-					((RunMojo) mojo).setRegistries(new File("src/it/k3s-registries.yaml"));
-					((RunMojo) mojo).setDisableDefaultRegistryEndpoint(true);
+			if (mojo instanceof RunMojo runMojo) {
+				runMojo.setDisableCoredns(true);
+				runMojo.setDisableServicelb(true);
+				if (System.getenv("CI") != null) {
+					runMojo.setRegistries(new File(".woodpecker/maven/registries.yaml"));
+					runMojo.setDisableDefaultRegistryEndpoint(true);
+					runMojo.setNodeTimeout(300);
+					runMojo.setClusterDns("10.53.0.10");
+					runMojo.setClusterCidr("10.52.0.0/16");
+					runMojo.setServiceCidr("10.53.0.0/16");
 				}
 			}
 

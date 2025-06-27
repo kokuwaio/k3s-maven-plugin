@@ -125,8 +125,7 @@ public class Docker {
 		try {
 			FileUtils.copyInputStreamToFile(client.saveImageCmd(image).exec(), target.toFile());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			throw new MojoExecutionException("");
+			throw new MojoExecutionException("Failed to write image to file", e);
 		}
 	}
 
@@ -198,9 +197,10 @@ public class Docker {
 		log.debug("Container {} and name {} started", container.getId(), container.getNames()[0]);
 	}
 
-	public void kill(Container container) {
-		client.killContainerCmd(container.getId()).exec();
+	public void kill(Container container) throws MojoExecutionException {
+		client.killContainerCmd(container.getId()).withSignal("SIGKILL").exec();
 		log.debug("Container {} and name {} stopped", container.getId(), container.getNames()[0]);
+		Await.await(log, "wait to kill container").until(() -> getContainer().get().getState().equals("exited"));
 	}
 
 	public boolean isRunning(Container container) {
