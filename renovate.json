@@ -1,6 +1,6 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": ["renovate-config"],
+	"extends": ["kokuwaio/renovate-config"],
 	"packageRules": [
 		{
 			"groupName": "org.apache.maven.plugin-tools",
