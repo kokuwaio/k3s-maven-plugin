@@ -12,12 +12,12 @@ services:
 steps:
 
   test:
-    image: maven:3.9.10-eclipse-temurin-17
+    image: maven:3.9.11-eclipse-temurin-17
     commands: DOCKER_HOST_IP=$(getent hosts dockerd|awk '{print $1}') mvn verify --settings=.woodpecker/maven/settings.xml -Dsurefire.skipAfterFailureCount=1
 
   errors:
     depends_on: [test]
-    image: maven:3.9.10-eclipse-temurin-17
+    image: maven:3.9.11-eclipse-temurin-17
     commands: find target/surefire-reports -name '*.xml' ! -exec grep -q -E 'errors="0" skipped="[0-9]+" failures="0"' {} \; -print | sed -e's#target/surefire-reports/TEST-##' -e's/.xml//' | xargs -i -d'\n' sh -c 'echo "\nOutput of failed test {}:\n" && cat target/surefire-reports/TEST-{}.xml'
     when:
       status: failure
