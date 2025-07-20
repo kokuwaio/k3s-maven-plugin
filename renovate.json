@@ -9,7 +9,12 @@
 			"groupName": "org.slf4j",
 			"matchPackageNames": ["org.slf4j:**"]
 		},{
-			"matchPackageNames": ["io.kokuwa.maven:k3s-maven-plugin-it"],
+			"groupName": "org.slf4j",
+			"matchPackageNames": ["org.slf4j:**"],
+			"matchUpdateTypes": ["major"]			,
+			"enabled": false
+		},{
+			"matchPackageNames": ["cert-manager", "io.kokuwa.maven:k3s-maven-plugin-it"],
 			"enabled": false
 		}
 	]
