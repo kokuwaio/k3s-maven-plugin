@@ -3,6 +3,9 @@ package io.kokuwa.maven.k3s.test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -31,6 +34,7 @@ import io.kokuwa.maven.k3s.util.Docker;
 public abstract class AbstractTest {
 
 	public final Logger log = LoggerFactory.getLogger(getClass());
+	public final Path kubeconfig = Paths.get("target/k3s.yaml");
 	public String host;
 	public Docker docker;
 
@@ -53,12 +57,13 @@ public abstract class AbstractTest {
 		this.docker.getContainer().ifPresent(docker::remove);
 		this.docker.removeVolume();
 		this.docker.removeImage(helloWorld());
+		assertDoesNotThrow(() -> Files.deleteIfExists(kubeconfig));
 		assertDoesNotThrow(() -> runMojo.getMarker().consumeStarted());
 		LoggerCapturer.clear();
 	}
 
 	public static String helloWorld() {
-		return "hello-world:linux";
+		return "hello-world:linux@sha256:a77ecd852b17bfaee6708208960645d20fc9e6d0eec12353f8eb0e7b94bb647a";
 	}
 
 	public List<String> exec(String... command) {

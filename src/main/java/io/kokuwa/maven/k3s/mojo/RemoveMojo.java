@@ -1,5 +1,10 @@
 package io.kokuwa.maven.k3s.mojo;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -30,6 +35,14 @@ public class RemoveMojo extends K3sMojo {
 	@Parameter(property = "k3s.skipRm", defaultValue = "false")
 	private boolean skipRm;
 
+	/**
+	 * Path where kubeconfig.yaml was be placed on host.
+	 *
+	 * @since 2.0.1
+	 */
+	@Parameter(property = "k3s.kubeconfig", defaultValue = "${project.build.directory}/k3s.yaml")
+	private Path kubeconfig;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
@@ -38,6 +51,11 @@ public class RemoveMojo extends K3sMojo {
 		}
 
 		getDocker().getContainer().ifPresent(getDocker()::remove);
+		try {
+			Files.deleteIfExists(kubeconfig);
+		} catch (IOException e) {
+			log.warn("Failed to delete {}", kubeconfig);
+		}
 		if (includeCache) {
 			getDocker().removeVolume();
 			log.info("Deleted cache volume.");
@@ -45,6 +63,10 @@ public class RemoveMojo extends K3sMojo {
 	}
 
 	// setter
+
+	public void setKubeconfig(File kubeconfig) {
+		this.kubeconfig = kubeconfig.toPath().toAbsolutePath();
+	}
 
 	public void setIncludeCache(boolean includeCache) {
 		this.includeCache = includeCache;

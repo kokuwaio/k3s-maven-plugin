@@ -1,10 +1,12 @@
 package io.kokuwa.maven.k3s.mojo;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -299,7 +301,14 @@ public class RunMojo extends K3sMojo {
 			getMarker().writeStarted();
 		}
 
-		getDocker().copyFromContainer(container, "/etc/rancher/k3s/k3s.yaml", kubeconfig);
+		getDocker().copyFromContainer(container, "/etc/rancher/k3s/k3s.yaml", kubeconfig.getParent());
+		if (!"k3s.yaml".equals(kubeconfig.getFileName().toString())) {
+			try {
+				Files.move(kubeconfig.getParent().resolve("k3s.yaml"), kubeconfig, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				throw new MojoExecutionException("Failed to write kubeconfig.", e);
+			}
+		}
 		log.info("k3s ready: KUBECONFIG={} kubectl get all --all-namespaces", kubeconfig);
 	}
 

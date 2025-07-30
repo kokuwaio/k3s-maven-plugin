@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -136,8 +138,10 @@ public class RunMojoTest extends AbstractTest {
 	@Test
 	void withRegistries(RunMojo runMojo) throws MojoExecutionException {
 		runMojo.setRegistries(new File("src/test/resources/registries.yaml"));
+		assertFalse(Files.exists(Paths.get("target/k3s.yaml")), "k3s.yaml not found");
 		assertDoesNotThrow(runMojo::execute);
 		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
+		assertTrue(Files.exists(Paths.get("target/k3s.yaml")), "k3s.yaml not found");
 		docker.waitForLog(docker.getContainer().get(), Await.await(log, "registries.yaml used"), s -> s.stream()
 				.anyMatch(l -> l.contains("Using private registry config file at /etc/rancher/k3s/registries.yaml")));
 	}

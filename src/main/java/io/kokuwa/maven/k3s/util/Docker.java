@@ -1,7 +1,9 @@
 package io.kokuwa.maven.k3s.util;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.slf4j.Logger;
@@ -224,9 +228,19 @@ public class Docker {
 
 	public void copyFromContainer(Container container, String source, Path destination) throws MojoExecutionException {
 		log.debug("Copy from container {} to host {}", source, destination);
-		client.copyArchiveFromContainerCmd(container.getId(), source)
-				.withHostPath(destination.toString())
-				.exec();
+		try (var is = new TarArchiveInputStream(client.copyArchiveFromContainerCmd(container.getId(), source).exec())) {
+			ArchiveEntry entry = null;
+			while ((entry = is.getNextEntry()) != null) {
+				var extractTo = destination.resolve(entry.getName());
+				if (entry.isDirectory()) {
+					Files.createDirectories(extractTo);
+				} else {
+					Files.copy(is, extractTo, StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+		} catch (IOException e) {
+			throw new MojoExecutionException("Failed to copy file " + source + " to " + destination, e);
+		}
 	}
 
 	public void copyToContainer(Container container, Path source, String destination) throws MojoExecutionException {

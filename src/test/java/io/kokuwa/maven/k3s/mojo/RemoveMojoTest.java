@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,7 @@ public class RemoveMojoTest extends AbstractTest {
 	@Test
 	void withoutContainer(RemoveMojo removeMojo) {
 		assertDoesNotThrow(removeMojo::execute);
+		assertFalse(Files.exists(kubeconfig), "kubeconfig found");
 	}
 
 	@DisplayName("without container but present cache")
@@ -48,24 +52,32 @@ public class RemoveMojoTest extends AbstractTest {
 		removeMojo.setIncludeCache(true);
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.isVolumePresent());
+		assertFalse(Files.exists(kubeconfig), "kubeconfig found");
 	}
 
 	@DisplayName("with container")
 	@Test
 	void withContainer(RunMojo runMojo, RemoveMojo removeMojo) throws MojoExecutionException {
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(Files.exists(kubeconfig), "kubeconfig not found");
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
 		assertTrue(docker.isVolumePresent());
+		assertFalse(Files.exists(kubeconfig), "kubeconfig found");
 	}
 
 	@DisplayName("with container and cache")
 	@Test
 	void withContainerAndCache(RunMojo runMojo, RemoveMojo removeMojo) throws MojoExecutionException {
+		var k8s = Paths.get("target/k8s.yaml");
 		removeMojo.setIncludeCache(true);
+		removeMojo.setKubeconfig(k8s.toFile());
+		runMojo.setKubeconfig(k8s.toFile());
 		assertDoesNotThrow(runMojo::execute);
+		assertTrue(Files.exists(k8s), "kubeconfig not found");
 		assertDoesNotThrow(removeMojo::execute);
 		assertFalse(docker.getContainer().isPresent());
 		assertFalse(docker.isVolumePresent());
+		assertFalse(Files.exists(k8s), "kubeconfig found");
 	}
 }
