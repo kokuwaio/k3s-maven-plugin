@@ -11,8 +11,11 @@
 		},{
 			"groupName": "org.slf4j",
 			"matchPackageNames": ["org.slf4j:**"],
-			"matchUpdateTypes": ["major"]			,
+			"matchUpdateTypes": ["major"],
 			"enabled": false
+		},{
+			"groupName": "com.github.docker-java",
+			"matchPackageNames": ["com.github.docker-java:**"]
 		},{
 			"matchPackageNames": ["cert-manager", "io.kokuwa.maven:k3s-maven-plugin-it"],
 			"enabled": false
