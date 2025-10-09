@@ -98,6 +98,8 @@ public class Docker {
 			newImageName = "docker.io/library/" + newImageName;
 		} else if (!image.substring(0, slashIndex).contains(".")) {
 			newImageName = "docker.io/" + newImageName;
+		} else if (image.startsWith("docker.io/") && image.indexOf('/', 10) == -1) {
+			newImageName = newImageName.replace("docker.io/", "docker.io/library/");
 		}
 
 		log.trace("Normalized {} to {}", image, newImageName);

@@ -82,6 +82,11 @@ public class DockerTest extends AbstractTest {
 		assertImage.accept("docker.io/library/hello:0.1.23", "hello:0.1.23");
 		assertImage.accept("docker.io/library/hello@sha256:XYZ", "hello@sha256:XYZ");
 
+		assertImage.accept("docker.io/library/world:latest", "docker.io/world");
+		assertImage.accept("docker.io/library/world:latest", "docker.io/world:latest");
+		assertImage.accept("docker.io/library/world:0.1.23", "docker.io/world:0.1.23");
+		assertImage.accept("docker.io/library/world@sha256:XYZ", "docker.io/world@sha256:XYZ");
+
 		assertImage.accept("docker.io/hello/world:latest", "hello/world");
 		assertImage.accept("docker.io/hello/world:latest", "hello/world:latest");
 		assertImage.accept("docker.io/hello/world:0.1.23", "hello/world:0.1.23");
