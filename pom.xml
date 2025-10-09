@@ -9,7 +9,7 @@
 
 	<name>k3s Maven Plugin</name>
 	<description>Maven Plugin to start k3s for test purposes</description>
-	<url>https://github.com/kokuwaio/k3s-maven-plugin</url>
+	<url>https://git.kokuwa.io/kokuwaio/k3s-maven-plugin</url>
 	<inceptionYear>2022</inceptionYear>
 	<organization>
 		<name>Kokuwa.io</name>
