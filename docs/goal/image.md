@@ -10,4 +10,3 @@ Import images into k3s containerd.
 | `dockerPullAlways` | `k3s.dockerPullAlways` | Always pull docker images or only if not present. | false |
 | `pullTimeout` | `k3s.pullTimeout` | Timout for `ctr image pull` or `docker pull` in seconds. | 1200 |
 | `skipImage` | `k3s.skipImage` | Skip image handling. | false |
-| `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |

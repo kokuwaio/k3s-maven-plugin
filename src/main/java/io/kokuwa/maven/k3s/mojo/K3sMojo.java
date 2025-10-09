@@ -20,14 +20,6 @@ import io.kokuwa.maven.k3s.util.Marker;
 public abstract class K3sMojo extends AbstractMojo {
 
 	/**
-	 * Enable debugging of docker and k3s logs.
-	 *
-	 * @since 1.0.0
-	 */
-	@Parameter(property = "k3s.debug", defaultValue = "false")
-	private boolean debug;
-
-	/**
 	 * Skip plugin.
 	 *
 	 * @since 0.1.0
@@ -73,10 +65,6 @@ public abstract class K3sMojo extends AbstractMojo {
 
 	public void setMarker(File directory) {
 		this.marker = new Marker(directory);
-	}
-
-	public void setDebug(boolean debug) {
-		this.debug = debug;
 	}
 
 	public void setSkip(boolean skip) {

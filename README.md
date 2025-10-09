@@ -108,7 +108,7 @@ mvn k3s:run k3s:apply \
   -Dk3s.portBindings=8080:8080 \
   -Dk3s.manifests=src/it/traefik/src/test/k3s \
   -Dk3s.kustomize'
-  -Dk3s.debug
+  -Dorg.slf4j.simpleLogger.log.io.kokuwa=trace
 ```
 
 Now you can access this urls:

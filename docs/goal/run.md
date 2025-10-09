@@ -28,4 +28,3 @@ Start and run k3s container.
 | `registries` | `k3s.registries` | Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml". | `null` |
 | `disableDefaultRegistryEndpoint` | `k3s.disableDefaultRegistryEndpoint` | Disables containerd's fallback default registry endpoint when a mirror is configured for that registry. | false |
 | `skipRun` | `skipRun` | Skip running of k3s. | false |
-| `debug` | `k3s.debug` | Stream logs of docker and kubectl. | false |
