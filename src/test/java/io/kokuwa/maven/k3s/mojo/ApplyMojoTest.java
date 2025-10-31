@@ -91,4 +91,12 @@ public class ApplyMojoTest extends AbstractTest {
 				+ "Found node taints with effect NoSchedule: [bar]"),
 				"Log message not found: \n" + LoggerCapturer.getMessages().stream().collect(Collectors.joining("\n")));
 	}
+
+	@DisplayName("with statefulset an OnDelete UpdateStrategy")
+	@Test
+	void withStatefulSetOnDelete(RunMojo runMojo, ApplyMojo applyMojo) {
+		applyMojo.setSubdir("statefulsetOnDelete");
+		assertDoesNotThrow(runMojo::execute);
+		assertDoesNotThrow(applyMojo::execute);
+	}
 }
