@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java-core</artifactId>
-			<version>3.6.0</version>
+			<version>3.7.0</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.bouncycastle</groupId>
@@ -95,7 +95,7 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java-transport-zerodep</artifactId>
-			<version>3.6.0</version>
+			<version>3.7.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
