@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -187,13 +188,17 @@ public class ApplyMojo extends K3sMojo {
 
 	private Stream<Entry<String, Callable<Boolean>>> waitFor(Container container, Entry<String, List<String>> entry) {
 		try {
-
 			var kind = entry.getKey();
+			var columns = ":.metadata.namespace,:.metadata.name";
+			if ("statefulset".equals(kind)) {
+				columns += ",:.updateStrategy.type";
+			}
+
 			var resources = getDocker()
 					.exec(container, "kubectl", "get", kind,
 							"--all-namespaces",
 							"--no-headers",
-							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
+							"--output=custom-columns=" + columns)
 					.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toList());
 
 			if ("pod".equals(kind)) {
@@ -205,31 +210,75 @@ public class ApplyMojo extends K3sMojo {
 			}
 
 			return resources.stream().map(resource -> {
-				var namespace = resource[0];
-				var name = resource[1];
-				var tmp = new ArrayList<>(entry.getValue());
-				tmp.add(kind);
-				tmp.add(name);
-				tmp.add("--namespace=" + namespace);
-				tmp.add("--timeout=" + timeout.getSeconds() + "s");
-				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
-				return Map.entry(representation, (Callable<Boolean>) () -> {
-					try {
-						log.debug("{} {} ... waiting", kind, representation);
-						getDocker().exec(container, timeout.plusSeconds(10), tmp.toArray(new String[tmp.size()]));
-						log.info("{} {} ... ready", kind, representation);
-						return true;
-					} catch (MojoExecutionException e) {
-						getDocker().exec(container, "kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind,
-								name);
-						return false;
-					}
-				});
+                var namespace = resource[0];
+                var name = resource[1];
+                var representation = "default".equals(namespace) ? name : namespace + "/" + name;
+                if (isStatefulSetWithOnDeleteUpdateStrategy(kind, resource)) {
+                    return Map.entry(representation,
+                            createReplicaCountReachedRolloutCheck(container, kind, name, namespace, representation));
+                } else {
+					return Map.entry(representation,
+							createCustomCommandRolloutCheck(container, entry.getValue(), kind, name, namespace,
+									representation));
+				}
 			});
-
 		} catch (MojoExecutionException e) {
-			return Stream.of(Map.entry("exception", () -> false));
-		}
+            return Stream.of(Map.entry("exception", () -> false));
+        }
+    }
+
+    private boolean isStatefulSetWithOnDeleteUpdateStrategy(String kind, String[] collectedColumns) {
+        return "statefulset".equals(kind) && collectedColumns.length == 3 && "OnDelete".equals(collectedColumns[2]);
+    }
+
+    private Callable<Boolean> createCustomCommandRolloutCheck(Container container,
+                                                              List<String> taskCommand, String kind, String name, String namespace, String representation) {
+		var tmp = new ArrayList<>(taskCommand);
+		tmp.add(kind);
+		tmp.add(name);
+		tmp.add("--namespace=" + namespace);
+		tmp.add("--timeout=" + timeout.getSeconds() + "s");
+		return (Callable<Boolean>) () -> {
+			try {
+				log.debug("{} {} ... waiting", kind, representation);
+				getDocker().exec(container, timeout.plusSeconds(10), tmp.toArray(new String[tmp.size()]));
+				log.info("{} {} ... ready", kind, representation);
+				return true;
+			} catch (MojoExecutionException e) {
+				getDocker().exec(container, "kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind,
+						name);
+				return false;
+			}
+		};
+	}
+
+    private Callable<Boolean> createReplicaCountReachedRolloutCheck(Container container, String kind,
+                                                                    String name, String namespace, String representation) {
+        var propertiesToCompare = List.of("{.status.replicas}", "{.status.readyReplicas}");
+
+        List<String[]> commands = propertiesToCompare
+                .stream()
+                .map(property -> List
+                        .of("kubectl", kind, name, "--namespace=" + namespace,
+								"--timeout=" + timeout.getSeconds() + "s", "-o jsonpath='" + property + "'"))
+				.map(list -> list.toArray(new String[list.size()]))
+				.toList();
+
+		return (Callable<Boolean>) () -> {
+			try {
+				log.debug("{} {} ... waiting", kind, representation);
+				var responses = new HashSet<String>();
+				for (String[] command : commands) {
+					responses.add(String.join("", getDocker().exec(container, timeout.plusSeconds(10), command)));
+				}
+				log.info("{} {} ... ready", kind, representation);
+				return responses.size() == 1;
+			} catch (MojoExecutionException e) {
+				getDocker().exec(container, "kubectl", "get", "--output=yaml", "--namespace=" + namespace, kind,
+						name);
+				return false;
+			}
+		};
 	}
 
 	// setter
