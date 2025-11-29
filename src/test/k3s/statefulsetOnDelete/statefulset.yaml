@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: echo
+spec:
+  serviceName: echo
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echo
+    spec:
+      containers:
+        - name: echo
+          image: jmalloc/echo-server:0.3.1
+          ports:
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            periodSeconds: 1
+            httpGet:
+              path: /
+              port: http
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            readOnlyRootFilesystem: true
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 0
+  updateStrategy:
+    type: OnDelete
