@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: echo-statefulset
+  name: echo-statefulset-ondelete
 spec:
-  serviceName: echo-statefulset
+  serviceName: echo-statefulset-ondelete
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: echo-statefulset
+      app.kubernetes.io/name: echo-statefulset-ondelete
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: echo-statefulset
+        app.kubernetes.io/name: echo-statefulset-ondelete
     spec:
       containers:
         - name: echo
@@ -30,3 +30,5 @@ spec:
             readOnlyRootFilesystem: true
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 0
+  updateStrategy:
+    type: OnDelete

@@ -5,9 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -15,7 +17,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -123,17 +124,11 @@ public class ApplyMojo extends K3sMojo {
 
 		// wait for stuff to be ready
 
-		var tasks = Map
-				.of(
-						"statefulset", List.of("kubectl", "rollout", "status"),
-						"deployment", List.of("kubectl", "rollout", "status"),
-						"job", List.of("kubectl", "wait", "--for=condition=complete"),
-						"pod", List.of("kubectl", "wait", "--for=condition=ready"))
-				.entrySet().stream().parallel().flatMap(e -> waitFor(container, e)).collect(Collectors.toSet());
 		try {
 			var success = true;
 			var pool = Executors.newWorkStealingPool();
-			var futures = tasks.stream().collect(Collectors.toMap(Entry::getKey, e -> pool.submit(e.getValue())));
+			var futures = waitFor(container).stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> pool.submit(e.getValue())));
 			var missing = new AtomicReference<>(futures.keySet().stream().sorted().toList());
 			pool.submit(() -> {
 				while (!futures.values().stream().allMatch(Future::isDone)) {
@@ -185,17 +180,19 @@ public class ApplyMojo extends K3sMojo {
 		return getDocker().execWithoutVerify(container, timeout, command.toArray(new String[command.size()]));
 	}
 
-	private Stream<Entry<String, Callable<Boolean>>> waitFor(Container container, Entry<String, List<String>> entry) {
-		try {
+	private Set<Entry<String, Callable<Boolean>>> waitFor(Container container) throws MojoExecutionException {
+		var calls = new HashSet<Entry<String, Callable<Boolean>>>();
+		for (var kind : List.of("statefulset", "deployment", "job", "pod")) {
 
-			var kind = entry.getKey();
+			// get resources to wait for
+
 			var resources = getDocker()
 					.exec(container, "kubectl", "get", kind,
 							"--all-namespaces",
 							"--no-headers",
-							"--output=custom-columns=:.metadata.namespace,:.metadata.name")
-					.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toList());
-
+							"--output=custom-columns=:.metadata.namespace,:.metadata.name"
+									+ ("statefulset".equals(kind) ? ",:.spec.updateStrategy.type" : ""))
+					.stream().map(resource -> resource.split("\\s+")).collect(Collectors.toSet());
 			if ("pod".equals(kind)) {
 				// remove pods from local storage provider
 				resources.removeIf(r -> "kube-system".equals(r[0]) && r[1].startsWith("helper-pod-create-pvc-"));
@@ -204,16 +201,29 @@ public class ApplyMojo extends K3sMojo {
 				resources.removeIf(r -> Pattern.matches(".*(-[a-z0-9]{8,10})?-[a-z0-9]{5}", r[1]));
 			}
 
-			return resources.stream().map(resource -> {
+			for (var resource : resources) {
 				var namespace = resource[0];
 				var name = resource[1];
-				var tmp = new ArrayList<>(entry.getValue());
+				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
+
+				var tmp = new ArrayList<String>();
+				if ("pod".equals(kind)) {
+					tmp.addAll(List.of("kubectl", "wait", "--for=condition=ready"));
+				} else if ("job".equals(kind)) {
+					tmp.addAll(List.of("kubectl", "wait", "--for=condition=complete"));
+				} else if ("statefulset".equals(kind) && "OnDelete".equals(resource[2])) {
+					var replicas = getDocker().exec(container, "kubectl", "get", kind, name,
+							"--output=jsonpath={.status.replicas}", "--namespace=" + namespace).get(0);
+					tmp.addAll(List.of("kubectl", "wait", "--for=jsonpath={..status.readyReplicas}=" + replicas));
+				} else {
+					tmp.addAll(List.of("kubectl", "rollout", "status"));
+				}
 				tmp.add(kind);
 				tmp.add(name);
 				tmp.add("--namespace=" + namespace);
 				tmp.add("--timeout=" + timeout.getSeconds() + "s");
-				var representation = "default".equals(namespace) ? name : namespace + "/" + name;
-				return Map.entry(representation, (Callable<Boolean>) () -> {
+
+				calls.add(Map.entry(representation, (Callable<Boolean>) () -> {
 					try {
 						log.debug("{} {} ... waiting", kind, representation);
 						getDocker().exec(container, timeout.plusSeconds(10), tmp.toArray(new String[tmp.size()]));
@@ -224,12 +234,10 @@ public class ApplyMojo extends K3sMojo {
 								name);
 						return false;
 					}
-				});
-			});
-
-		} catch (MojoExecutionException e) {
-			return Stream.of(Map.entry("exception", () -> false));
+				}));
+			}
 		}
+		return calls;
 	}
 
 	// setter

@@ -69,7 +69,7 @@ public class RestartMojoTest extends AbstractTest {
 	void statefulset(RunMojo runMojo, ApplyMojo applyMojo, RestartMojo restartMojo) {
 
 		applyMojo.setSubdir("statefulset");
-		restartMojo.setResources(List.of("statefulset/echo"));
+		restartMojo.setResources(List.of("statefulset/echo-statefulset"));
 		assertDoesNotThrow(runMojo::execute);
 		assertTrue(assertDoesNotThrow(runMojo.getMarker()::consumeStarted), "started marker expected");
 		assertDoesNotThrow(applyMojo::execute);

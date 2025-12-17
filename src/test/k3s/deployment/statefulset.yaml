@@ -1,17 +1,16 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: echo-statefulset
+  name: echo-deployment
 spec:
-  serviceName: echo-statefulset
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: echo-statefulset
+      app.kubernetes.io/name: echo-deployment
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: echo-statefulset
+        app.kubernetes.io/name: echo-deployment
     spec:
       containers:
         - name: echo
