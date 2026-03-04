@@ -115,4 +115,14 @@ public class ApplyMojoTest extends AbstractTest {
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(applyMojo::execute);
 	}
+
+	@DisplayName("with namespace")
+	@Test
+	void withNamespace(RunMojo runMojo, ApplyMojo applyMojo) {
+		applyMojo.setSubdir("deploymentInNamespace");
+		applyMojo.setNamespace("test-namespace");
+		assertDoesNotThrow(runMojo::execute);
+		exec("kubectl", "create", "namespace", "test-namespace");
+		assertDoesNotThrow(applyMojo::execute);
+	}
 }

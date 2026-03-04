@@ -69,6 +69,14 @@ public class ApplyMojo extends K3sMojo {
 	private Duration timeout;
 
 	/**
+	 * Namespace to use when applying manifests. If not set, the default namespace from the manifests is used.
+	 *
+	 * @since 1.6.0
+	 */
+	@Parameter(property = "k3s.namespace")
+	private String namespace;
+
+	/**
 	 * Skip applying kubectl manifests.
 	 *
 	 * @since 1.0.0
@@ -169,6 +177,9 @@ public class ApplyMojo extends K3sMojo {
 		var command = new ArrayList<String>();
 		command.add("kubectl");
 		command.add("apply");
+		if (namespace != null) {
+			command.add("--namespace=" + namespace);
+		}
 		if (kustomize) {
 			command.add("--kustomize=" + subPath);
 		} else {
@@ -256,6 +267,10 @@ public class ApplyMojo extends K3sMojo {
 
 	public void setTimeout(int timeout) {
 		this.timeout = Duration.ofSeconds(timeout);
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
 	}
 
 	public void setSkipApply(boolean skipApply) {
