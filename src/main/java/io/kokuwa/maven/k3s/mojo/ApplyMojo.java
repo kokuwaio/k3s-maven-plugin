@@ -45,6 +45,14 @@ public class ApplyMojo extends K3sMojo {
 	private Path manifests;
 
 	/**
+	 * Namespace for kubernetes manifests.
+	 *
+	 * @since 2.1.0
+	 */
+	@Parameter(property = "k3s.namespace")
+	private String namespace;
+
+	/**
 	 * Path for {@link #manifests} inside the k3s container.
 	 *
 	 * @since 1.0.0
@@ -169,6 +177,9 @@ public class ApplyMojo extends K3sMojo {
 		var command = new ArrayList<String>();
 		command.add("kubectl");
 		command.add("apply");
+		if (namespace != null) {
+			command.add("--namespace=" + namespace);
+		}
 		if (kustomize) {
 			command.add("--kustomize=" + subPath);
 		} else {
@@ -244,6 +255,10 @@ public class ApplyMojo extends K3sMojo {
 
 	public void setManifests(File manifests) {
 		this.manifests = manifests.toPath().toAbsolutePath();
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
 	}
 
 	public void setPath(String path) {

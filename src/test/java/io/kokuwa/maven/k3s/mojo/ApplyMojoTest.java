@@ -59,6 +59,17 @@ public class ApplyMojoTest extends AbstractTest {
 		assertFalse(LoggerCapturer.getMessages().contains("WARN This may cause issues!"), "No taint expected.");
 	}
 
+	@DisplayName("with namespace")
+	@Test
+	void withNamespace(RunMojo runMojo, ApplyMojo applyMojo) {
+		applyMojo.setSubdir("pod.yaml");
+		applyMojo.setNamespace("example");
+		assertDoesNotThrow(runMojo::execute);
+		exec("kubectl", "create", "namespace", "example");
+		assertDoesNotThrow(applyMojo::execute);
+		exec("kubectl", "get", "pod", "echo", "--namespace=example");
+	}
+
 	@DisabledIfEnvironmentVariable(named = "CI", matches = "woodpecker")
 	@DisplayName("taint: node.kubernetes.io/disk-pressure")
 	@Test
