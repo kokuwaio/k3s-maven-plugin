@@ -66,6 +66,9 @@ public class DockerTest extends AbstractTest {
 
 		docker.pullImage(helloWorld(), Duration.ofSeconds(30));
 		assertTrue(docker.findImage(helloWorld()).isPresent(), "image missing after pulling");
+		assertTrue(docker.findImage(helloWorld().split("@")[0]).isPresent(), "image missing without digest");
+		assertTrue(docker.findImage(helloWorld().replaceAll(":linux", "")).isPresent(), "image missing without tag");
+		assertFalse(docker.findImage("hello-world:linux@sha256:nope").isPresent(), "image missing because invalid tag");
 
 		docker.removeImage(helloWorld());
 		assertFalse(docker.findImage(helloWorld()).isPresent(), "image found after removing");

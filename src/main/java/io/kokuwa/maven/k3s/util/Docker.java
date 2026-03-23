@@ -109,13 +109,13 @@ public class Docker {
 
 	public Optional<Image> findImage(String image) {
 		var normalizedImage = normalizeImage(image);
+		var reference = normalizedImage.split(":")[0].split("@")[0].replace("library/", "").replace("docker.io/", "");
+		var digest = normalizedImage.contains("@") ? normalizedImage.split("@")[1] : null;
 		return client.listImagesCmd()
-				.withImageNameFilter(normalizedImage)
+				.withReferenceFilter(reference)
 				.exec().stream()
-				.filter(i -> Optional.ofNullable(i.getRepoTags())
-						.map(Stream::of).orElseGet(Stream::empty)
-						.map(this::normalizeImage)
-						.anyMatch(normalizedImage::equals))
+				.filter(i -> digest == null
+						|| Stream.of(i.getRepoDigests()).map(d -> d.split("@")[1]).anyMatch(digest::equals))
 				.findFirst();
 	}
 
