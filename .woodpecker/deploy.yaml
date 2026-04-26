@@ -3,7 +3,7 @@ when:
   repo: kokuwaio/k3s-maven-plugin
   event: [manual, push]
   branch: main
-  path: [.woodpecker/deploy.yaml, pom.xml, src/main/**]
+  path: [.woodpecker/deploy.yaml, .woodpecker/maven/settings.xml, pom.xml, src/main/**]
 
 steps:
 

@@ -1,7 +1,8 @@
 # https://docs.k3s.io/installation/private-registry
 mirrors:
+  # use same docker mirror as docker daemon
   docker.io:
-    endpoint: [http://mirror.woodpecker.svc]
+    endpoint: ["${DOCKERD_REGISTRY_MIRROR}"]
     rewrite: {"^(.*)$": docker.io/$1}
   "*":
-    endpoint: []
+    endpoint: ["${DOCKERD_REGISTRY_MIRROR}"]

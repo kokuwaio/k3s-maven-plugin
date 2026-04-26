@@ -16,7 +16,7 @@
 	</servers>
 	<mirrors>
 		<mirror>
-			<url>http://mirror.woodpecker.svc.cluster.local/maven2</url>
+			<url>${env.MAVEN_MIRROR_URL}</url>
 			<mirrorOf>central</mirrorOf>
 		</mirror>
 	</mirrors>
