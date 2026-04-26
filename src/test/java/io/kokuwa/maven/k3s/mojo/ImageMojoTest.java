@@ -15,7 +15,6 @@ import java.util.List;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import io.kokuwa.maven.k3s.test.AbstractTest;
 
@@ -61,7 +60,6 @@ public class ImageMojoTest extends AbstractTest {
 		assertDoesNotThrow(imageMojo::execute);
 	}
 
-	@DisabledIfEnvironmentVariable(named = "CI", matches = "woodpecker", disabledReason = "fails with k3s in k3s")
 	@DisplayName("with crtImages")
 	@Test
 	void ctrImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
@@ -76,7 +74,6 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), true);
 	}
 
-	@DisabledIfEnvironmentVariable(named = "CI", matches = "woodpecker", disabledReason = "fails with k3s in k3s")
 	@DisplayName("with dockerImages")
 	@Test
 	void dockerImages(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException {
@@ -107,7 +104,6 @@ public class ImageMojoTest extends AbstractTest {
 		assertCtrImage(helloWorld(), true);
 	}
 
-	@DisabledIfEnvironmentVariable(named = "CI", matches = "woodpecker")
 	@DisplayName("with tarFiles")
 	@Test
 	void tarFiles(RunMojo runMojo, ImageMojo imageMojo) throws MojoExecutionException, IOException {
@@ -138,7 +134,10 @@ public class ImageMojoTest extends AbstractTest {
 	private void assertCtrImage(String image, boolean exists) throws MojoExecutionException {
 		var images = exec("ctr", "image", "list", "--quiet");
 		var normalizedImage = docker.normalizeImage(image);
-		assertEquals(exists, images.stream().filter(i -> i.startsWith(normalizedImage)).findAny().isPresent(),
+		var normalizedImageWithoutTag = normalizedImage.split(":")[0] + "@" + normalizedImage.split("@")[1];
+		assertEquals(exists, images.stream()
+				.filter(i -> i.equals(normalizedImage) || i.equals(normalizedImageWithoutTag))
+				.findAny().isPresent(),
 				"Image '" + normalizedImage + "' " + (exists ? "not " : "") + "found, available: \n" + images);
 	}
 
