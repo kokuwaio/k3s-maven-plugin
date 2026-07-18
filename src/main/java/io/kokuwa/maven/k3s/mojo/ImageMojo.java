@@ -4,18 +4,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.Adler32;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -24,7 +22,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
+import io.kokuwa.maven.k3s.util.CtrImage;
+import io.kokuwa.maven.k3s.util.Image;
 
 /**
  * Import images into k3s containerd.
@@ -41,7 +40,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.ctrImages")
-	private Set<String> ctrImages = new HashSet<>();
+	private List<Image> ctrImages = new ArrayList<>();
 
 	/**
 	 * Import given tar files as images via "ctr image import" inside k3s container.
@@ -49,7 +48,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.tarFiles")
-	private Set<Path> tarFiles = new HashSet<>();
+	private List<Path> tarFiles = new ArrayList<>();
 
 	/**
 	 * Copy given images from docker deamon via "ctr image import" inside k3s container.
@@ -57,7 +56,7 @@ public class ImageMojo extends K3sMojo {
 	 * @since 0.3.0
 	 */
 	@Parameter(property = "k3s.dockerImages")
-	private Set<String> dockerImages = new HashSet<>();
+	private List<Image> dockerImages = new ArrayList<>();
 
 	/**
 	 * Always pull docker images or only if not present.
@@ -85,7 +84,6 @@ public class ImageMojo extends K3sMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException {
-
 		// skip if no image is request
 
 		if (isSkip(skipImage) || ctrImages.isEmpty() && tarFiles.isEmpty() && dockerImages.isEmpty()) {
@@ -95,7 +93,7 @@ public class ImageMojo extends K3sMojo {
 		// get callables that handle images
 
 		var container = getDocker().getContainer().orElseThrow(() -> new MojoExecutionException("No container found"));
-		var existingImages = getCtrImages(container);
+		var existingImages = getDocker().getCtrImages(container);
 		var tasks = new HashSet<Callable<Boolean>>();
 		dockerImages.forEach(requestedImage -> tasks.add(() -> docker(container, existingImages, requestedImage)));
 		tarFiles.forEach(tarFile -> tasks.add(() -> tar(container, existingImages, tarFile)));
@@ -116,8 +114,7 @@ public class ImageMojo extends K3sMojo {
 		}
 	}
 
-	private boolean tar(Container container, Map<String, Map<String, ?>> existingImages, Path tarFile) {
-
+	private boolean tar(Container container, List<CtrImage> existingImages, Path tarFile) {
 		if (!Files.isRegularFile(tarFile)) {
 			log.error("Tar not found: {}", tarFile);
 			return false;
@@ -132,7 +129,7 @@ public class ImageMojo extends K3sMojo {
 			var checksum = new Adler32();
 			checksum.update(Files.readAllBytes(tarFile));
 			var newChecksum = "adler32:" + checksum.getValue();
-			var oldChecksum = existingImages.values().stream()
+			var oldChecksum = existingImages.stream().map(CtrImage::labels)
 					.filter(l -> Optional.ofNullable(l.get(labelPath)).map(tarFile.toString()::equals).orElse(false))
 					.map(l -> l.get(labelChecksum)).filter(Objects::nonNull)
 					.findAny().orElse(null);
@@ -147,34 +144,49 @@ public class ImageMojo extends K3sMojo {
 
 			// import tar into ctr
 
-			var destination = "/tmp/" + System.nanoTime();
-			var outputPattern = Pattern.compile("^unpacking (?<image>.*) \\(sha256:[0-9a-f]{64}\\).*$");
+			var destination = "/tmp/" + tarFile.hashCode();
 			getDocker().copyToContainer(container, tarFile, destination);
-			for (var output : getDocker().exec(container, "ctr", "image", "import",
-					destination + "/" + tarFile.getFileName())) {
-				var matcher = outputPattern.matcher(output);
-				if (matcher.matches()) {
-					getDocker().exec(container, "ctr", "image", "label", matcher.group("image"),
-							labelPath + "=" + tarFile);
-					getDocker().exec(container, "ctr", "image", "label", matcher.group("image"),
-							labelChecksum + "=" + newChecksum);
+			var ctrImportOutput = getDocker().exec(container, "ctr", "image", "import",
+					destination + "/" + tarFile.getFileName());
+
+			// try to store checksum to avoid reimporting tar
+
+			var outputPattern = Pattern.compile(".*(?<digest>sha256:[0-9a-f]{64}).*");
+			var digest = ctrImportOutput.stream()
+					.map(o -> outputPattern.matcher(o))
+					.filter(m -> m.matches())
+					.map(m -> m.group("digest")).findFirst().orElse(null);
+			if (digest == null) {
+				log.warn("Tar {} failed to determine image digest after import, checksum not stored.", tarFile);
+				log.warn("Tar {} output was: \n{}", tarFile,
+						ctrImportOutput.stream().collect(Collectors.joining("\n")));
+				log.warn("Tar {} this is NOT a problem, but tar file will be imported every invocation", tarFile);
+			} else {
+				log.debug("Tar {} has digest {}", tarFile, digest);
+				var images = getDocker().getCtrImages(container);
+				var ref = CtrImage.findByDigest(images, digest).map(CtrImage::ref).orElse(null);
+				if (ref == null) {
+					log.warn("Tar {} has digest {} but no ref was found", tarFile, digest);
+					log.warn("Tar {} this is NOT a problem, but tar file will be imported every invocation", tarFile);
 				} else {
-					log.warn("Tar {} import output cannot be parsed: {}", tarFile, output);
+					getDocker().exec(container, "ctr", "image", "label", ref, labelPath + "=" + tarFile.toString());
+					getDocker().exec(container, "ctr", "image", "label", ref, labelChecksum + "=" + newChecksum);
+					log.debug("Tar {} labels stored", tarFile);
+					log.info("Imported tar from {} as {}", tarFile, ref);
 				}
 			}
+
 		} catch (MojoExecutionException | IOException e) {
 			log.error("Failed to import tar: {}", tarFile, e);
 			return false;
 		}
 
-		log.info("Imported tar from {}", tarFile);
 		return true;
 	}
 
-	private boolean ctr(Container container, Map<String, Map<String, ?>> existingImages, String image)
+	private boolean ctr(Container container, List<CtrImage> existingImages, Image image)
 			throws MojoExecutionException {
-
-		if (existingImages.containsKey(image)) {
+		if (CtrImage.findByName(existingImages, image).isPresent()) {
 			log.debug("Image {} found in ctr, skip pulling", image);
 			return true;
 		}
@@ -182,17 +194,16 @@ public class ImageMojo extends K3sMojo {
 		log.info("Image {} not found, start pulling", image);
 		// use crictl instead of cri, because crictl honors custom registry.yaml
 		// see https://github.com/k3s-io/k3s/issues/5277
-		getDocker().exec(container, pullTimeout, "crictl", "pull", image);
+		getDocker().exec(container, pullTimeout, "crictl", "pull", image.toString());
 		log.info("Image {} pulled", image);
 
 		return true;
 	}
 
-	private boolean docker(Container container, Map<String, Map<String, ?>> existingImages, String image) {
-
+	private boolean docker(Container container, List<CtrImage> existingImages, Image image) {
 		// pull image
 
-		var digest = getDocker().findImage(image).map(Image::getRepoDigests).orElse(null);
+		var digest = getDocker().findImage(image).map(Image::digest).orElse(null);
 		if (dockerPullAlways || digest == null) {
 			if (digest != null) {
 				log.debug("Image {} found in docker, pull always ...", image);
@@ -205,19 +216,23 @@ public class ImageMojo extends K3sMojo {
 				log.error("Failed to pull docker image {}", image, e);
 				return false;
 			}
-			digest = getDocker().findImage(image).map(Image::getRepoDigests).orElse(null);
+			digest = getDocker().findImage(image).map(Image::digest).orElse(null);
+			log.debug("Image {} pull in docker with digest {}", image, digest);
 		} else {
-			log.debug("Image {} found in docker", image);
+			log.debug("Image {} found in docker with digest {}", image, digest);
 		}
 
 		// skip if image is already present in ctr
 
-		var normalizedImage = getDocker().normalizeImage(image);
+		var ref = image.registry() + "/" + image.repository() + (image.tag() == null ? "" : ":" + image.tag());
 		var label = "k3s-maven-digest";
-		var oldDigest = existingImages.getOrDefault(normalizedImage, Map.of()).get(label);
+		var oldDigest = existingImages.stream()
+				.filter(i -> i.ref().equals(ref))
+				.map(i -> i.labels().get(label))
+				.findAny().orElse(null);
 		if (oldDigest == null) {
 			log.debug("Image {} does not exists in ctr.", image);
-		} else if (oldDigest.equals(digest)) {
+		} else if (List.of(digest).contains(oldDigest)) {
 			log.info("Image {} present in ctr with digest {}, skip.", image, digest);
 			return true;
 		} else {
@@ -231,8 +246,9 @@ public class ImageMojo extends K3sMojo {
 		try {
 			getDocker().saveImage(image, source);
 			getDocker().copyToContainer(container, source, "/tmp/");
-			getDocker().exec(container, "ctr", "image", "import", "/tmp/" + filename);
-			getDocker().exec(container, "ctr", "image", "label", normalizedImage, label + "=" + digest);
+			getDocker().exec(container, "ctr", "image", "import", "--digests", "--base-name=" + ref,
+					"/tmp/" + filename);
+			getDocker().exec(container, "ctr", "image", "label", image.toString(), label + "=" + digest);
 		} catch (MojoExecutionException e) {
 			log.error("Failed to import tar {}", source, e);
 			return false;
@@ -242,41 +258,18 @@ public class ImageMojo extends K3sMojo {
 		return true;
 	}
 
-	/**
-	 * Read image from <code>ctr image list</code>.
-	 *
-	 * @return Image name with labels.
-	 */
-	private Map<String, Map<String, ?>> getCtrImages(Container container) throws MojoExecutionException {
-		return getDocker().exec(container, "ctr", "image", "list").stream().map(String::strip)
-				.filter(row -> !row.startsWith("REF") && !row.startsWith("sha256:"))
-				.map(row -> row.split("(\\s)+"))
-				.filter(parts -> {
-					var matches = parts.length == 7;
-					if (!matches) {
-						log.warn("Unexpected output of `ctr image list`: {}", List.of(parts));
-					}
-					return matches;
-				})
-				.map(parts -> Map.entry(parts[0], Stream.of(parts[6].split(",")).map(s -> s.split("="))
-						.filter(s -> !"io.cri-containerd.image".equals(s[0]))
-						.collect(Collectors.toMap(s -> s[0], s -> s[1]))))
-				.peek(entry -> log.debug("Found ctr image: {}", entry))
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-	}
-
 	// setter
 
 	public void setCtrImages(List<String> ctrImages) {
-		this.ctrImages = ctrImages.stream().map(getDocker()::normalizeImage).collect(Collectors.toSet());
+		this.ctrImages = ctrImages.stream().map(Image::of).toList();
 	}
 
 	public void setDockerImages(List<String> dockerImages) {
-		this.dockerImages = Set.copyOf(dockerImages);
+		this.dockerImages = dockerImages.stream().map(Image::of).toList();
 	}
 
 	public void setTarFiles(List<String> tarFiles) {
-		this.tarFiles = tarFiles.stream().map(Path::of).map(Path::toAbsolutePath).collect(Collectors.toSet());
+		this.tarFiles = tarFiles.stream().map(Path::of).map(Path::toAbsolutePath).toList();
 	}
 
 	public void setDockerPullAlways(boolean dockerPullAlways) {

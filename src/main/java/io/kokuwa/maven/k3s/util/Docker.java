@@ -24,7 +24,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.PortBinding;
@@ -89,58 +88,59 @@ public class Docker {
 
 	// images
 
-	public String normalizeImage(String image) {
+	public Optional<Image> findImage(Image image) {
+		var digest = image.digest();
+		var reference = (image.registry() + "/" + image.repository()).replace("library/", "").replace("docker.io/", "");
+		var repoTagStart = reference
+				+ (image.tag() == null ? (image.digest() == null ? ":latest" : "") : ":" + image.tag());
 
-		var newImageName = image;
-
-		if (!image.contains("@sha256:") && !image.contains(":")) {
-			newImageName += ":latest";
+		log.trace("Search for docker images for {} using ref {}", image, reference);
+		var images = client.listImagesCmd().withReferenceFilter(reference).exec();
+		for (var i : images) {
+			if (digest != null) {
+				if (Stream.of(i.getRepoDigests()).noneMatch(d -> d.equals(reference + "@" + digest))) {
+					log.trace("{} filtered because of repoDigest.", i);
+					continue;
+				}
+			}
+			var repoTag = Stream.of(i.getRepoTags()).filter(t -> t.startsWith(repoTagStart)).findAny().orElse(null);
+			if (repoTag == null) {
+				log.trace("{} filtered because of repoTag.", i);
+				continue;
+			}
+			if (!repoTag.contains("@")) {
+				repoTag += "@" + i.getId();
+			}
+			log.trace("{} found with name {}.", i, Image.of(repoTag));
+			return Optional.of(Image.of(repoTag));
 		}
 
-		var slashIndex = image.indexOf('/');
-		if (slashIndex == -1) {
-			newImageName = "docker.io/library/" + newImageName;
-		} else if (!image.substring(0, slashIndex).contains(".")) {
-			newImageName = "docker.io/" + newImageName;
-		} else if (image.startsWith("docker.io/") && image.indexOf('/', 10) == -1) {
-			newImageName = newImageName.replace("docker.io/", "docker.io/library/");
-		}
-
-		log.trace("Normalized {} to {}", image, newImageName);
-
-		return newImageName;
+		log.trace("Image {} not found.", image);
+		return Optional.empty();
 	}
 
-	public Optional<Image> findImage(String image) {
-		var normalizedImage = normalizeImage(image);
-		var reference = normalizedImage.split(":")[0].split("@")[0].replace("library/", "").replace("docker.io/", "");
-		var digest = normalizedImage.contains("@") ? normalizedImage.split("@")[1] : null;
-		return client.listImagesCmd()
-				.withReferenceFilter(reference)
-				.exec().stream()
-				.filter(i -> digest == null
-						|| Stream.of(i.getRepoDigests()).map(d -> d.split("@")[1]).anyMatch(digest::equals))
-				.findFirst();
-	}
-
-	public void pullImage(String image, Duration timeout) throws MojoExecutionException {
-		var callback = client.pullImageCmd(image).exec(new DockerPullCallback(image));
+	public void pullImage(Image image, Duration timeout) throws MojoExecutionException {
+		var callback = client.pullImageCmd(image.toString()).exec(new DockerPullCallback(image));
 		Await.await(log, "pull images").timeout(timeout).until(callback::isCompleted);
 		if (!callback.isSuccess()) {
 			throw new MojoExecutionException("Failed to pull image " + image);
 		}
 	}
 
-	public void saveImage(String image, Path target) throws MojoExecutionException {
+	public void saveImage(Image image, Path target) throws MojoExecutionException {
 		try {
-			FileUtils.copyInputStreamToFile(client.saveImageCmd(image).exec(), target.toFile());
+			FileUtils.copyInputStreamToFile(client.saveImageCmd(image.toString()).exec(), target.toFile());
 		} catch (IOException e) {
 			throw new MojoExecutionException("Failed to write image to file", e);
 		}
 	}
 
-	public void removeImage(String image) {
-		findImage(image).map(Image::getId).ifPresent(id -> client.removeImageCmd(id).withForce(true).exec());
+	public void removeImage(Image image) {
+		client.listImagesCmd()
+				.withReferenceFilter(
+						(image.registry() + "/" + image.repository()).replace("library/", "").replace("docker.io/", ""))
+				.exec()
+				.forEach(i -> client.removeImageCmd(i.getId()).withForce(true).exec());
 	}
 
 	// container
@@ -153,11 +153,10 @@ public class Docker {
 	}
 
 	public Container createContainer(
-			String dockerImage,
+			Image dockerImage,
 			Path registries,
 			List<String> portBindings,
 			List<String> command) {
-
 		// host config
 
 		var mounts = new ArrayList<Mount>();
@@ -180,7 +179,7 @@ public class Docker {
 		// container
 
 		var container = client
-				.createContainerCmd(dockerImage)
+				.createContainerCmd(dockerImage.toString())
 				.withName(containerName)
 				.withCmd(command)
 				.withExposedPorts(List.copyOf(hostConfig.getPortBindings().getBindings().keySet()))
@@ -281,5 +280,28 @@ public class Docker {
 				.until(logs::isCompleted);
 		var exitCode = client.inspectExecCmd(execId).exec().getExitCodeLong();
 		return new DockerExecResult(log, command, exitCode, logs.messages);
+	}
+
+	/**
+	 * Read image from <code>ctr image list</code>.
+	 *
+	 * @return Image name with labels.
+	 */
+	public List<CtrImage> getCtrImages(Container container) throws MojoExecutionException {
+		return exec(container, "ctr", "image", "list").stream()
+				.filter(row -> !row.startsWith("REF"))
+				.map(row -> row.split("(\\s)+"))
+				.filter(parts -> {
+					var matches = parts.length == 7;
+					if (!matches) {
+						log.warn("Unexpected output of `ctr image list`: {}", List.of(parts));
+					}
+					return matches;
+				})
+				.map(parts -> new CtrImage(parts[0].split("@")[0], parts[2], parts[3] + " " + parts[4], Stream
+						.of(parts[6].split(",")).map(s -> s.split("="))
+						.collect(Collectors.toMap(s -> s[0], s -> s[1]))))
+				.peek(entry -> log.debug("Found ctr image: {}", entry))
+				.toList();
 	}
 }

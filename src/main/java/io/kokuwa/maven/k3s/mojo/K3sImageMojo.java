@@ -5,6 +5,8 @@ import java.time.Duration;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import io.kokuwa.maven.k3s.util.Image;
+
 /**
  * Base for Mojos that reference the k3s image.
  *
@@ -36,11 +38,11 @@ public abstract class K3sImageMojo extends K3sMojo {
 	@Parameter(property = "k3s.imageTag", defaultValue = "latest")
 	private String imageTag;
 
-	String getImage() {
-		return (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
+	Image getImage() {
+		return Image.of((imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag);
 	}
 
-	String pullImage() throws MojoExecutionException {
+	Image pullImage() throws MojoExecutionException {
 		if ("latest".equals(imageTag)) {
 			log.warn("Using image tag 'latest' is unstable.");
 		}

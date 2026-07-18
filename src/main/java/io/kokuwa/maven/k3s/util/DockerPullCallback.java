@@ -21,12 +21,12 @@ public class DockerPullCallback implements ResultCallback<PullResponseItem> {
 
 	private static final Logger log = LoggerFactory.getLogger(DockerPullCallback.class);
 
-	private final String image;
+	private final Image image;
 	private boolean completed = false;
 	private boolean success = false;
 	private PullResponseItem response;
 
-	DockerPullCallback(String image) {
+	DockerPullCallback(Image image) {
 		this.image = image;
 	}
 

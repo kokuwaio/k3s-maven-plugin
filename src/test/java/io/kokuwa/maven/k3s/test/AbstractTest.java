@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import io.kokuwa.maven.k3s.mojo.RunMojo;
 import io.kokuwa.maven.k3s.util.Docker;
+import io.kokuwa.maven.k3s.util.Image;
 
 /**
  * Base class for all test cases.
@@ -62,8 +63,10 @@ public abstract class AbstractTest {
 		LoggerCapturer.clear();
 	}
 
-	public static String helloWorld() {
-		return "hello-world:linux@sha256:a77ecd852b17bfaee6708208960645d20fc9e6d0eec12353f8eb0e7b94bb647a";
+	public static Image helloWorld() {
+		// docker save hello-world:linux --platform=linux/amd64 --output=src/test/resources/hello-world.tar
+		return Image
+				.of("hello-world:linux@sha256:b44f8077f3cc983f21adf071c813599ff805af75196a456a326253c7b3357c48");
 	}
 
 	public List<String> exec(String... command) {

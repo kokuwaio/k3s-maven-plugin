@@ -95,7 +95,7 @@ public class HostnameMojo extends K3sImageMojo {
 			String containerId = null;
 			try {
 				containerId = getDocker().getClient()
-						.createContainerCmd(pullImage())
+						.createContainerCmd(pullImage().toString())
 						.withHostConfig(new HostConfig().withNetworkMode("host"))
 						.withEntrypoint("sh", "-euc", hostnameCommand)
 						.exec().getId();
