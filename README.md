@@ -14,31 +14,31 @@ For unit testing [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and
 
 If your production system is Kubernetes it would be better to use some kind of Kubernetes for integration tests:
 
-* [`k3s`](https://k3s.io/)
-* [`kind`](https://kind.sigs.k8s.io/)
-* [`minikube`](https://minikube.sigs.k8s.io/docs/)
+- [`k3s`](https://k3s.io/)
+- [`kind`](https://kind.sigs.k8s.io/)
+- [`minikube`](https://minikube.sigs.k8s.io/docs/)
 
 Because `k3s` has a very fast startup and can run in docker this plugin relies on `k3s`. This plugin runs `k3s` as docker container (like `k3d`). As alternative it was considered to use `k3s` in rootless mode. This assumes packages like `newguimap` which are not installed everywhere. Feel free to create a PR for adding a non-docker mode of this plugin.
 
 If you don't like to use this plugin you can:
 
-* use `docker-compose` with testcontainers [Docker Compose Module](https://www.testcontainers.org/modules/docker_compose/)
-* use `docker-compose` with [docker-compose-maven-plugin](https://github.com/syncdk/docker-compose-maven-plugin)
-* use `k3d` as wrapper for `k3s` in docker with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
-* start `k3s` direct with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
-* start `k3s` in docker with [docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin)
-* handle lifecycle out of maven
+- use `docker-compose` with testcontainers [Docker Compose Module](https://www.testcontainers.org/modules/docker_compose/)
+- use `docker-compose` with [docker-compose-maven-plugin](https://github.com/syncdk/docker-compose-maven-plugin)
+- use `k3d` as wrapper for `k3s` in docker with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
+- start `k3s` direct with [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin)
+- start `k3s` in docker with [docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin)
+- handle lifecycle out of maven
 
 ## Goals
 
-| Goal                                  | Description                     | Default Lifecycle Phase |
-| ------------------------------------- | ------------------------------- | ----------------------- |
-| [`k3s:run`](docs/goal/run.md)         | Create and start k3s container  | pre-integration-test    |
-| [`k3s:image`](docs/goal/image.md)     | Prepare images for containerd   | pre-integration-test    |
-| [`k3s:copy`](docs/goal/copy.md)       | Copying files to container.     | pre-integration-test    |
-| [`k3s:apply`](docs/goal/apply.md)     | Run kubectl aplpy               | pre-integration-test    |
-| [`k3s:restart`](docs/goal/apply.md)   | Restart resources               | pre-integration-test    |
-| [`k3s:rm`](docs/goal/rm.md)           | Stop and remove k3s containers  | post-integration-test   |
+| Goal                                | Description                    | Default Lifecycle Phase |
+| ----------------------------------- | ------------------------------ | ----------------------- |
+| [`k3s:run`](docs/goal/run.md)       | Create and start k3s container | pre-integration-test    |
+| [`k3s:image`](docs/goal/image.md)   | Prepare images for containerd  | pre-integration-test    |
+| [`k3s:copy`](docs/goal/copy.md)     | Copying files to container.    | pre-integration-test    |
+| [`k3s:apply`](docs/goal/apply.md)   | Run kubectl aplpy              | pre-integration-test    |
+| [`k3s:restart`](docs/goal/apply.md) | Restart resources              | pre-integration-test    |
+| [`k3s:rm`](docs/goal/rm.md)         | Stop and remove k3s containers | post-integration-test   |
 
 ## Examples
 
@@ -46,49 +46,49 @@ To plugin is tested with `maven-invoker-plugin`. The testcases can be used as ex
 
 ### [Pod using HostPort](/src/it/pod-with-hostport)
 
-* manifest are applied with `k3s:apply`
-* `k3s` and pod image is always pulled via `k3s:iamge`, pod has [imagePullPolicy: Never](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L9)
-* Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
-* [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
+- manifest are applied with `k3s:apply`
+- `k3s` and pod image is always pulled via `k3s:iamge`, pod has [imagePullPolicy: Never](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L9)
+- Pod is running with [hostport](/src/it/pod-with-hostport/src/test/k3s/pod.yaml#L12) 8080
+- [test](/src/it/pod-with-hostport/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://127.0.0.1:8080` as endpoint
 
 ### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image-from-tar)
 
-* manifest are applied with `k3s:apply`
-* image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to tar file
-* image is imported from tar file
-* image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
-* Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
-* [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
+- manifest are applied with `k3s:apply`
+- image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to tar file
+- image is imported from tar file
+- image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
+- Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
+- [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
 
 ### [Local image using jib as Pod with HostPort](src/it/pod-with-local-image-from-docker)
 
-* manifest are applied with `k3s:apply`
-* image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to local docker deamon
-* image is imported from local docker deamon
-* image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
-* Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
-* [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
+- manifest are applied with `k3s:apply`
+- image is build with [jib-maven-plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin) to local docker deamon
+- image is imported from local docker deamon
+- image is [Never](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L9) pulled from registries
+- Pod is running with [hostport](/src/it/pod-with-local-image-from-docker/src/test/k3s/pod.yaml#L13) 8080
+- [test](/src/it/pod-with-local-image-from-docker/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L20) uses `http://127.0.0.1:8080` as endpoint
 
 ### [Traefik and Dashboard](src/it/traefik)
 
-* manifest are applied with `k3s:apply` using custom command with kustomize
-* Traefik for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/traefik/src/test/k3s/traefik/service.yaml#L18) on port 8080
-* Traefik Admin available at [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
-* Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
-* Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
-* [test](/src/it/traefik/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
+- manifest are applied with `k3s:apply` using custom command with kustomize
+- Traefik for subdomains of `127.0.0.1.nip.io` with [LoadBalancer](/src/it/traefik/src/test/k3s/traefik/service.yaml#L18) on port 8080
+- Traefik Admin available at [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
+- Kubernetes Dashboard available at [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
+- Deployment with Ingress [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
+- [test](/src/it/traefik/src/test/java/io/kokuwa/maven/k3s/PodIT.java#L21) uses `http://echo.127.0.0.1.nip.io:8080` as endpoint
 
 ### [PostgreSQL using PVC with HostPort](src/it/postgresql-with-pvc-and-hostport)
 
-* manifest are applied with `k3s:apply` using custom command with kustomize
-* PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
-* [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
+- manifest are applied with `k3s:apply` using custom command with kustomize
+- PostgreSQL is running with [hostport](/src/it/postgresql-with-pvc-and-hostport/src/test/k3s/pod.yaml#L15) 5432
+- [test](/src/it/postgresql-with-pvc-and-hostport/src/test/java/io/kokuwa/maven/k3s/PostgreIT.java#L26) uses `http://127.0.0.1:5432` as endpoint
 
 ### [Cert-Manager](src/it/cert-manager)
 
-* manifest are generated with `helm template`, using the [helm-maven-plugin](https://github.com/kokuwaio/helm-maven-plugin)
-* manifest are applied with `k3s:apply`
-* test itself doesn't assert anything, but success verifies that the job completed and was taken as success.
+- manifest are generated with `helm template`, using the [helm-maven-plugin](https://github.com/kokuwaio/helm-maven-plugin)
+- manifest are applied with `k3s:apply`
+- test itself doesn't assert anything, but success verifies that the job completed and was taken as success.
 
 ### Usage out of Build
 
@@ -113,9 +113,9 @@ mvn k3s:run k3s:apply \
 
 Now you can access this urls:
 
-* Traefik Admin: [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
-* Kubernetes Dashboard: [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
-* Echo: [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
+- Traefik Admin: [http://traefik.127.0.0.1.nip.io:8080](http://traefik.127.0.0.1.nip.io:8080)
+- Kubernetes Dashboard: [http://dashboard.127.0.0.1.nip.io:8080](http://dashboard.127.0.0.1.nip.io:8080)
+- Echo: [http://echo.127.0.0.1.nip.io:8080](http://echo.127.0.0.1.nip.io:8080)
 
 Use external `kubectl`:
 
