@@ -55,6 +55,10 @@ public class Docker {
 		this.containerName = containerName;
 	}
 
+	public DockerClient getClient() {
+		return client;
+	}
+
 	// volume
 
 	public boolean isVolumePresent() {

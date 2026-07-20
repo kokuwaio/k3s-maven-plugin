@@ -76,6 +76,7 @@
 						<failIfExists>false</failIfExists>
 						<replaceIfExists>true</replaceIfExists>
 						<disableCoredns>true</disableCoredns>
+						<debugToStdout>true</debugToStdout>
 					</configuration>
 				</plugin>
 				<plugin>

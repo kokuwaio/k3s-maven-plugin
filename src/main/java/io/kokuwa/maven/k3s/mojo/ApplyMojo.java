@@ -34,7 +34,7 @@ import io.kokuwa.maven.k3s.util.DockerExecResult;
  * @since 1.0.0
  */
 @Mojo(name = "apply", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
-public class ApplyMojo extends K3sMojo {
+public class ApplyMojo extends K3sDebugMojo {
 
 	/**
 	 * Path where to find manifest files to apply. This files are copied to docker container.
@@ -160,6 +160,7 @@ public class ApplyMojo extends K3sMojo {
 				success &= future.getValue().get();
 			}
 			if (!success) {
+				handleDebugInfos(container);
 				throw new MojoExecutionException("Failed to wait for resources, see previous log");
 			}
 		} catch (InterruptedException | ExecutionException e) {

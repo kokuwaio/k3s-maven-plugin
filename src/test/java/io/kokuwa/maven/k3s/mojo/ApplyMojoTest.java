@@ -3,11 +3,16 @@ package io.kokuwa.maven.k3s.mojo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,6 +114,21 @@ public class ApplyMojoTest extends AbstractTest {
 		applyMojo.setSubdir("deployment");
 		assertDoesNotThrow(runMojo::execute);
 		assertDoesNotThrow(applyMojo::execute);
+	}
+
+	@DisplayName("with debug")
+	@Test
+	void withDebug(RunMojo runMojo, ApplyMojo applyMojo) throws IOException {
+		var output = Paths.get("target/k3s/debug");
+		assertDoesNotThrow(() -> FileUtils.deleteDirectory(output.toFile()));
+		applyMojo.setTimeout(1);
+		assertDoesNotThrow(runMojo::execute);
+		assertThrows(MojoExecutionException.class, applyMojo::execute);
+		assertTrue(Files.isDirectory(output.resolve("containers")), "containers not found");
+		assertTrue(Files.isRegularFile(output.resolve("k3s.log")), "k3s.log not found");
+		assertTrue(Files.size(output.resolve("k3s.log")) > 0, "k3s.log empty");
+		assertTrue(Files.isRegularFile(output.resolve("k3s.yaml")), "k3s.yaml not found");
+		assertTrue(Files.size(output.resolve("k3s.yaml")) > 0, "k3s.yaml empty");
 	}
 
 	@DisplayName("with statefulset")

@@ -48,6 +48,7 @@
 						<goals>
 							<goal>run</goal>
 							<goal>apply</goal>
+							<goal>debug</goal>
 							<goal>rm</goal>
 						</goals>
 					</execution>
