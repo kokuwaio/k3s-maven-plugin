@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
+import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -33,6 +34,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	private static final String volumeName = "k3s-maven-plugin-junit";
 	private static final Docker docker = new Docker(containerName, volumeName);
 	private static final Set<MojoDescriptor> mojos = new HashSet<>();
+	private static final MavenProject project = new MavenProject();
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
@@ -52,13 +54,17 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
 		var type = parameterContext.getParameter().getType();
 		return mojos.stream().map(MojoDescriptor::getImplementation).anyMatch(type.getName()::equals)
-				|| type.equals(Docker.class);
+				|| type.equals(Docker.class)
+				|| type.equals(MavenProject.class);
 	}
 
 	@Override
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) {
 
 		var type = parameterContext.getParameter().getType();
+		if (type.equals(MavenProject.class)) {
+			return project;
+		}
 		if (type.equals(Docker.class)) {
 			return docker;
 		}
@@ -81,6 +87,9 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 						setter.invoke(mojo, Boolean.valueOf(parameter.getDefaultValue()));
 					} else if (int.class.equals(parameterType)) {
 						setter.invoke(mojo, Integer.valueOf(parameter.getDefaultValue()));
+					} else if (MavenProject.class.equals(parameterType)) {
+						setter.invoke(mojo, project);
+						project.getProperties().clear();
 					} else {
 						fail(parameter.getName() + " has unknown type: " + type);
 					}

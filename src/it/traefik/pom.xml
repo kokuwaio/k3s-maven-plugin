@@ -12,7 +12,6 @@
 	<artifactId>k3s-maven-plugin-it-traefik</artifactId>
 
 	<properties>
-		<k3s.ip>127.0.0.1</k3s.ip>
 		<k3s.manifests>${project.build.directory}/k3s</k3s.manifests>
 	</properties>
 
@@ -41,11 +40,21 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<k3s.hostname>${k3s.hostname}</k3s.hostname>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>io.kokuwa.maven</groupId>
 				<artifactId>k3s-maven-plugin</artifactId>
 				<executions>
 					<execution>
 						<goals>
+							<goal>hostname</goal>
 							<goal>run</goal>
 							<goal>apply</goal>
 							<goal>debug</goal>
@@ -61,18 +70,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>ip</id>
-			<activation>
-				<property>
-					<name>env.DOCKER_HOST_IP</name>
-				</property>
-			</activation>
-			<properties>
-				<k3s.ip>${env.DOCKER_HOST_IP}</k3s.ip>
-			</properties>
-		</profile>
-	</profiles>
 </project>

@@ -33,6 +33,7 @@ If you don't like to use this plugin you can:
 
 | Goal                                    | Description                    | Default Lifecycle Phase |
 | --------------------------------------- | ------------------------------ | ----------------------- |
+| [`k3s:hostname`](docs/goal/hostname.md) | Determine docker hostname      | validate                |
 | [`k3s:run`](docs/goal/run.md)           | Create and start k3s container | pre-integration-test    |
 | [`k3s:image`](docs/goal/image.md)       | Prepare images for containerd  | pre-integration-test    |
 | [`k3s:copy`](docs/goal/copy.md)         | Copying files to container.    | pre-integration-test    |

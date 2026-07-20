@@ -74,6 +74,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-core</artifactId>
+			<version>${project.prerequisites.maven}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-annotations</artifactId>
 			<version>3.15.2</version>
@@ -268,7 +274,6 @@
 							<cloneProjectsTo>${project.build.directory}/its</cloneProjectsTo>
 							<mergeUserSettings>true</mergeUserSettings>
 							<goals>verify</goals>
-							<streamLogs>false</streamLogs>
 							<streamLogsOnFailures>true</streamLogsOnFailures>
 						</configuration>
 					</execution>

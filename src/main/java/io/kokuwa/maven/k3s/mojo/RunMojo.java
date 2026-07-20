@@ -27,31 +27,7 @@ import io.kokuwa.maven.k3s.util.Await;
  * @since 1.0.0
  */
 @Mojo(name = "run", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresProject = false)
-public class RunMojo extends K3sMojo {
-
-	/**
-	 * k3s image registry.
-	 *
-	 * @since 1.0.0
-	 */
-	@Parameter(property = "k3s.imageRegistry")
-	private String imageRegistry;
-
-	/**
-	 * k3s image repository.
-	 *
-	 * @since 1.0.0
-	 */
-	@Parameter(property = "k3s.imageRepository", defaultValue = "docker.io/rancher/k3s")
-	private String imageRepository;
-
-	/**
-	 * k3s image tag.
-	 *
-	 * @since 1.0.0
-	 */
-	@Parameter(property = "k3s.imageTag", defaultValue = "latest")
-	private String imageTag;
+public class RunMojo extends K3sImageMojo {
 
 	/**
 	 * Disable servicelb.
@@ -314,13 +290,6 @@ public class RunMojo extends K3sMojo {
 
 	private Container createContainer() throws MojoExecutionException {
 
-		// get image name
-
-		if ("latest".equals(imageTag)) {
-			log.warn("Using image tag 'latest' is unstable.");
-		}
-		var image = (imageRegistry == null ? "" : imageRegistry + "/") + imageRepository + ":" + imageTag;
-
 		// k3s command
 
 		var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
@@ -378,8 +347,7 @@ public class RunMojo extends K3sMojo {
 		var ports = new ArrayList<>(portBindings);
 		ports.add(portKubeApi + ":" + portKubeApi);
 		getDocker().createVolume();
-		getDocker().pullImage(image, Duration.ofMinutes(10));
-		return getDocker().createContainer(image, registries, ports, command);
+		return getDocker().createContainer(pullImage(), registries, ports, command);
 	}
 
 	// setter
@@ -390,18 +358,6 @@ public class RunMojo extends K3sMojo {
 
 	public void setNodeTimeout(int nodeTimeout) {
 		this.nodeTimeout = Duration.ofSeconds(nodeTimeout);
-	}
-
-	public void setImageRegistry(String imageRegistry) {
-		this.imageRegistry = imageRegistry;
-	}
-
-	public void setImageRepository(String imageRepository) {
-		this.imageRepository = imageRepository;
-	}
-
-	public void setImageTag(String imageTag) {
-		this.imageTag = imageTag;
 	}
 
 	public void setDisableServicelb(boolean disableServicelb) {
