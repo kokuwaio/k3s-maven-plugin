@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -49,7 +50,8 @@ public abstract class K3sDebugMojo extends K3sMojo {
 			throw new MojoExecutionException("Failed to prepare debug directory", e);
 		}
 
-		log.debug("Collect k3s docker logs");
+		var k3sLogFile = debugDirectory.resolve("k3s.log");
+		log.info("Collect k3s docker logs to {}", k3sLogFile);
 		var callback = getDocker().getClient()
 				.logContainerCmd(container.getId())
 				.withSince(0)
@@ -57,32 +59,37 @@ public abstract class K3sDebugMojo extends K3sMojo {
 				.withStdErr(true)
 				.exec(new DockerLogCallback());
 		Await.await(log, "Collect logs of k3s.").until(() -> callback.isCompleted());
-		var k3sLog = callback.messages.stream().collect(Collectors.joining("\n"));
+		var k3sLogText = callback.messages.stream().collect(Collectors.joining("\n"));
 		try {
-			new FileWriter(debugDirectory.resolve("k3s.log").toString()).write(k3sLog);
+			new FileWriter(k3sLogFile.toString()).write(k3sLogText);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Failed to collect k3s logs", e);
 		}
 
-		log.debug("Copy container logs from container");
+		log.info("Collect container logs to {}", containers);
 		for (var logName : getDocker().exec(container, "ls", "/var/log/containers")) {
 			var realPath = getDocker().exec(container, "realpath", "/var/log/containers/" + logName).get(0);
 			getDocker().copyFromContainer(container, realPath, containers);
+			var source = containers.resolve(Paths.get(realPath).toFile().getName());
+			var destination = containers.resolve(logName);
+			log.debug("Copy container logs from {} to {}", source, destination);
 			try {
-				Files.move(containers.resolve(Paths.get(realPath).toFile().getName()), containers.resolve(logName));
+				Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
-				throw new MojoExecutionException("Failed to move " + Paths.get(realPath).toFile().getName(), e);
+				throw new MojoExecutionException(
+						"Failed to move " + source + " to " + destination + ": " + e.getMessage(), e);
 			}
 		}
 
-		log.debug("Get manifests from k3s");
+		var k3sManifests = debugDirectory.resolve("k3s.yaml");
+		log.info("Collect manifests from k3s to {}", k3sManifests);
 		getDocker().exec(container, "sh", "-c", "kubectl get all --all-namespaces --output=yaml > /tmp/k3s.yaml");
 		getDocker().copyFromContainer(container, "/tmp/k3s.yaml", debugDirectory);
 
 		if (debugToStdout) {
 			try {
-				log.warn("k3s manifests: \n\n{}\n\n", Files.readString(debugDirectory.resolve("k3s.yaml")));
-				log.warn("k3s logs: \n\n{}\n\n", Files.readString(debugDirectory.resolve("k3s.log")));
+				log.warn("k3s manifests: \n\n{}\n\n", Files.readString(k3sManifests));
+				log.warn("k3s logs: \n\n{}\n\n", Files.readString(k3sLogFile));
 				var containerLogs = Files.list(debugDirectory.resolve("containers")).toList();
 				if (containerLogs.isEmpty()) {
 					log.warn("k3s container logs not found");
