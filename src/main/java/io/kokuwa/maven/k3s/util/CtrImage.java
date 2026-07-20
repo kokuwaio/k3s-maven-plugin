@@ -2,9 +2,8 @@ package io.kokuwa.maven.k3s.util;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-
-import com.google.common.base.Objects;
 
 /**
  * Wrapper for ctr image ls.
@@ -23,9 +22,9 @@ public record CtrImage(String ref, String digest, String size, Map<String, Strin
 			return findByDigest(images, name.digest());
 		}
 		return images.stream()
-				.filter(i -> Objects.equal(i.name().registry(), name.registry()))
-				.filter(i -> Objects.equal(i.name().repository(), name.repository()))
-				.filter(i -> Objects.equal(i.name().tag(), name.tag()))
+				.filter(i -> Objects.equals(i.name().registry(), name.registry()))
+				.filter(i -> Objects.equals(i.name().repository(), name.repository()))
+				.filter(i -> Objects.equals(i.name().tag(), name.tag()))
 				.findAny();
 	}
 
