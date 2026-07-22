@@ -309,6 +309,9 @@ public class RunMojo extends K3sImageMojo {
 		// k3s command
 
 		var command = new ArrayList<>(List.of("server", "--node-name=k3s", "--https-listen-port=" + portKubeApi));
+		if (hostname != null) {
+			command.add("--tls-san=" + hostname);
+		}
 		if (clusterDomain != null) {
 			command.add("--cluster-domain=" + clusterDomain);
 		}
