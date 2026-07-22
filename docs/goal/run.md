@@ -25,6 +25,7 @@ Start and run k3s container.
 | `replaceIfExists`                | `k3s.replaceIfExists`                | Replace existing docker container from previous run.                                                    | false                               |
 | `nodeTimeout`                    | `k3s.nodeTimeout`                    | Timeout in seconds to wait for nodes getting ready.                                                     | 30                                  |
 | `kubeconfig`                     | `k3s.kubeconfig`                     | Path where to place kubectl config for external usage.                                                  | ${project.build.directory}/k3s.yaml |
+| `hostname`                       | `k3s.hostname`                       | Hostname to use in kubeconfig. See hostname mojo.                                                       | `null`                              |
 | `registries`                     | `k3s.registries`                     | Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml".                                 | `null`                              |
 | `disableDefaultRegistryEndpoint` | `k3s.disableDefaultRegistryEndpoint` | Disables containerd's fallback default registry endpoint when a mirror is configured for that registry. | false                               |
 | `skipRun`                        | `skipRun`                            | Skip running of k3s.                                                                                    | false                               |

@@ -178,6 +178,14 @@ public class RunMojo extends K3sImageMojo {
 	private Path kubeconfig;
 
 	/**
+	 * Hostname to use in kubeconfig. See hostname mojo.
+	 *
+	 * @since 2.3.0
+	 */
+	@Parameter(property = "k3s.hostname", defaultValue = "${k3s.hostname}")
+	private String hostname;
+
+	/**
 	 * Path to "registry.yaml" to mount to "/etc/rancher/k3s/registries.yaml".
 	 *
 	 * @since 1.1.0
@@ -282,7 +290,15 @@ public class RunMojo extends K3sImageMojo {
 			try {
 				Files.move(kubeconfig.getParent().resolve("k3s.yaml"), kubeconfig, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
-				throw new MojoExecutionException("Failed to write kubeconfig.", e);
+				throw new MojoExecutionException("Failed to write kubeconfig: " + e.getMessage(), e);
+			}
+		}
+		if (hostname != null && !hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
+			try {
+				log.debug("Replace k3s host in config {} with {}", kubeconfig, hostname);
+				Files.writeString(kubeconfig, Files.readString(kubeconfig).replace("127.0.0.1", hostname));
+			} catch (IOException e) {
+				throw new MojoExecutionException("Failed to write kubeconfig with updated host:" + e.getMessage(), e);
 			}
 		}
 		log.info("k3s ready: KUBECONFIG={} kubectl get all --all-namespaces", kubeconfig);
@@ -442,5 +458,9 @@ public class RunMojo extends K3sImageMojo {
 
 	public void setDnsResolverDomain(String dnsResolverDomain) {
 		this.dnsResolverDomain = dnsResolverDomain;
+	}
+
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
 	}
 }

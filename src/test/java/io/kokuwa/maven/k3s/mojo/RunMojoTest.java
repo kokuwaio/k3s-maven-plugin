@@ -156,6 +156,36 @@ public class RunMojoTest extends AbstractTest {
 		assertFalse(runMojo.getMarker().consumeStarted(), "no started marker expected");
 	}
 
+	@DisplayName("with hostname 1.2.3.4")
+	@Test
+	void withHostnameIp(RunMojo runMojo) throws MojoExecutionException {
+		runMojo.setHostname("1.2.3.4");
+		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
+		var kubeConfig = assertDoesNotThrow(() -> Files.readString(Paths.get("target/k3s.yaml")));
+		assertTrue(kubeConfig.contains("https://1.2.3.4:6443"), "kubeConfig invalid: " + kubeConfig);
+	}
+
+	@DisplayName("with hostname 127.0.0.1")
+	@Test
+	void withHostnameLocalhostIp(RunMojo runMojo) throws MojoExecutionException {
+		runMojo.setHostname("localhost");
+		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
+		var kubeConfig = assertDoesNotThrow(() -> Files.readString(Paths.get("target/k3s.yaml")));
+		assertTrue(kubeConfig.contains("https://127.0.0.1:6443"), "kubeConfig invalid: " + kubeConfig);
+	}
+
+	@DisplayName("with hostname localhost")
+	@Test
+	void withHostnameLocalhost(RunMojo runMojo) throws MojoExecutionException {
+		runMojo.setHostname("localhost");
+		assertDoesNotThrow(runMojo::execute);
+		assertTrue(runMojo.getMarker().consumeStarted(), "started marker expected");
+		var kubeConfig = assertDoesNotThrow(() -> Files.readString(Paths.get("target/k3s.yaml")));
+		assertTrue(kubeConfig.contains("https://127.0.0.1:6443"), "kubeConfig invalid: " + kubeConfig);
+	}
+
 	@DisplayName("dns: skipped")
 	@Test
 	void checkDnsSkipped(RunMojo runMojo) {
