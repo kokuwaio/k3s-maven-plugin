@@ -90,7 +90,7 @@ public class RunMojo extends K3sImageMojo {
 	 *
 	 * @since 1.0.0
 	 */
-	@Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "true")
+	@Parameter(property = "k3s.disableNetworkPolicy", defaultValue = "false")
 	private boolean disableNetworkPolicy;
 
 	/**
