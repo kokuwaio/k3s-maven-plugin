@@ -65,8 +65,7 @@ public abstract class AbstractTest {
 
 	public static Image helloWorld() {
 		// docker save hello-world:linux --platform=linux/amd64 --output=src/test/resources/hello-world.tar
-		return Image
-				.of("hello-world:linux@sha256:b44f8077f3cc983f21adf071c813599ff805af75196a456a326253c7b3357c48");
+		return Image.of("hello-world:linux@sha256:5e22040d441e5fb3aed38368acbe8486b575d7018df38dbdfbc7311fbb2ef3a9");
 	}
 
 	public List<String> exec(String... command) {
