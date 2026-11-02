@@ -232,7 +232,7 @@ public class ImageMojo extends K3sMojo {
 				.findAny().orElse(null);
 		if (oldDigest == null) {
 			log.debug("Image {} does not exists in ctr.", image);
-		} else if (List.of(digest).contains(oldDigest)) {
+		} else if (Objects.equals(digest, oldDigest)) {
 			log.info("Image {} present in ctr with digest {}, skip.", image, digest);
 			return true;
 		} else {

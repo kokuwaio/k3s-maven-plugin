@@ -90,7 +90,14 @@ public class Docker {
 
 	public Optional<Image> findImage(Image image) {
 		var digest = image.digest();
-		var reference = (image.registry() + "/" + image.repository()).replace("library/", "").replace("docker.io/", "");
+		var reference = image.registry() + "/" + image.repository();
+		if (reference.startsWith("docker.io/")) {
+			reference = reference.replace("docker.io/", "");
+		}
+		if (reference.startsWith("library/")) {
+			reference = reference.replace("library/", "");
+		}
+		var referenceFinal = reference;
 		var repoTagStart = reference
 				+ (image.tag() == null ? (image.digest() == null ? ":latest" : "") : ":" + image.tag());
 
@@ -98,7 +105,7 @@ public class Docker {
 		var images = client.listImagesCmd().withReferenceFilter(reference).exec();
 		for (var i : images) {
 			if (digest != null) {
-				if (Stream.of(i.getRepoDigests()).noneMatch(d -> d.equals(reference + "@" + digest))) {
+				if (Stream.of(i.getRepoDigests()).noneMatch(d -> d.equals(referenceFinal + "@" + digest))) {
 					log.trace("{} filtered because of repoDigest.", i);
 					continue;
 				}
